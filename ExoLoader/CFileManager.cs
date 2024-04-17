@@ -229,6 +229,17 @@ namespace ExoLoader
             }
             ModInstance.log("Ages read");
 
+            string[] jobs = ((JArray)(parsedJson.GetValueSafe("Jobs"))).ToObject<string[]>();
+            if (jobs != null)
+            {
+                data.jobs = jobs;
+            }
+            else
+            {
+                ModInstance.instance.Log("No Jobs entry for " + Path.GetFileName(folderName));
+            }
+            ModInstance.log("Jobs read");
+
             ModInstance.instance.Log("Finished Parsing");
             data.folderName = folderName;
             return data;

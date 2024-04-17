@@ -36,6 +36,8 @@ namespace ExoLoader
         public string[] likes;
         public string[] dislikes;
         public string skeleton;
+        public string[] jobs;
+
         public float[] stratoMapSpot;
         public float[] helioMapSpot;
         public float[] destroyedMapSpot;

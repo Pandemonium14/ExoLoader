@@ -104,6 +104,15 @@ namespace ExoLoader
                     CChara.dislikedCards.AddSafe(cd);
                 }
 
+                foreach (string jobID in CChara.data.jobs)
+                {
+                    Job job = Job.FromID(jobID);
+                    if (job != null)
+                    {
+                        job.skillChanges.Add(new SkillChange(CChara, 1));
+                    }
+                }
+
             }
         }
 
