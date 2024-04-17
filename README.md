@@ -4,7 +4,7 @@
 
 Mod for I Was a Teenage Exocolonist that makes adding custom characters easier.
 
-Uses BepInEx to inject the code (included in the releases)
+Uses BepInEx (https://github.com/BepInEx/BepInEx)to inject the code (included in the releases)
 
 Current features: 
 - Adding a character to the list without modifying the Chara.tsv file (easier + more compatible)
