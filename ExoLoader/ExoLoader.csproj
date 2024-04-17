@@ -71,23 +71,24 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AddMapSpotPatches.cs" />
-    <Compile Include="CharaAddPatches.cs" />
-    <Compile Include="CharaData.cs" />
-    <Compile Include="CustomCardData.cs" />
-    <Compile Include="CustomChara.cs" />
+    <Compile Include="StoryPatches\AddMapSpotPatches.cs" />
+    <Compile Include="AddContentPatches.cs" />
+    <Compile Include="CustomElements\CharaData.cs" />
+    <Compile Include="CustomElements\CustomCardData.cs" />
+    <Compile Include="CustomElements\CustomChara.cs" />
     <Compile Include="CustomContentParser.cs" />
-    <Compile Include="CustomMapManager.cs" />
+    <Compile Include="CustomElements\CustomJobData.cs" />
+    <Compile Include="MapSpots\CustomMapManager.cs" />
     <Compile Include="CFileManager.cs" />
     <Compile Include="ImagePatches.cs" />
     <Compile Include="Injector.cs" />
-    <Compile Include="CustomMapObjectMaker.cs" />
-    <Compile Include="LinePointer.cs" />
+    <Compile Include="MapSpots\CustomMapObjectMaker.cs" />
+    <Compile Include="StoryPatches\LinePointer.cs" />
     <Compile Include="ModInstance.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="StoryPatch.cs" />
-    <Compile Include="StoryPatchManager.cs" />
-    <Compile Include="StoryPatchType.cs" />
+    <Compile Include="StoryPatches\StoryPatch.cs" />
+    <Compile Include="StoryPatches\StoryPatchManager.cs" />
+    <Compile Include="StoryPatches\StoryPatchType.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
