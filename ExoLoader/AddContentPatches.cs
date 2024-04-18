@@ -6,7 +6,7 @@ using System.IO;
 namespace ExoLoader
 {
     [HarmonyPatch]
-    public class CharaAddPatches
+    public class AddContentPatches
     {
         private static bool logStoryReq;
 
@@ -78,6 +78,9 @@ namespace ExoLoader
                 ModInstance.log("Loading custom backgrounds");
                 LoadCustomContent("Backgrounds");
 
+            } else if (filename == "Exocolonist - jobs")
+            {
+                LoadCustomContent("Jobs");
             }
         }
 

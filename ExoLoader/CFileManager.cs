@@ -196,7 +196,7 @@ namespace ExoLoader
             data.likes = likes;
             ModInstance.log("Likes read");
 
-            string[] dislikes = ((JArray)(parsedJson.GetValueSafe("Likes"))).ToObject<string[]>();
+            string[] dislikes = ((JArray)(parsedJson.GetValueSafe("Dislikes"))).ToObject<string[]>();
             if (dislikes == null)
             {
                 ModInstance.instance.Log("No Dislikes entry for " + TrimFolderName(folderName));

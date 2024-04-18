@@ -23,21 +23,6 @@ namespace ExoLoader
                 if (folderName.Equals(contentType)) { 
                     switch (folderName)
                     {
-                        //Should be unnecessary after the patcher things
-                        /*case "Stories":
-                        {
-                            ModInstance.log("Parsing stories folder");
-                            foreach (string file in Directory.GetFiles(folder))
-                            {
-                                ModInstance.log("Parsing file : " + Path.GetFileName(file));
-                                if (file.EndsWith(".exo"))
-                                {
-                                    StoryPatchManager.PatchStoryFile(file);
-                                    ParserStory.LoadStoriesFile(Path.GetFileName(file), folder);
-                                }
-                            }
-                            break;
-                        }*/
                         case "Cards":
                         {
                             ModInstance.log("Parsing cards folder");
@@ -74,6 +59,22 @@ namespace ExoLoader
                             Singleton<AssetManager>.instance.backgroundAndEndingNames = cBgs.ToArray();
                             break;
                         }
+                        case "Jobs":
+                            {
+                                ModInstance.log("Parsing job folders");
+                                foreach (string jobFolder in CFileManager.GetAllCustomContentFolders("Jobs"))
+                                {
+                                    foreach (string file in Directory.GetFiles(jobFolder))
+                                    {
+                                        if (file.EndsWith(".json"))
+                                        {
+                                            ModInstance.log("Found job file " + Path.GetFileName(file) + ", parsing...");
+                                            ParseJobData(file);
+                                        }
+                                    }
+                                }
+                                break;
+                            }
                     }
                 }
             }
@@ -250,6 +251,84 @@ namespace ExoLoader
             cardData.abilitySuits = suits;
 
             cardData.MakeCard();
+        }
+
+        private static void ParseJobData(string file)
+        {
+            string fullJson = File.ReadAllText(file);
+            if (fullJson == null || fullJson.Length == 0)
+            {
+                ModInstance.instance.Log("Couldn't read text for " + Path.GetFileName(file));
+            }
+            Dictionary<string, object> json = JsonConvert.DeserializeObject<Dictionary<string, object>>(fullJson);
+            ModInstance.log("Json parsed");
+            CustomJobData jobData = new CustomJobData();
+            jobData.ID = (string)json["ID"];
+            jobData.name = (string)json["Name"];
+            jobData.location = Location.FromID((string)json["Location"]);
+            ModInstance.log("Read first wave of data");
+            jobData.skillChanges = new List<SkillChange>();
+            if (json.ContainsKey("PrimarySkill"))
+            {
+                jobData.primarySkill = Skill.FromID((string)json["PrimarySkill"]);
+                int primarySkillValue = int.Parse((string)json["PrimaryValue"]);
+                jobData.skillChanges.Add(new SkillChange(jobData.primarySkill, primarySkillValue));
+            }
+            if (json.ContainsKey("SecondSkill"))
+            {
+                Skill secondSkill = Skill.FromID((string)json["SecondSkill"]);
+                int secondValue = int.Parse((string)json["SecondValue"]);
+                jobData.skillChanges.Add(new SkillChange(secondSkill, secondValue));
+            }
+            if (json.ContainsKey("Kudos"))
+            {
+                int kudos = int.Parse((string)json["Kudos"]);
+                if (kudos != 0)
+                {
+                    jobData.skillChanges.Add(new SkillChange(Skill.FromID("kudos"), kudos));
+                }
+            }
+            if (json.ContainsKey("Stress"))
+            {
+                int stress = int.Parse((string)json["Stress"]);
+                if (stress != 0)
+                {
+                    jobData.skillChanges.Add(new SkillChange(Skill.FromID("stress"), stress));
+                }
+            }
+            ModInstance.log("Read skill data");
+            if (json.ContainsKey("IsRelax"))
+            {
+                jobData.isRelax = bool.Parse((string)json["IsRelax"]);
+            } else
+            {
+                jobData.isRelax = false;
+            }
+
+            if (json.ContainsKey("Characters"))
+            {
+                string[] charaIDs = ((JArray)(json.GetValueSafe("Characters"))).ToObject<string[]>();
+                foreach (string charaID in charaIDs)
+                {
+                    Chara chara = Chara.FromID(charaID);
+                    if (chara != null)
+                    {
+                        jobData.skillChanges.Add(new SkillChange(chara, 1));
+                    }
+                }
+            }
+            ModInstance.log("Read characters data");
+            if (json.ContainsKey("UltimateBonusSkill"))
+            {
+                Skill ultiSkill = Skill.FromID((string)json["UltimateBonusSkill"]);
+                int ultiValue = int.Parse((string)json["UltimateBonusValue"]);
+                jobData.ultimateBonus = new SkillChange(ultiSkill, ultiValue);
+            }
+            if (json.ContainsKey("BattleHeaderText"))
+            {
+                jobData.battleHeaderText = (string)json["BattleHeaderText"];
+            }
+            jobData.MakeJob();
         }
     }
 }

@@ -200,8 +200,6 @@ namespace ExoLoader
             }
             
             //charaSwitcher.DestroySafe();
-            ModInstance.log("CharaSwitcher removed");
-            //newObject.GetComponent<SkeletonMecanim>().valid = true;
             newObject.transform.localScale = new Vector3(1f,1f,1f);
             return newObject;            
         }
