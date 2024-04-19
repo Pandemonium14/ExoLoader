@@ -72,7 +72,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Debugging\DataDebugHelper.cs" />
-    <Compile Include="StoryPatches\AddMapSpotPatches.cs" />
+    <Compile Include="MapSpots\AddMapSpotPatches.cs" />
     <Compile Include="AddContentPatches.cs" />
     <Compile Include="CustomElements\CharaData.cs" />
     <Compile Include="CustomElements\CustomCardData.cs" />

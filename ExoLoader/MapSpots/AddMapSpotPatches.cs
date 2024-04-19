@@ -42,7 +42,7 @@ namespace ExoLoader
                         {
                             MapSpot.allMapSpots.Add(pair.Item1.GetComponent<MapSpot>());
                         }*/
-                        GameObject actualSpot = PoolManager.Spawn(pair.Item1, pair.Item2);
+                        GameObject actualSpot = PoolManager.Spawn(pair.Item1, GameObject.Find("Seasonal").transform);
                         actualSpot.transform.localPosition = pair.Item1.transform.localPosition;
                         pair.Item1.DestroySafe();
                     }
