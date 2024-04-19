@@ -13,7 +13,7 @@ namespace ExoLoader
     {
         public static readonly string patchFolderName = "StoryPatches";
         public static readonly string patchStartMarker = "@";
-        public static readonly string patchedStoriesFolder = Path.Combine(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CustomContent", "common", "PatchedStories"));
+        public static readonly string patchedStoriesFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CustomContent", "common", "PatchedStories");
         
         
         

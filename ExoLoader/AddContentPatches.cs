@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using ExoLoader.Debugging;
+using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -25,8 +26,18 @@ namespace ExoLoader
                 foreach (string folder in charaFolders)
                 {
                     ModInstance.instance.Log("Parsing folder " + CFileManager.TrimFolderName(folder));
-
-                    CharaData data = CFileManager.ParseCustomData(folder);
+                    CharaData data = null;
+                    try
+                    {
+                        data = CFileManager.ParseCustomData(folder);
+                    } catch (Exception e)
+                    {
+                        if (e is InvalidCastException)
+                        {
+                            DataDebugHelper.PrintDataError("Invalid cast when loading character " + Path.GetFileName(folder), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
+                        }
+                        throw e;
+                    }
                     ModInstance.log("Adding character: " + data.id);
                     if (data != null)
                     {
