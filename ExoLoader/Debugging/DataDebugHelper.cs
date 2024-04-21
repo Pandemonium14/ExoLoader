@@ -15,6 +15,7 @@ namespace ExoLoader.Debugging
 
         public static void PrintDataError(string name, params string[] messages) 
         {
+            Directory.CreateDirectory(logFilePath);
             StreamWriter writer = new StreamWriter(Path.Combine(logFilePath, name) + ".txt", false);
             foreach (string message in messages)
             {

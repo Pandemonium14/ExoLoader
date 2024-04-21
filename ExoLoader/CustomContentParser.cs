@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+﻿using ExoLoader.Debugging;
+using HarmonyLib;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Northway.Utils;
@@ -14,6 +15,17 @@ namespace ExoLoader
     public class CustomContentParser
     {
         public static Dictionary<string, string> customBackgrounds = new Dictionary<string, string>();
+
+        private static readonly string[] expectedCardEntries = new string[]
+        {
+            "ID",
+            "Name",
+            "Type",
+            "Level",
+            "Suit",
+            "Value"
+        };
+
         public static void ParseContentFolder(string contentFolderPath, string contentType)
         {
             string[] folders = Directory.GetDirectories(contentFolderPath);
@@ -85,140 +97,96 @@ namespace ExoLoader
             string fullJson = File.ReadAllText(file);
             if (fullJson == null || fullJson.Length == 0)
             {
-                ModInstance.instance.Log("Couldn't read text for " + Path.GetFileName(file));
+                DataDebugHelper.PrintDataError("Couldn't read json file for " + Path.GetFileName(file));
+                ModInstance.instance.Log("Couldn't read text for " + Path.GetFileNameWithoutExtension(file));
+                return;
             }
             Dictionary<string, object> data = JsonConvert.DeserializeObject<Dictionary<string, object>>(fullJson);
             if (data == null || data.Count == 0)
             {
+                DataDebugHelper.PrintDataError("Couldn't parse json file for " + Path.GetFileNameWithoutExtension(file), "Json file could be read as text but the text coudln't be parsed. Check for any missing \",{}, or comma");
                 ModInstance.instance.Log("Couldn't parse json for " + Path.GetFileName(file));
+                return;
+            }
+            List<string> missingKeys = new List<string>() {"The following keys are mandatory for a card file but were missing:"};
+            foreach (string key in expectedCardEntries)
+            {
+                if (!data.ContainsKey(key))
+                {
+                    missingKeys.Add(key);
+                }
+            }
+            if (missingKeys.Count > 1)
+            {
+                DataDebugHelper.PrintDataError("Missing mandatory keys for card " + Path.GetFileNameWithoutExtension(file), missingKeys.ToArray());
+                return;
             }
 
             CustomCardData cardData = new CustomCardData();
             cardData.file = file;
+            cardData.id = (string)data["ID"];
+            cardData.name = (string)data["Name"];
+            cardData.level = int.Parse((string)data["Level"]);
 
-            if (data.TryGetValue("ID", out object id))
+            switch ((string)data["Type"])
             {
-                cardData.id = (string)id;
+                case "memory":
+                    {
+                        cardData.type = CardType.memory; 
+                        break;
+                    }
+                default:
+                    {
+                        DataDebugHelper.PrintDataError(Path.GetFileNameWithoutExtension(file) + " has invalid or unsupported type", "Only memory type cards are currently supported");
+                        return;
+                    }
             }
-            else
-            {
-                ModInstance.instance.Log("no ID entry for " + Path.GetFileName(file));
-            }
-            ModInstance.log("Read ID entry");
 
-            if (data.TryGetValue("Name", out object name))
-            {
-                cardData.name = (string)name;
-            }
-            else
-            {
-                ModInstance.instance.Log("no Name entry for " + Path.GetFileName(file));
-            }
-            ModInstance.log("Read Name entry");
+            cardData.value = ((string)data["Value"]).ParseInt();
+            
 
-            if (data.TryGetValue("Level", out object level))
+            switch (((string)data["Suit"]).ToLower())
             {
-                cardData.level = int.Parse((string)level);
+                case "physical":
+                    {
+                        cardData.suit = CardSuit.physical;
+                        break;
+                    }
+                case "mental":
+                    {
+                        cardData.suit = CardSuit.mental;
+                        break;
+                    }
+                case "social":
+                    {
+                        cardData.suit = CardSuit.social;
+                        break;
+                    }
+                case "wild":
+                    {
+                        cardData.suit = CardSuit.wildcard;
+                        break;
+                    }
+                default:
+                    {
+                        DataDebugHelper.PrintDataError(Path.GetFileNameWithoutExtension(file) + "has invalid suit", "Valid suits are limited to wild, physical, mental and social");
+                        break;
+                    }
             }
-            else
-            {
-                ModInstance.instance.Log("no Name entry for " + Path.GetFileName(file));
-            }
-            ModInstance.log("Read Name entry");
-
-            if (data.TryGetValue("Type", out object typeName))
-            {
-                switch (typeName)
-                {
-                    case "memory":
-                        {
-                            cardData.type = CardType.memory; 
-                            break;
-                        }
-                    default:
-                        {
-                            ModInstance.log("Card type " + typeName + " is invalid or not supported yet!");
-                            break;
-                        }
-                }
-            }
-            else
-            {
-                ModInstance.instance.Log("no Type entry for " + Path.GetFileName(file));
-            }
-            ModInstance.log("Read Type entry");
-
-            if (data.TryGetValue("Value", out object value))
-            {
-                cardData.value = ((string)value).ParseInt();
-            }
-            else
-            {
-                ModInstance.instance.Log("no Value entry for " + Path.GetFileName(file));
-            }
-            ModInstance.log("Read Value entry");
-
-            if (data.TryGetValue("Suit", out object suitName))
-            {
-                switch (suitName)
-                {
-                    case "physical":
-                        {
-                            cardData.suit = CardSuit.physical;
-                            break;
-                        }
-                    case "mental":
-                        {
-                            cardData.suit = CardSuit.mental;
-                            break;
-                        }
-                    case "social":
-                        {
-                            cardData.suit = CardSuit.social;
-                            break;
-                        }
-                    case "wild":
-                        {
-                            cardData.suit = CardSuit.wildcard;
-                            break;
-                        }
-                }
-            }
-            else
-            {
-                ModInstance.instance.Log("no Suit entry for " + Path.GetFileName(file));
-            }
-            ModInstance.log("Read Suit entry");
 
             if (data.TryGetValue("ArtistName", out object artistName))
             {
                 cardData.artist = (string)artistName;
             }
-            else
-            {
-                ModInstance.instance.Log("no ArtistName entry for " + Path.GetFileName(file));
-            }
-            ModInstance.log("Read ArtistName entry");
-
             if (data.TryGetValue("ArtistSocialAt", out object artistAt))
             {
                 cardData.artistAt = (string)artistAt;
             }
-            else
-            {
-                ModInstance.instance.Log("no ArtistSocialAt entry for " + Path.GetFileName(file));
-            }
-            ModInstance.log("Read ArtistSocialAt entry");
 
             if (data.TryGetValue("ArtistLink", out object artistLink))
             {
                 cardData.artistLink = (string)artistLink;
             }
-            else
-            {
-                ModInstance.instance.Log("no ArtistLink entry for " + Path.GetFileName(file));
-            }
-            ModInstance.log("Read ArtistLink entry");
 
             List<CardAbilityType> abilities = new List<CardAbilityType>();
             List<int> values = new List<int>();
@@ -242,6 +210,7 @@ namespace ExoLoader
                         suits.Add(((string)abilityMap.GetValueSafe("Suit")).ParseEnum<CardSuit>());
                     } else if (abID != null && abID != "")
                     {
+                        DataDebugHelper.PrintDataError("Invalid ability in " + Path.GetFileNameWithoutExtension(file));
                         ModInstance.log("WARNING: Incorrect Ability ID : " + abID);
                     }
                 }

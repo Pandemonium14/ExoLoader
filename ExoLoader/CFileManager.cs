@@ -21,7 +21,7 @@ namespace ExoLoader
 
         private static readonly string[] expectedCharacterEntries = new string[]
         {
-            "Data","Likes","Dislikes","Ages","OnMap","HelioOnly","SpriteSize","Skeleton","Jobs"
+            "Data","Likes","Dislikes","Ages","OnMap","HelioOnly","SpriteSize","Skeleton"
         };
         private static readonly string[] expectedCharacterDataEntries = new string[]
         {
@@ -267,18 +267,20 @@ namespace ExoLoader
             data.spriteSize = spriteSize;
 
             data.ages = (string)parsedJson["Ages"] == "TRUE";
-            
 
-            string[] jobs = ((JArray)(parsedJson.GetValueSafe("Jobs"))).ToObject<string[]>();
-            if (jobs != null)
+            object rawJobs = parsedJson.GetValueSafe("Jobs");
+            if (rawJobs != null)
             {
-                data.jobs = jobs;
+                string[] jobs = ((JArray) rawJobs).ToObject<string[]>();
+                if (jobs != null)
+                {
+                    data.jobs = jobs;
+                }
+                else
+                {
+                    DataDebugHelper.PrintDataError("Jobs entry for " + Path.GetFileName(folderName) + "broken");
+                }
             }
-            else
-            {
-                DataDebugHelper.PrintDataError("Jobs entry for " + Path.GetFileName(folderName) + "broken");
-            }
-            ModInstance.log("Jobs read");
 
             ModInstance.instance.Log("Finished Parsing");
             data.folderName = folderName;
