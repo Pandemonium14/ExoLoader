@@ -34,10 +34,10 @@ namespace ExoLoader
                     {
                         if (e is InvalidCastException)
                         {
-                            DataDebugHelper.PrintDataError("Invalid cast when loading character " + Path.GetFileName(folder), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
+                            DataDebugHelper.PrintDataError("Invalid cast when loading character " + Path.GetFileNameWithoutExtension(folder), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
                         } else
                         {
-                            DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileName(folder), e.Message);
+                            DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(folder), e.Message);
                         }
                         throw e;
                     }

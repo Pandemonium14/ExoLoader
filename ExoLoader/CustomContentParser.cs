@@ -43,7 +43,23 @@ namespace ExoLoader
                                 if (file.EndsWith(".json"))
                                 {
                                     ModInstance.log("Parsing file : " + Path.GetFileName(file));
-                                    ParseCardData(file);
+                                    try
+                                    {
+
+                                        ParseCardData(file);
+                                    } 
+                                    catch (Exception ex)
+                                    {
+                                        if (ex is InvalidCastException)
+                                        {
+                                            DataDebugHelper.PrintDataError("Invalid cast when loading card " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
+                                        }
+                                        else
+                                        {
+                                            DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(file), ex.Message);
+                                        }
+                                        throw ex;
+                                        }
                                 }
                             }
 
@@ -81,7 +97,22 @@ namespace ExoLoader
                                         if (file.EndsWith(".json"))
                                         {
                                             ModInstance.log("Found job file " + Path.GetFileName(file) + ", parsing...");
-                                            ParseJobData(file);
+                                            try
+                                            {
+                                                ParseJobData(file);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                if (ex is InvalidCastException)
+                                                {
+                                                    DataDebugHelper.PrintDataError("Invalid cast when loading job " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
+                                                }
+                                                else
+                                                {
+                                                    DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(file), ex.Message);
+                                                }
+                                                throw ex;
+                                            }
                                         }
                                     }
                                 }
