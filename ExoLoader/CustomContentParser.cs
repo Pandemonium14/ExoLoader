@@ -26,6 +26,13 @@ namespace ExoLoader
             "Value"
         };
 
+        private static readonly string[] expectedJobEntries = new string[]
+        {
+            "ID",
+            "Name",
+            "Location"
+        };
+
         public static void ParseContentFolder(string contentFolderPath, string contentType)
         {
             string[] folders = Directory.GetDirectories(contentFolderPath);
@@ -258,15 +265,35 @@ namespace ExoLoader
             string fullJson = File.ReadAllText(file);
             if (fullJson == null || fullJson.Length == 0)
             {
+                DataDebugHelper.PrintDataError("Couldn't read json file for " + Path.GetFileName(file));
                 ModInstance.instance.Log("Couldn't read text for " + Path.GetFileName(file));
+                return;
             }
             Dictionary<string, object> json = JsonConvert.DeserializeObject<Dictionary<string, object>>(fullJson);
-            ModInstance.log("Json parsed");
+            if (json == null || json.Count == 0)
+            {
+                DataDebugHelper.PrintDataError("Couldn't parse json file for " + Path.GetFileNameWithoutExtension(file), "Json file could be read as text but the text coudln't be parsed. Check for any missing \",{}, or comma");
+                ModInstance.instance.Log("Couldn't parse json for " + Path.GetFileName(file));
+                return;
+            }
+            List<string> missingKeys = new List<string>() { "The following keys are mandatory for a job file but were missing:" };
+            foreach (string key in expectedJobEntries)
+            {
+                if (!json.ContainsKey(key))
+                {
+                    missingKeys.Add(key);
+                }
+            }
+            if (missingKeys.Count > 1)
+            {
+                DataDebugHelper.PrintDataError("Missing mandatory keys for job " + Path.GetFileNameWithoutExtension(file), missingKeys.ToArray());
+                return;
+            }
+
             CustomJobData jobData = new CustomJobData();
             jobData.ID = (string)json["ID"];
             jobData.name = (string)json["Name"];
             jobData.location = Location.FromID((string)json["Location"]);
-            ModInstance.log("Read first wave of data");
             jobData.skillChanges = new List<SkillChange>();
             if (json.ContainsKey("PrimarySkill"))
             {
@@ -296,7 +323,6 @@ namespace ExoLoader
                     jobData.skillChanges.Add(new SkillChange(Skill.FromID("stress"), stress));
                 }
             }
-            ModInstance.log("Read skill data");
             if (json.ContainsKey("IsRelax"))
             {
                 jobData.isRelax = bool.Parse((string)json["IsRelax"]);
