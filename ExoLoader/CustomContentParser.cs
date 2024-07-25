@@ -3,6 +3,7 @@ using HarmonyLib;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Northway.Utils;
+using Spine;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -31,6 +32,13 @@ namespace ExoLoader
             "ID",
             "Name",
             "Location"
+        };
+
+        private static readonly string[] expectedEndingEntries = new string[]
+        {
+            "ID",
+            "Name",
+            "Preamble"
         };
 
         public static void ParseContentFolder(string contentFolderPath, string contentType)
@@ -117,6 +125,37 @@ namespace ExoLoader
                                                 else
                                                 {
                                                     DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(file), ex.Message);
+                                                }
+                                                throw ex;
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                        case "Endings":
+                            {
+                                ModInstance.log("Parsing ending folders");
+                                foreach (string jobFolder in CFileManager.GetAllCustomContentFolders("Endings"))
+                                {
+                                    foreach (string file in Directory.GetFiles(jobFolder))
+                                    {
+                                        if (file.EndsWith(".json"))
+                                        {
+                                            ModInstance.log("Found ending file " + Path.GetFileName(file) + ", parsing...");
+                                            try
+                                            {
+                                                ParseEndingData(file);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                if (ex is InvalidCastException)
+                                                {
+                                                    DataDebugHelper.PrintDataError("Invalid cast when loading ending " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
+                                                }
+                                                else
+                                                {
+                                                    DataDebugHelper.PrintDataError("Unexpected error when loading ending " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                                 }
                                                 throw ex;
                                             }
@@ -355,6 +394,74 @@ namespace ExoLoader
                 jobData.battleHeaderText = (string)json["BattleHeaderText"];
             }
             jobData.MakeJob();
+        }
+
+        private static void ParseEndingData(string file)
+        {
+            string fullJson = File.ReadAllText(file);
+            if (fullJson == null || fullJson.Length == 0)
+            {
+                DataDebugHelper.PrintDataError("Couldn't read json file for " + Path.GetFileName(file));
+                ModInstance.instance.Log("Couldn't read text for " + Path.GetFileNameWithoutExtension(file));
+                return;
+            }
+            Dictionary<string, object> data = JsonConvert.DeserializeObject<Dictionary<string, object>>(fullJson);
+            if (data == null || data.Count == 0)
+            {
+                DataDebugHelper.PrintDataError("Couldn't parse json file for " + Path.GetFileNameWithoutExtension(file), "Json file could be read as text but the text coudln't be parsed. Check for any missing \",{}, or comma");
+                ModInstance.instance.Log("Couldn't parse json for " + Path.GetFileName(file));
+                return;
+            }
+            List<string> missingKeys = new List<string>() { "The following keys are mandatory for an ending file but were missing:" };
+            foreach (string key in expectedEndingEntries)
+            {
+                if (!data.ContainsKey(key))
+                {
+                    missingKeys.Add(key);
+                }
+            }
+            if (missingKeys.Count > 1)
+            {
+                DataDebugHelper.PrintDataError("Missing mandatory keys for card " + Path.GetFileNameWithoutExtension(file), missingKeys.ToArray());
+                return;
+            }
+            string ID = (string)data["ID"];
+            string name = (string)data["Name"];
+            string preamble = (string)data["Preamble"];
+            Location location = data.ContainsKey("Location") ? Location.FromID((string)data["Location"]) : Location.none;
+            string chara = data.ContainsKey("Character") ? (string)data["Character"] : "";
+
+            string[] requiredMemories = data.ContainsKey("RequiredMemories") ? ((JArray)(data.GetValueSafe("RequiredMemories"))).ToObject<string[]>() : new string[0];
+
+            string[] requiredJobsStrings = data.ContainsKey("RequiredJobs") ? ((JArray)(data.GetValueSafe("RequiredJobs"))).ToObject<string[]>() : new string[0];
+            Job[] requiredJobs = new Job[requiredJobsStrings.Length];
+            for (int i = 0;  i < requiredJobsStrings.Length; i++)
+            {
+                requiredJobs[i] = Job.FromID(requiredJobsStrings[i]);
+            }
+
+            string[] extraJobsStrings = data.ContainsKey("OtherJobs") ? ((JArray)(data.GetValueSafe("OtherJobs"))).ToObject<string[]>() : new string[0];
+            Job[] extraJobs = new Job[extraJobsStrings.Length];
+            for (int i = 0; i < extraJobsStrings.Length; i++)
+            {
+                extraJobs[i] = Job.FromID(extraJobsStrings[i]);
+            }
+
+            string[] skillsStrings = data.ContainsKey("Skills") ? ((JArray)(data.GetValueSafe("Skills"))).ToObject<string[]>() : new string[0];
+            Skill[] skills = new Skill[skillsStrings.Length];
+            for (int i = 0; i < skillsStrings.Length; i++)
+            {
+                skills[i] = Skill.FromID(skillsStrings[i]);
+            }
+
+            Ending ending = new Ending(ID, name, preamble, requiredMemories, requiredJobs, extraJobs, skills, chara, location);
+
+            string bg = data.ContainsKey("Background") ? (string)data["Background"] : null;
+            if (bg != null)
+            {
+                Singleton<AssetManager>.instance.backgroundAndEndingNames = Singleton<AssetManager>.instance.backgroundAndEndingNames.ToList<string>().AddItem(bg).ToArray();
+            }
+            ModInstance.log("Parsed and created ending");
         }
     }
 }

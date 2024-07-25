@@ -20,10 +20,13 @@ namespace ExoLoader
         [HarmonyPrefix]
         public static bool GetCustomSprite(ref Sprite __result, string spriteName)
         {
+            if (spriteName ==  null)
+            {
+                ModInstance.log("Trying to load a story sprite with null ID string (from CharaImage)");
+            }
             Chara ch = Chara.FromCharaImageID(spriteName);
             if (!(ch is CustomChara))
             {
-                ModInstance.log("CharaImage is loading a vanilla character Sprite");
                 return true;
             }
             else
@@ -48,10 +51,13 @@ namespace ExoLoader
         [HarmonyPrefix]
         public static bool SecondGetCustomSprite(ref Sprite __result, string spriteName)
         {
+            if (spriteName == null)
+            {
+                ModInstance.log("Trying to load a story sprite with null ID string (from AssetManager)");
+            }
             Chara ch = Chara.FromCharaImageID(spriteName);
             if (!(ch is CustomChara))
             {
-                ModInstance.log("AssetManager is loading a vanilla character Sprite");
                 return true;
             }
             else
@@ -101,7 +107,6 @@ namespace ExoLoader
             Chara ch = Chara.FromCharaImageID(spriteName);
             if (ch == null || !(ch is CustomChara))
             {
-                ModInstance.log("Loading CustomPortrait with name : " + spriteName);
                 return true;
             }
             else
@@ -130,7 +135,7 @@ namespace ExoLoader
         [HarmonyPrefix]
         public static bool LoadCustomCardSprite(ref Sprite __result, string cardID)
         {
-            ModInstance.log("Loading a card image, id = " + cardID);
+            //ModInstance.log("Loading a card image, id = " + cardID);
             string file = CustomCardData.idToFile.GetSafe(cardID);
             if (file != null)
             {
@@ -148,7 +153,7 @@ namespace ExoLoader
         [HarmonyPrefix]
         public static bool LoadCustomBackground(ref Sprite __result, string spriteName)
         {
-            ModInstance.log("Loading custom background with id " + spriteName);
+            //ModInstance.log("Loading custom background with id " + spriteName);
             string folder = CustomContentParser.customBackgrounds.GetSafe(spriteName);
             if (folder != null)
             {
@@ -161,6 +166,19 @@ namespace ExoLoader
                 return true;
             }
 
+        }
+
+        [HarmonyPatch(typeof(Result))]
+        [HarmonyPatch(nameof(Result.SetCharaImage))]
+        [HarmonyPrefix]
+        public static void LoggingPatch(CharaImageLocation location, string spriteName) {
+            if (spriteName != null)
+            {
+                ModInstance.log("===== Called SetCharaImage with location " + location.ToString() + " and spriteName '" + spriteName + "'");
+            } else
+            {
+                ModInstance.log("===== Called SetCharaImage with a null spriteName");
+            }
         }
 
     }

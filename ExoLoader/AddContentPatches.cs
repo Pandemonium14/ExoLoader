@@ -96,6 +96,10 @@ namespace ExoLoader
             {
                 LoadCustomContent("Jobs");
             }
+            else if (filename == "Exocolonist - endings")
+            {
+                LoadCustomContent("Endings");
+            }
         }
 
         [HarmonyPatch(typeof(ParserData), nameof(ParserData.LoadAllData))]
