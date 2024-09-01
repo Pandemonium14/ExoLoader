@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using HarmonyLib;
 using Northway.Utils;
 using UnityEngine;
+using UnityEngine.Windows;
 
 namespace ExoLoader
 {
@@ -34,7 +35,9 @@ namespace ExoLoader
                 ModInstance.log("CharaImage is loading a custom chara sprite, getting image " + spriteName + "...");
                 try
                 {
-                    __result = CFileManager.GetCustomImage(((CustomChara)ch).data.folderName, MakeRealSpriteName(spriteName, (CustomChara)ch), ((CustomChara)ch).data.spriteSize);
+                    int targetSpriteSize = Math.Max(((CustomChara)ch).data.spriteSize, ((CustomChara)ch).data.spriteSizes[getArtStageFromSpriteName(spriteName) -1]);
+                    ModInstance.log("Getting story sprite with size " +  targetSpriteSize);
+                    __result = CFileManager.GetCustomImage(((CustomChara)ch).data.folderName, MakeRealSpriteName(spriteName, (CustomChara)ch), targetSpriteSize);
                     return false;
                 }
                 catch (Exception e)
@@ -65,7 +68,9 @@ namespace ExoLoader
                 ModInstance.log("AssetManager is loading a custom chara sprite, getting image " + spriteName + "...");
                 try
                 {
-                    __result = CFileManager.GetCustomImage(((CustomChara)ch).data.folderName, MakeRealSpriteName(spriteName, (CustomChara)ch), ((CustomChara)ch).data.spriteSize);
+                    int targetSpriteSize = Math.Max(((CustomChara)ch).data.spriteSize, ((CustomChara)ch).data.spriteSizes[getArtStageFromSpriteName(spriteName) - 1]);
+                    ModInstance.log("Getting story sprite with size " + targetSpriteSize);
+                    __result = CFileManager.GetCustomImage(((CustomChara)ch).data.folderName, MakeRealSpriteName(spriteName, (CustomChara)ch), targetSpriteSize);
                     return false;
                 }
                 catch (Exception e)
@@ -74,6 +79,21 @@ namespace ExoLoader
                     ModInstance.log(e.ToString());
                     return true;
                 }
+            }
+        }
+
+        private static int getArtStageFromSpriteName(string spriteName)
+        {
+            string[] split = spriteName.Split('_');
+            string first = split[0];
+            if ((!first.EndsWith("1") && !first.EndsWith("2") && !first.EndsWith("3")))
+            {
+                ModInstance.log("For age " + Princess.artStage);
+                return Princess.artStage;
+            } else
+            {
+                ModInstance.log("For age " + int.Parse(first[first.Length - 1].ToString()));
+                return int.Parse(first[first.Length-1].ToString());
             }
         }
 

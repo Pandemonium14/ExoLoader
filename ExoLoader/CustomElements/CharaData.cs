@@ -46,6 +46,7 @@ namespace ExoLoader
         public bool ages;
         public bool onMap = true;
         public int spriteSize = -1;
+        public int[] spriteSizes = new int[3];
 
         public CustomChara MakeChara()
         {

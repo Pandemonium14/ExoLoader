@@ -21,7 +21,7 @@ namespace ExoLoader
 
         private static readonly string[] expectedCharacterEntries = new string[]
         {
-            "Data","Likes","Dislikes","Ages","OnMap","HelioOnly","SpriteSize","Skeleton"
+            "Data","Likes","Dislikes","Ages","OnMap","HelioOnly","Skeleton"
         };
         private static readonly string[] expectedCharacterDataEntries = new string[]
         {
@@ -263,8 +263,20 @@ namespace ExoLoader
             string skeleton = (string)parsedJson["Skeleton"];
             data.skeleton = skeleton;
 
-            int spriteSize = int.Parse((string)parsedJson.GetValueSafe("SpriteSize"));
-            data.spriteSize = spriteSize;
+            string spriteSizeString = (string)parsedJson.GetValueSafe("SpriteSize");
+            if (spriteSizeString != null)
+            {
+                data.spriteSize = int.Parse(spriteSizeString);
+            }
+            
+            JArray spriteSizesRaw = ((JArray)(parsedJson.GetValueSafe("SpriteSizesByAge")));
+            if (spriteSizesRaw != null)
+            {
+                ModInstance.log("This character will use sprite sizes by age");
+                string[] spriteSizesStrings = spriteSizesRaw.ToObject<string[]>();
+                int[] spriteSizes = { int.Parse(spriteSizesStrings[0]), int.Parse(spriteSizesStrings[1]), int.Parse(spriteSizesStrings[2]) };
+                data.spriteSizes = spriteSizes;
+            }
 
             data.ages = (string)parsedJson["Ages"] == "TRUE";
 
