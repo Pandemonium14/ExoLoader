@@ -23,7 +23,8 @@ namespace ExoLoader
         public string artistAt;
         public string artistLink;
 
-        private int kudoCost = 0;
+        public HowGet howGet;
+        public int kudoCost = 0;
 
         public List<CardAbilityType> abilityIds = new List<CardAbilityType>();
         public List<int> abilityValues = new List<int>();
@@ -40,7 +41,7 @@ namespace ExoLoader
                 originalAbilitySuits = abilitySuits,
                 kudosCost = kudoCost,
                 upgradeFromCardID = null,
-                howGet = HowGet.none,
+                howGet = howGet,
                 artistName = artist,
                 artistSocialAt = artistAt,
                 artistSocialUrl = artistLink
