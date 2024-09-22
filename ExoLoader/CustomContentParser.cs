@@ -209,12 +209,53 @@ namespace ExoLoader
             {
                 case "memory":
                     {
-                        cardData.type = CardType.memory; 
+                        cardData.type = CardType.memory;
+                        cardData.howGet = HowGet.none;
+                        break;
+                    }
+                case "gear":
+                    {
+                        if (data.TryGetValue("HowGet", out object howGet))
+                        {
+                            switch ((string)howGet)
+                            {
+                                case "shopDefault":
+                                    {
+                                        cardData.howGet = HowGet.shopDefault;
+                                        break;
+                                    }
+                                case "shopClothes":
+                                    {
+                                        cardData.howGet = HowGet.shopClothes;
+                                        break;
+                                    }
+                                case "shopWeapons":
+                                    {
+                                        cardData.howGet = HowGet.shopWeapons;
+                                        break;
+                                    }
+                                case "shopGadgets":
+                                    {
+                                        cardData.howGet = HowGet.shopGadgets;
+                                        break;
+                                    }
+                                default:
+                                    {
+                                        DataDebugHelper.PrintDataError(Path.GetFileNameWithoutExtension(file) + " has invalid or unsupported how get", "Only shopDefault, shopClothes, shopWeapons, and shopGadgets are currently supported");
+                                        return;
+                                    }
+                            }
+                        }
+                        cardData.type = CardType.gear;
+                        if (data.TryGetValue("Kudos", out object kudos))
+                        {
+                            cardData.kudoCost = int.Parse((string)kudos);
+                        }
                         break;
                     }
                 default:
                     {
-                        DataDebugHelper.PrintDataError(Path.GetFileNameWithoutExtension(file) + " has invalid or unsupported type", "Only memory type cards are currently supported");
+                        DataDebugHelper.PrintDataError(Path.GetFileNameWithoutExtension(file) + " has invalid or unsupported type", "Only memory and shop gear type cards are currently supported");
                         return;
                     }
             }
