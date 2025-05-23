@@ -72,7 +72,16 @@ namespace ExoLoader
             string maybeKey = customCharaId + "_" + season + "_month" + (season != "glow" ? week.ToString() : "");
             if (mapObjects.ContainsKey(maybeKey))
             {
-                return mapObjects[maybeKey];
+                Tuple<GameObject, Transform> pair = mapObjects[maybeKey];
+
+                if (pair != null && pair.Item1 != null && pair.Item2 != null)
+                {
+                    return pair;
+                }
+                else
+                {
+                    ModInstance.log("Map object or transform is null, continuing");
+                }
             }
             CustomChara cC = CustomChara.customCharasById[customCharaId];
             if (cC == null)
@@ -102,7 +111,17 @@ namespace ExoLoader
             ModInstance.log("Copied and modified map object");
 
             Tuple <GameObject,Transform> result = new Tuple<GameObject, Transform>(customMapObject, templateObject.transform.parent);
-            mapObjects.Add(maybeKey, result);
+
+            // The key may have existed, but the values were null
+            if (mapObjects.ContainsKey(maybeKey))
+            {
+                mapObjects[maybeKey] = result;
+            }
+            else
+            {
+                mapObjects.Add(maybeKey, result);
+            }
+
             return result;
         }
 
