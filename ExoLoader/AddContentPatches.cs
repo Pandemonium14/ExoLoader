@@ -3,6 +3,7 @@ using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace ExoLoader
 {
@@ -134,6 +135,36 @@ namespace ExoLoader
                     }
                 }
 
+            }
+
+            // Chara.allCharas is the array used in CharasMenu to display the list of charas
+            // With this sorting, we maintain the order of original charas, but add custom charas with .canLove before original charas with .canLove = false
+            // This is done to maintain the order of charas in the menu, and to make it easier to find custom charas
+            ReorderCharasWithLinq();
+        }
+
+        public static void ReorderCharasWithLinq()
+        {
+            Chara.allCharas = Chara.allCharas
+                .OrderBy(GetCharaSortKey)
+                .ToList();
+        }
+
+        private static int GetCharaSortKey(Chara chara)
+        {
+            // Create sort keys to maintain desired order:
+            // 0: Chara with canLove = true
+            // 1: CustomChara with canLove = true
+            // 2: Chara with canLove = false
+            // 3: CustomChara with canLove = false
+
+            if (chara is CustomChara)
+            {
+                return chara.canLove ? 1 : 3;
+            }
+            else // Regular Chara
+            {
+                return chara.canLove ? 0 : 2;
             }
         }
 
