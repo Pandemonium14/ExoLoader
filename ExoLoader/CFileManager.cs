@@ -363,7 +363,7 @@ namespace ExoLoader
                 Byte[] bytes = null;
                 try
                 {
-                    texture = new Texture2D(2,2);
+                    texture = new Texture2D(2, 2);
                     bytes = File.ReadAllBytes(imagePath);
                     ImageConversion.LoadImage(texture, bytes);
                     texture.Apply();
@@ -371,7 +371,10 @@ namespace ExoLoader
                     int targetHeightInUnits = targetHeight;
                     float density = height / targetHeightInUnits;
                     image = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0), density);
-                } catch (Exception e)
+                    // Setting name for chara sprites allows clicking interaction, speaker change animation, love bubbles, etc.
+                    image.name = imageName;
+                }
+                catch (Exception e)
                 {
                     ModInstance.log("Couldn't make sprite from file " + TrimFolderName(imagePath));
                     ModInstance.log(texture == null ? "The texture is null" : texture.isReadable.ToString());
