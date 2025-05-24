@@ -168,8 +168,6 @@ namespace ExoLoader
             }
         }
 
-
-
         public static void LoadCustomContent(string contentType)
         {
             ModInstance.instance.Log("Checking CustomContent folders");

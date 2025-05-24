@@ -212,6 +212,11 @@ namespace ExoLoader
                         cardData.type = CardType.memory; 
                         break;
                     }
+                case "gear":
+                    {
+                        cardData.type = CardType.gear;
+                        break;
+                    }
                 default:
                     {
                         DataDebugHelper.PrintDataError(Path.GetFileNameWithoutExtension(file) + " has invalid or unsupported type", "Only memory type cards are currently supported");
@@ -267,27 +272,27 @@ namespace ExoLoader
                             cardData.howGet = HowGet.training;
                             break;
                         }
-                    case "trainingBuy":
+                    case "trainingbuy":
                         {
                             cardData.howGet = HowGet.trainingBuy;
                             break;
                         }
-                    case "shopDefault":
+                    case "shopdefault":
                         {
                             cardData.howGet = HowGet.shopDefault;
                             break;
                         }
-                    case "shopClothes":
+                    case "shopclothes":
                         {
                             cardData.howGet = HowGet.shopClothes;
                             break;
                         }
-                    case "shopWeapons":
+                    case "shopweapons":
                         {
                             cardData.howGet = HowGet.shopWeapons;
                             break;
                         }
-                    case "shopGadgets":
+                    case "shopgadgets":
                         {
                             cardData.howGet = HowGet.shopGadgets;
                             break;
@@ -308,10 +313,19 @@ namespace ExoLoader
                 {
                     cardData.upgradeFromCardID = null;
                 }
+
+                if (data.TryGetValue("Kudos", out object kudoCost))
+                {
+                    cardData.kudoCost = ((string)kudoCost).ParseInt();
+                }
+                else
+                {
+                    cardData.kudoCost = 0;
+                }
             }
             catch (Exception ex)
             {
-                ModInstance.log("Invalid HowGet/UpgradeFrom value in " + Path.GetFileNameWithoutExtension(file) + ": " + ex.Message);
+                ModInstance.log("Invalid new field value in " + Path.GetFileNameWithoutExtension(file) + ": " + ex.Message);
             }
 
             if (data.TryGetValue("ArtistName", out object artistName))

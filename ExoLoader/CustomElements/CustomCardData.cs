@@ -25,7 +25,7 @@ namespace ExoLoader
         public string artistAt;
         public string artistLink;
 
-        private int kudoCost = 0;
+        public int kudoCost = 0;
 
         public List<CardAbilityType> abilityIds = new List<CardAbilityType>();
         public List<int> abilityValues = new List<int>();
