@@ -19,6 +19,8 @@ namespace ExoLoader
         public int level;
         public CardSuit suit;
         public int value;
+        public string upgradeFromCardID;
+        public HowGet howGet;
         public string artist;
         public string artistAt;
         public string artistLink;
@@ -39,8 +41,8 @@ namespace ExoLoader
                 originalAbilityValues = abilityValues,
                 originalAbilitySuits = abilitySuits,
                 kudosCost = kudoCost,
-                upgradeFromCardID = null,
-                howGet = HowGet.none,
+                upgradeFromCardID = upgradeFromCardID,
+                howGet = howGet,
                 artistName = artist,
                 artistSocialAt = artistAt,
                 artistSocialUrl = artistLink

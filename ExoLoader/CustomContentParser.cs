@@ -74,7 +74,7 @@ namespace ExoLoader
                                             DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                         }
                                         throw ex;
-                                        }
+                                    }
                                 }
                             }
 
@@ -249,6 +249,69 @@ namespace ExoLoader
                         DataDebugHelper.PrintDataError(Path.GetFileNameWithoutExtension(file) + "has invalid suit", "Valid suits are limited to wild, physical, mental and social");
                         break;
                     }
+            }
+
+            try
+            {
+                string howGetValue = data.ContainsKey("HowGet") ? ((string)data["HowGet"]).ToLower() : "none";
+
+                switch (howGetValue)
+                {
+                    case "unique":
+                        {
+                            cardData.howGet = HowGet.unique;
+                            break;
+                        }
+                    case "training":
+                        {
+                            cardData.howGet = HowGet.training;
+                            break;
+                        }
+                    case "trainingBuy":
+                        {
+                            cardData.howGet = HowGet.trainingBuy;
+                            break;
+                        }
+                    case "shopDefault":
+                        {
+                            cardData.howGet = HowGet.shopDefault;
+                            break;
+                        }
+                    case "shopClothes":
+                        {
+                            cardData.howGet = HowGet.shopClothes;
+                            break;
+                        }
+                    case "shopWeapons":
+                        {
+                            cardData.howGet = HowGet.shopWeapons;
+                            break;
+                        }
+                    case "shopGadgets":
+                        {
+                            cardData.howGet = HowGet.shopGadgets;
+                            break;
+                        }
+                    case "none":
+                    default:
+                        {
+                            cardData.howGet = HowGet.none;
+                            break;
+                        }
+                }
+
+                if (data.TryGetValue("UpgradeFrom", out object upgradeFromCardID))
+                {
+                    cardData.upgradeFromCardID = (string)upgradeFromCardID;
+                }
+                else
+                {
+                    cardData.upgradeFromCardID = null;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModInstance.log("Invalid HowGet/UpgradeFrom value in " + Path.GetFileNameWithoutExtension(file) + ": " + ex.Message);
             }
 
             if (data.TryGetValue("ArtistName", out object artistName))
