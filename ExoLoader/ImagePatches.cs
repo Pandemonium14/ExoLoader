@@ -15,70 +15,40 @@ namespace ExoLoader
     [HarmonyPatch]
     public class ImagePatches
     {
-
-        [HarmonyPatch(typeof(CharaImage))]
-        [HarmonyPatch(nameof(CharaImage.GetSprite))]
-        [HarmonyPrefix]
-        public static bool GetCustomSprite(ref Sprite __result, string spriteName)
+        [HarmonyPatch(typeof(Chara))]
+        [HarmonyPatch(nameof(Chara.GetStorySprite))]
+        [HarmonyPostfix]
+        public static void GetCustomSprite(Chara __instance, ref Sprite __result, string expression, int overrideArtStage)
         {
-            if (spriteName ==  null)
+            if (__result)
             {
-                ModInstance.log("Trying to load a story sprite with null ID string (from CharaImage)");
+                return;
             }
-            Chara ch = Chara.FromCharaImageID(spriteName);
-            if (!(ch is CustomChara))
-            {
-                return true;
-            }
-            else
-            {
-                ModInstance.log("CharaImage is loading a custom chara sprite, getting image " + spriteName + "...");
-                try
-                {
-                    int targetSpriteSize = Math.Max(((CustomChara)ch).data.spriteSize, ((CustomChara)ch).data.spriteSizes[getArtStageFromSpriteName(spriteName) -1]);
-                    ModInstance.log("Getting story sprite with size " +  targetSpriteSize);
-                    __result = CFileManager.GetCustomImage(((CustomChara)ch).data.folderName, MakeRealSpriteName(spriteName, (CustomChara)ch), targetSpriteSize);
-                    return false;
-                }
-                catch (Exception e)
-                {
-                    ModInstance.log("Couldn't get image");
-                    ModInstance.log(e.ToString());
-                    return true;
-                }
-            }
-        }
 
-        [HarmonyPatch(typeof(AssetManager))]
-        [HarmonyPatch(nameof(AssetManager.LoadCharaSprite))]
-        [HarmonyPrefix]
-        public static bool SecondGetCustomSprite(ref Sprite __result, string spriteName)
-        {
-            if (spriteName == null)
+            ModInstance.log($"Loading custom sprite for {__instance.nickname} with expression {expression} and override art stage {overrideArtStage}");
+
+            try
             {
-                ModInstance.log("Trying to load a story sprite with null ID string (from AssetManager)");
-            }
-            Chara ch = Chara.FromCharaImageID(spriteName);
-            if (!(ch is CustomChara))
-            {
-                return true;
-            }
-            else
-            {
-                ModInstance.log("AssetManager is loading a custom chara sprite, getting image " + spriteName + "...");
-                try
+                if (__instance is CustomChara ch)
                 {
-                    int targetSpriteSize = Math.Max(((CustomChara)ch).data.spriteSize, ((CustomChara)ch).data.spriteSizes[getArtStageFromSpriteName(spriteName) - 1]);
-                    ModInstance.log("Getting story sprite with size " + targetSpriteSize);
-                    __result = CFileManager.GetCustomImage(((CustomChara)ch).data.folderName, MakeRealSpriteName(spriteName, (CustomChara)ch), targetSpriteSize);
-                    return false;
+                    ModInstance.log("Chara is getting a custom chara sprite, getting image " + expression + "...");
+                    try
+                    {
+                        int artStage = overrideArtStage > 0 ? overrideArtStage : Princess.artStage;
+                        string spriteName = __instance.charaID + artStage + "_" + expression;
+                        int targetSpriteSize = Math.Max(ch.data.spriteSize, ch.data.spriteSizes[artStage - 1]);
+                        ModInstance.log("Getting story sprite with size " + targetSpriteSize);
+                        __result = CFileManager.GetCustomImage(ch.data.folderName, spriteName, targetSpriteSize);
+                    }
+                    catch (Exception e)
+                    {
+                        ModInstance.log($"Error loading custom sprite for {__instance.nickname} with expression {expression}: {e}");
+                    }
                 }
-                catch (Exception e)
-                {
-                    ModInstance.log("Couldn't get image");
-                    ModInstance.log(e.ToString());
-                    return true;
-                }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log($"Error loading custom sprite for {__instance.nickname}: {e}");
             }
         }
 
@@ -90,10 +60,11 @@ namespace ExoLoader
             {
                 ModInstance.log("For age " + Princess.artStage);
                 return Princess.artStage;
-            } else
+            }
+            else
             {
                 ModInstance.log("For age " + int.Parse(first[first.Length - 1].ToString()));
-                return int.Parse(first[first.Length-1].ToString());
+                return int.Parse(first[first.Length - 1].ToString());
             }
         }
 
@@ -177,7 +148,7 @@ namespace ExoLoader
             string folder = CustomContentParser.customBackgrounds.GetSafe(spriteName);
             if (folder != null)
             {
-                Texture2D bgTexture = CFileManager.GetTexture(Path.Combine(folder,spriteName + ".png"));
+                Texture2D bgTexture = CFileManager.GetTexture(Path.Combine(folder, spriteName + ".png"));
                 __result = Sprite.Create(bgTexture, new Rect(0, 0, bgTexture.width, bgTexture.height), new Vector2(0.5f, 0), 1);
                 return false;
             }
@@ -191,16 +162,17 @@ namespace ExoLoader
         [HarmonyPatch(typeof(Result))]
         [HarmonyPatch(nameof(Result.SetCharaImage))]
         [HarmonyPrefix]
-        public static void LoggingPatch(CharaImageLocation location, string spriteName) {
+        public static void LoggingPatch(CharaImageLocation location, string spriteName)
+        {
             if (spriteName != null)
             {
                 ModInstance.log("===== Called SetCharaImage with location " + location.ToString() + " and spriteName '" + spriteName + "'");
-            } else
+            }
+            else
             {
                 ModInstance.log("===== Called SetCharaImage with a null spriteName");
             }
         }
-
     }
    
 }

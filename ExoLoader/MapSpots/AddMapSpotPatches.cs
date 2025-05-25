@@ -21,6 +21,7 @@ namespace ExoLoader
             {
                 return;
             }
+
             string scene = MapManager.currentScene.RemoveStart("Colony").ToLower();
             string season = Princess.season.seasonID;
             ModInstance.log(season);
@@ -28,7 +29,8 @@ namespace ExoLoader
 
             foreach (CustomChara cC in CustomChara.customCharasById.Values)
             {
-                if (cC.data.onMap && ( !cC.data.helioOnly || scene.Equals("helio"))) {
+                if (cC.data.onMap && (!cC.data.helioOnly || scene.Equals("helio")))
+                {
                     Tuple<GameObject, Transform> pair = CustomMapObjectMaker.MakeCustomMapObject(cC.charaID, season, week, scene);
 
                     if (pair != null && pair.Item1 != null && pair.Item2 != null)

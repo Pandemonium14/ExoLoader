@@ -74,7 +74,7 @@ namespace ExoLoader
                                             DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                         }
                                         throw ex;
-                                        }
+                                    }
                                 }
                             }
 
@@ -212,6 +212,11 @@ namespace ExoLoader
                         cardData.type = CardType.memory; 
                         break;
                     }
+                case "gear":
+                    {
+                        cardData.type = CardType.gear;
+                        break;
+                    }
                 default:
                     {
                         DataDebugHelper.PrintDataError(Path.GetFileNameWithoutExtension(file) + " has invalid or unsupported type", "Only memory type cards are currently supported");
@@ -249,6 +254,78 @@ namespace ExoLoader
                         DataDebugHelper.PrintDataError(Path.GetFileNameWithoutExtension(file) + "has invalid suit", "Valid suits are limited to wild, physical, mental and social");
                         break;
                     }
+            }
+
+            try
+            {
+                string howGetValue = data.ContainsKey("HowGet") ? ((string)data["HowGet"]).ToLower() : "none";
+
+                switch (howGetValue)
+                {
+                    case "unique":
+                        {
+                            cardData.howGet = HowGet.unique;
+                            break;
+                        }
+                    case "training":
+                        {
+                            cardData.howGet = HowGet.training;
+                            break;
+                        }
+                    case "trainingbuy":
+                        {
+                            cardData.howGet = HowGet.trainingBuy;
+                            break;
+                        }
+                    case "shopdefault":
+                        {
+                            cardData.howGet = HowGet.shopDefault;
+                            break;
+                        }
+                    case "shopclothes":
+                        {
+                            cardData.howGet = HowGet.shopClothes;
+                            break;
+                        }
+                    case "shopweapons":
+                        {
+                            cardData.howGet = HowGet.shopWeapons;
+                            break;
+                        }
+                    case "shopgadgets":
+                        {
+                            cardData.howGet = HowGet.shopGadgets;
+                            break;
+                        }
+                    case "none":
+                    default:
+                        {
+                            cardData.howGet = HowGet.none;
+                            break;
+                        }
+                }
+
+                if (data.TryGetValue("UpgradeFrom", out object upgradeFromCardID))
+                {
+                    cardData.upgradeFromCardID = (string)upgradeFromCardID;
+                }
+                else
+                {
+                    cardData.upgradeFromCardID = null;
+                }
+
+                if (data.TryGetValue("Kudos", out object kudoCost))
+                {
+                    cardData.kudoCost = ((string)kudoCost).ParseInt();
+                }
+                else
+                {
+                    cardData.kudoCost = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModInstance.log("Invalid new field value in " + Path.GetFileNameWithoutExtension(file) + ": " + ex.Message);
             }
 
             if (data.TryGetValue("ArtistName", out object artistName))

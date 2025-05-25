@@ -1,0 +1,2 @@
+# This is a folder for external libraries, that we do not want to include in the repository.
+*.dll
