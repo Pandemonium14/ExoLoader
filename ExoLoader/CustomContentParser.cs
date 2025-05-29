@@ -88,7 +88,7 @@ namespace ExoLoader
                             {
                                 if (file.EndsWith(".png"))
                                 {
-                                    string bgName = Path.GetFileName(file).Replace(".png", "");
+                                    string bgName = Path.GetFileName(file).Replace(".png", "").ToLower();
                                     if (!Singleton<AssetManager>.instance.backgroundAndEndingNames.Contains(bgName))
                                     {
                                         ModInstance.log("Found bg " +  bgName);
@@ -531,12 +531,20 @@ namespace ExoLoader
                 skills[i] = Skill.FromID(skillsStrings[i]);
             }
 
+            if (Ending.FromID(ID) != null)
+            {
+                ModInstance.log("Ending with ID " + ID + " already exists, skipping creation");
+                DataDebugHelper.PrintDataError("Ending with ID " + ID + " already exists", "If you want to change the ending, please change the ID in the json file to something else. Editing existing endings is not supported at the moment.");
+                return;
+            }
+
+            ModInstance.log("Creating ending with ID " + ID);
             Ending ending = new Ending(ID, name, preamble, requiredMemories, requiredJobs, extraJobs, skills, chara, location);
 
             string bg = data.ContainsKey("Background") ? (string)data["Background"] : null;
             if (bg != null)
             {
-                Singleton<AssetManager>.instance.backgroundAndEndingNames = Singleton<AssetManager>.instance.backgroundAndEndingNames.ToList<string>().AddItem(bg).ToArray();
+                Singleton<AssetManager>.instance.backgroundAndEndingNames = Singleton<AssetManager>.instance.backgroundAndEndingNames.ToList<string>().AddItem(bg.ToLower()).ToArray();
             }
             ModInstance.log("Parsed and created ending");
         }

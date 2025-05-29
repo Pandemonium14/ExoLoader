@@ -141,22 +141,28 @@ namespace ExoLoader
 
         [HarmonyPatch(typeof(AssetManager))]
         [HarmonyPatch(nameof(AssetManager.LoadBackgroundOrEndingSprite))]
-        [HarmonyPrefix]
-        public static bool LoadCustomBackground(ref Sprite __result, string spriteName)
+        [HarmonyPostfix]
+        public static void LoadCustomBackground(ref Sprite __result, string spriteName)
         {
-            //ModInstance.log("Loading custom background with id " + spriteName);
-            string folder = CustomContentParser.customBackgrounds.GetSafe(spriteName);
-            if (folder != null)
+            if (__result)
             {
-                Texture2D bgTexture = CFileManager.GetTexture(Path.Combine(folder, spriteName + ".png"));
-                __result = Sprite.Create(bgTexture, new Rect(0, 0, bgTexture.width, bgTexture.height), new Vector2(0.5f, 0), 1);
-                return false;
-            }
-            else
-            {
-                return true;
+                return;
             }
 
+            try
+            {
+                ModInstance.log("Loading custom background with id " + spriteName);
+                string folder = CustomContentParser.customBackgrounds.GetSafe(spriteName);
+                if (folder != null)
+                {
+                    Texture2D bgTexture = CFileManager.GetTexture(Path.Combine(folder, spriteName + ".png"));
+                    __result = Sprite.Create(bgTexture, new Rect(0, 0, bgTexture.width, bgTexture.height), new Vector2(0.5f, 0), 1);
+                }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log($"Error loading custom background with id {spriteName}: {e}");
+            }
         }
 
         [HarmonyPatch(typeof(Result))]
