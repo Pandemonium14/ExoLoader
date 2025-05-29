@@ -15,8 +15,6 @@ namespace ExoLoader
 {
     public class CustomContentParser
     {
-        public static Dictionary<string, string> customBackgrounds = new Dictionary<string, string>();
-
         private static readonly string[] expectedCardEntries = new string[]
         {
             "ID",
@@ -94,7 +92,7 @@ namespace ExoLoader
                                         ModInstance.log("Found bg " +  bgName);
                                         cBgs.Add(bgName);
                                         Singleton<AssetManager>.instance.backgroundAndEndingNames.Append(bgName);
-                                        customBackgrounds.Add(bgName, folder);
+                                        CustomBackground.Add(bgName, Path.GetDirectoryName(file));
                                         ModInstance.log("Added " + bgName + "to list");
                                     }
                                 }
@@ -544,6 +542,27 @@ namespace ExoLoader
             string bg = data.ContainsKey("Background") ? (string)data["Background"] : null;
             if (bg != null)
             {
+                string galleryBgName = "gallery_bg_ending_" + ID.ToLower();
+
+                if (ID.Contains("special_"))
+                {
+                    TextLocalized tl = new TextLocalized(galleryBgName);
+                    tl.AddLocale(Locale.EN, name);
+                }
+                else
+                {
+                    TextLocalized tlf = new TextLocalized($"{galleryBgName}_f");
+                    tlf.AddLocale(Locale.EN, name);
+
+                    TextLocalized tlm = new TextLocalized($"{galleryBgName}_m");
+                    tlm.AddLocale(Locale.EN, name);
+
+                    TextLocalized tlnb = new TextLocalized($"{galleryBgName}_nb");
+                    tlnb.AddLocale(Locale.EN, name);
+                }
+
+                ModInstance.log($"Adding locale for keys {galleryBgName} with value {name}");
+
                 Singleton<AssetManager>.instance.backgroundAndEndingNames = Singleton<AssetManager>.instance.backgroundAndEndingNames.ToList<string>().AddItem(bg.ToLower()).ToArray();
             }
             ModInstance.log("Parsed and created ending");
