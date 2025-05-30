@@ -35,6 +35,10 @@
       <HintPath>$(SolutionDir)lib\spine-unity.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(SolutionDir)lib\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
   <!-- All .cs files are automatically included by the SDK -->

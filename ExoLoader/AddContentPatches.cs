@@ -108,6 +108,7 @@ namespace ExoLoader
         public static void FinalizeLoading()
         {
             FinalizeCharacters();
+            LoadCustomContent("ScriptExtensions");
         }
 
         public static void FinalizeCharacters() //Loads likes, dislikes

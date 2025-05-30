@@ -164,6 +164,34 @@ namespace ExoLoader
                                 }
                                 break;
                             }
+                        case "ScriptExtensions":
+                            {
+                                ModInstance.log("Parsing script extensions folder");
+                                foreach (string file in Directory.GetFiles(folder))
+                                {
+                                    if (file.EndsWith(".json"))
+                                    {
+                                        ModInstance.log("Parsing script extension file : " + Path.GetFileName(file));
+                                        try
+                                        {
+                                            ScriptExtensionsParser.ParseFile(file);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            if (ex is InvalidCastException)
+                                            {
+                                                DataDebugHelper.PrintDataError("Invalid cast when loading script extension " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
+                                            }
+                                            else
+                                            {
+                                                DataDebugHelper.PrintDataError("Unexpected error when loading script extension " + Path.GetFileNameWithoutExtension(file), ex.Message);
+                                            }
+                                            throw ex;
+                                        }
+                                    }
+                                }
+                                break;
+                            }
                     }
                 }
             }
