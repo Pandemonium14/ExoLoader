@@ -539,32 +539,8 @@ namespace ExoLoader
             ModInstance.log("Creating ending with ID " + ID);
             Ending ending = new Ending(ID, name, preamble, requiredMemories, requiredJobs, extraJobs, skills, chara, location);
 
-            string bg = data.ContainsKey("Background") ? (string)data["Background"] : null;
-            if (bg != null)
-            {
-                string galleryBgName = "gallery_bg_ending_" + ID.ToLower();
+            CustomBackground.updateBackgroundNames("ending_" + ID.ToLower(), name);
 
-                if (ID.Contains("special_"))
-                {
-                    TextLocalized tl = new TextLocalized(galleryBgName);
-                    tl.AddLocale(Locale.EN, name);
-                }
-                else
-                {
-                    TextLocalized tlf = new TextLocalized($"{galleryBgName}_f");
-                    tlf.AddLocale(Locale.EN, name);
-
-                    TextLocalized tlm = new TextLocalized($"{galleryBgName}_m");
-                    tlm.AddLocale(Locale.EN, name);
-
-                    TextLocalized tlnb = new TextLocalized($"{galleryBgName}_nb");
-                    tlnb.AddLocale(Locale.EN, name);
-                }
-
-                ModInstance.log($"Adding locale for keys {galleryBgName} with value {name}");
-
-                Singleton<AssetManager>.instance.backgroundAndEndingNames = Singleton<AssetManager>.instance.backgroundAndEndingNames.ToList<string>().AddItem(bg.ToLower()).ToArray();
-            }
             ModInstance.log("Parsed and created ending");
         }
     }

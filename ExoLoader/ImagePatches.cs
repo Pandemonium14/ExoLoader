@@ -194,29 +194,6 @@ namespace ExoLoader
             CustomBackground.loadedBackgrounds.Clear();
         }
 
-        // Not strictly image patch, but it's related to localization of image names in the gallery
-        [HarmonyPatch(typeof(TextLocalized))]
-        [HarmonyPatch(nameof(TextLocalized.Localize))]
-        [HarmonyPostfix]
-        public static void LogLocalize(ref string __result, params object[] paramArray)
-        {
-            string text = paramArray[0]?.ToString().ToLower().Trim() ?? "";
-            if (__result != text)
-            {
-                return;
-            }
-
-            ModInstance.log($"TextLocalized.Localize called for '{text}'");
-
-            if (text.StartsWith("gallery_bg_"))
-            {
-                string transformedText = text.RemoveStart("gallery_bg_").RemoveStart("pinup_");
-
-                __result = string.Join(" ", transformedText.Split('_').Select(part => part.ToUpperInvariant())).Trim();
-                return;
-            }
-        }
-
         [HarmonyPatch(typeof(AssetManager))]
         [HarmonyPatch(nameof(AssetManager.LoadBackgroundOrEndingSprite))]
         [HarmonyPostfix]

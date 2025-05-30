@@ -30,12 +30,42 @@ namespace ExoLoader
             CustomBackground background = new CustomBackground
             {
                 id = id,
-                name = name ?? id,
+                name = name ?? string.Join(" ", id.RemoveStart("pinup_").Split('_').Select(part => part.ToUpperInvariant())).Trim(),
                 file = file
             };
 
             allBackgrounds.Add(id, background);
             ModInstance.log($"Added custom background with id {id}, name {background.name}, file {background.file}");
+        }
+
+        public static void updateBackgroundNames(string key, string name)
+        {
+            string[] possibleKeys = [
+                key,
+                key + "_f",
+                key + "_m",
+                key + "_nb"
+            ];
+
+            foreach (string possibleKey in possibleKeys)
+            {
+                if (allBackgrounds.TryGetValue(possibleKey, out CustomBackground background))
+                {
+                    background.name = name;
+                }
+            }
+        }
+
+        public static void addLocales()
+        {
+            // Go through all backgrounds and add their localized names
+            foreach (var background in allBackgrounds.Values)
+            {
+                string galleryBgName = "gallery_bg_" + background.id.ToLower();
+
+                TextLocalized tl = new TextLocalized(galleryBgName);
+                tl.AddLocale(Locale.EN, background.name);
+            }
         }
     }
 }
