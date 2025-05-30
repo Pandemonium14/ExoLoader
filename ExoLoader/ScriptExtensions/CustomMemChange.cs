@@ -18,12 +18,15 @@ namespace ExoLoader
             if (!changesByID.ContainsKey(ID))
             {
                 changesByID.Add(ID, this);
-                ModInstance.instance.Log("Custom memory change created: " + id + " - " + name);
+                ModInstance.instance.Log("Custom memory change created: " + ID + " - " + name);
             }
             else
             {
                 ModInstance.instance.Log("Custom memory change with ID " + ID + " already exists. Skipping.");
             }
+
+            TextLocalized tl = new TextLocalized("memchange_" + ID);
+            tl.AddLocale(Locale.EN, name);
         }
     }
 }

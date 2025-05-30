@@ -31,63 +31,6 @@ namespace ExoLoader
             }
         }
 
-        [HarmonyPatch(typeof(NWButtonResults), "SetRequirement", MethodType.Normal)]
-        [HarmonyPostfix]
-        public static void SetRequirementPatch(NWButtonResults __instance, ref Image requirementIcon, StoryReq req, Result result)
-        {
-            try
-            {
-                if (req.type == StoryReqType.memory && CustomMemChange.changesByID.ContainsKey(req.stringID))
-                {
-                    ModInstance.instance.Log("Setting custom memory icon for " + req.stringID);
-                    CustomMemChange change = CustomMemChange.changesByID[req.stringID];
-                    bool flag = !req.Execute(result);
-                    string text = "other";
-                    string text2 = change.name;
-
-                    string tooltip3 = (req.compare != StoryReqCompare.lessThan) ? TextLocalized.Localize("button_req_equalOrGreater", text2, req.intValue + 1) : TextLocalized.Localize("button_req_lessThan", text2, req.intValue);
-
-                    NWButtonResultsSetIcon(__instance, ref requirementIcon, text, tooltip3, flag ? NWButtonResults.requirementNotMetColor : NWButtonResults.requirementMetColor);
-                    if (flag || PlatformUtils.useControllerTooltips)
-                    {
-                        __instance.tooltipText = tooltip3;
-                    }
-                }
-            }
-            catch (System.Exception ex)
-            {
-                ModInstance.instance.Log("Error in SetRequirementPatch: " + ex.Message);
-                ModInstance.instance.Log("Stack trace: " + ex.StackTrace);
-            }
-        }
-
-        public static void NWButtonResultsSetIcon(NWButtonResults __instance, ref Image iconImage, string iconName, string tooltip = null, Color color = default(Color))
-        {
-            Color iconColor = color == default(Color) ? Color.white : color;
-
-            if (iconName.IsNullOrEmptyOrWhitespace())
-            {
-                ((Component)(object)iconImage).SetActiveMaybe(value: false);
-                return;
-            }
-
-            Sprite requirementIcon = AssetManager.GetRequirementIcon(iconName);
-            if (requirementIcon == null)
-            {
-                ((Component)(object)iconImage).SetActiveMaybe(value: false);
-                return;
-            }
-
-            ((Component)(object)iconImage).SetActiveMaybe();
-            iconImage.sprite = requirementIcon;
-            if (tooltip != null)
-            {
-                ((Component)(object)iconImage).GetComponentInChildren<Tooltippable>()?.SetText(tooltip);
-            }
-
-            iconImage.SetImageColor(iconColor);
-        }
-
         [HarmonyPatch(typeof(Princess), nameof(Princess.IncrementMemory))]
         [HarmonyPrefix]
         public static void IncrementMemoryPatch(string id, int value = 1)
