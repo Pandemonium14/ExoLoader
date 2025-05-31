@@ -140,23 +140,103 @@ namespace ExoLoader
         }
 
         [HarmonyPatch(typeof(AssetManager))]
-        [HarmonyPatch(nameof(AssetManager.LoadBackgroundOrEndingSprite))]
-        [HarmonyPrefix]
-        public static bool LoadCustomBackground(ref Sprite __result, string spriteName)
+        [HarmonyPatch(nameof(AssetManager.LoadGalleryThumbnail))]
+        [HarmonyPostfix]
+        public static void LoadCustomGalleryThumbnail(ref Sprite __result, string backgroundName)
         {
-            //ModInstance.log("Loading custom background with id " + spriteName);
-            string folder = CustomContentParser.customBackgrounds.GetSafe(spriteName);
-            if (folder != null)
+            if (__result)
             {
-                Texture2D bgTexture = CFileManager.GetTexture(Path.Combine(folder, spriteName + ".png"));
-                __result = Sprite.Create(bgTexture, new Rect(0, 0, bgTexture.width, bgTexture.height), new Vector2(0.5f, 0), 1);
-                return false;
-            }
-            else
-            {
-                return true;
+                return;
             }
 
+            try
+            {
+                ModInstance.log("Loading custom gallery thumbnail with id " + backgroundName);
+
+                // First try and get the image from CustomBackgrounds.loadedBackgrounds dictionary, it may be already loaded
+                if (CustomBackground.loadedBackgrounds.TryGetValue(backgroundName, out Sprite existingSprite))
+                {
+                    __result = existingSprite;
+                    return;
+                }
+
+                if (CustomBackground.allBackgrounds.TryGetValue(backgroundName, out CustomBackground background))
+                {
+                    ModInstance.log($"Found custom gallery thumbnail with id {backgroundName}, file {background.file}");
+                    string folder = background.file;
+                    Texture2D thumbnailTexture = CFileManager.GetTexture(Path.Combine(folder, backgroundName + ".png"));
+                    if (thumbnailTexture != null)
+                    {
+                        ModInstance.log($"Successfully loaded thumbnail texture for {backgroundName}");
+                        Sprite bgSprite = Sprite.Create(thumbnailTexture, new Rect(0, 0, thumbnailTexture.width, thumbnailTexture.height), new Vector2(0.5f, 0), 1);
+                        bgSprite.name = backgroundName; // Use the background's name if available, otherwise use the id
+                        CustomBackground.loadedBackgrounds[backgroundName] = bgSprite;
+
+                        __result = bgSprite;
+
+                        return;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log($"Error loading custom gallery thumbnail with id {backgroundName}: {e}");
+            }
+        }
+
+        // Patch for AssetManager.ReleaseGalleryThumbnails - clean up loaded backgrounds
+        [HarmonyPatch(typeof(AssetManager))]
+        [HarmonyPatch(nameof(AssetManager.ReleaseGalleryThumbnails))]
+        [HarmonyPostfix]
+        public static void ReleaseGalleryThumbnails()
+        {
+            ModInstance.log("Releasing gallery thumbnails");
+            CustomBackground.loadedBackgrounds.Clear();
+        }
+
+        [HarmonyPatch(typeof(AssetManager))]
+        [HarmonyPatch(nameof(AssetManager.LoadBackgroundOrEndingSprite))]
+        [HarmonyPostfix]
+        public static void LoadCustomBackground(ref Sprite __result, string spriteName)
+        {
+            if (__result)
+            {
+                return;
+            }
+
+            try
+            {
+                ModInstance.log("Loading custom background with id " + spriteName);
+
+                // First try and get the image from CustomBackgrounds.loadedBackgrounds dictionary, it may be already loaded
+                if (CustomBackground.loadedBackgrounds.TryGetValue(spriteName, out Sprite existingSprite))
+                {
+                    __result = existingSprite;
+                    return;
+                }
+
+                if (CustomBackground.allBackgrounds.TryGetValue(spriteName, out CustomBackground background))
+                {
+                    ModInstance.log($"Found custom background with id {spriteName}, file {background.file}");
+                    string folder = background.file;
+                    Texture2D bgTexture = CFileManager.GetTexture(Path.Combine(folder, spriteName + ".png"));
+                    if (bgTexture != null)
+                    {
+                        ModInstance.log($"Successfully loaded background texture for {spriteName}");
+                        Sprite bgSprite = Sprite.Create(bgTexture, new Rect(0, 0, bgTexture.width, bgTexture.height), new Vector2(0.5f, 0), 1);
+                        bgSprite.name = spriteName;
+                        CustomBackground.loadedBackgrounds[spriteName] = bgSprite;
+                        Princess.seenBackgrounds.AddSafe(spriteName, -1, false); // Register the background as seen for the gallery
+                        __result = bgSprite;
+
+                        return;
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log($"Error loading custom background with id {spriteName}: {e}");
+            }
         }
 
         [HarmonyPatch(typeof(Result))]
