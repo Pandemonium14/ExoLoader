@@ -154,18 +154,20 @@ namespace ExoLoader
                 ModInstance.log("Can't modify map object in unsupported scene");
                 return null;
             }
-            if (scene.Equals("strato"))
-            {
-                newObject.transform.localPosition = new Vector3(cC.data.stratoMapSpot[0], cC.data.stratoMapSpot[1], cC.data.stratoMapSpot[2]);
-            }
-            else if (scene.Equals("helio"))
-            {
-                newObject.transform.localPosition = new Vector3(cC.data.helioMapSpot[0], cC.data.helioMapSpot[1], cC.data.helioMapSpot[2]);
-            }
-            else if (scene.Equals("stratodestroyed"))
-            {
-                newObject.transform.localPosition = new Vector3(cC.data.destroyedMapSpot[0], cC.data.destroyedMapSpot[1], cC.data.destroyedMapSpot[2]);
-            }
+            float[] mapSpotPosition = cC.GetMapSpot(scene, Princess.season.seasonID);
+            newObject.transform.localPosition = new Vector3(mapSpotPosition[0], mapSpotPosition[1], mapSpotPosition[2]);
+            // if (scene.Equals("strato"))
+            // {
+            //     newObject.transform.localPosition = new Vector3(cC.data.stratoMapSpot[0], cC.data.stratoMapSpot[1], cC.data.stratoMapSpot[2]);
+            // }
+            // else if (scene.Equals("helio"))
+            // {
+            //     newObject.transform.localPosition = new Vector3(cC.data.helioMapSpot[0], cC.data.helioMapSpot[1], cC.data.helioMapSpot[2]);
+            // }
+            // else if (scene.Equals("stratodestroyed"))
+            // {
+            //     newObject.transform.localPosition = new Vector3(cC.data.destroyedMapSpot[0], cC.data.destroyedMapSpot[1], cC.data.destroyedMapSpot[2]);
+            // }
             mapSpot.MoveToGround();
             //ModInstance.log("Changed position of map object");
             List<Transform> artAgeTransforms = new List<Transform>(); //this is for the chara switcher
