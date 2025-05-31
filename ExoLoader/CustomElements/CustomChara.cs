@@ -21,6 +21,39 @@ namespace ExoLoader
             
         }
 
+        public float[] GetMapSpot(string scene, string seasonId)
+        {
+            if (scene.Equals("strato"))
+            {
+                if (data.stratoMapSpots != null && data.stratoMapSpots.ContainsKey(seasonId) && data.stratoMapSpots[seasonId] != null)
+                {
+                    return data.stratoMapSpots[seasonId];
+                }
+
+                if (data.stratoMapSpot != null)
+                {
+                    return data.stratoMapSpot;
+                }
+            }
+            else if (scene.Equals("helio"))
+            {
+                if (data.helioMapSpots != null && data.helioMapSpots.ContainsKey(seasonId) && data.helioMapSpots[seasonId] != null)
+                {
+                    return data.helioMapSpots[seasonId];
+                }
+
+                if (data.helioMapSpot != null)
+                {
+                    return data.helioMapSpot;
+                }
+            }
+            else if (scene.Equals("destroyed"))
+            {
+                return data.destroyedMapSpot;
+            }
+            return null;
+        }
+
         public void DictionaryTests()
         {
             try

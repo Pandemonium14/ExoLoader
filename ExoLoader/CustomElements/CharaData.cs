@@ -39,7 +39,9 @@ namespace ExoLoader
         public string[] jobs;
 
         public float[] stratoMapSpot;
+        public Dictionary<string, float[]> stratoMapSpots;
         public float[] helioMapSpot;
+        public Dictionary<string, float[]> helioMapSpots;
         public float[] destroyedMapSpot;
 
         public string folderName;
