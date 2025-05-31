@@ -194,6 +194,11 @@ namespace ExoLoader
                                                 DataDebugHelper.PrintDataError("Unexpected error when loading script extension " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
                                             throw ex;
+                                        }
+                                    }
+                                }
+                                break;
+                            }
 
                         case "Collectibles":
                             {
