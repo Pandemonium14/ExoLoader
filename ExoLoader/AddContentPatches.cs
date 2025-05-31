@@ -20,7 +20,8 @@ namespace ExoLoader
             {
                 ModInstance.instance.Log("Checking CustomCharacter folders");
                 string[] charaFolders = CFileManager.GetAllCustomCharaFolders();
-                if (charaFolders != null && charaFolders.Length == 0) {
+                if (charaFolders != null && charaFolders.Length == 0)
+                {
                     ModInstance.instance.Log("Found no folder");
                     return;
                 }
@@ -31,12 +32,14 @@ namespace ExoLoader
                     try
                     {
                         data = CFileManager.ParseCustomData(folder);
-                    } catch (Exception e)
+                    }
+                    catch (Exception e)
                     {
                         if (e is InvalidCastException)
                         {
                             DataDebugHelper.PrintDataError("Invalid cast when loading character " + Path.GetFileNameWithoutExtension(folder), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
-                        } else
+                        }
+                        else
                         {
                             DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(folder), e.Message);
                         }
@@ -76,11 +79,13 @@ namespace ExoLoader
                     ModInstance.log("Added " + counter + " image names to the list");
 
                 }
-            } else if (filename == "ExocolonistCards - cards")
+            }
+            else if (filename == "ExocolonistCards - cards")
             {
                 ModInstance.log("calling LoadCustomContent for Cards");
                 LoadCustomContent("Cards");
-            } else if (filename == "Exocolonist - variables")
+            }
+            else if (filename == "Exocolonist - variables")
             {
                 ModInstance.log("Loading preliminary content");
 
@@ -93,13 +98,18 @@ namespace ExoLoader
                 ModInstance.log("Loading custom backgrounds");
                 LoadCustomContent("Backgrounds");
 
-            } else if (filename == "Exocolonist - jobs")
+            }
+            else if (filename == "Exocolonist - jobs")
             {
                 LoadCustomContent("Jobs");
             }
             else if (filename == "Exocolonist - endings")
             {
                 LoadCustomContent("Endings");
+            }
+            else if (filename == "ExocolonistCards - collectibles")
+            {
+                LoadCustomContent("Collectibles");
             }
         }
 
@@ -108,6 +118,7 @@ namespace ExoLoader
         public static void FinalizeLoading()
         {
             FinalizeCharacters();
+            LoadCustomContent("ScriptExtensions");
         }
 
         public static void FinalizeCharacters() //Loads likes, dislikes
@@ -141,6 +152,9 @@ namespace ExoLoader
             // With this sorting, we maintain the order of original charas, but add custom charas with .canLove before original charas with .canLove = false
             // This is done to maintain the order of charas in the menu, and to make it easier to find custom charas
             ReorderCharasWithLinq();
+
+            // Add locale keys for all custom backgrounds
+            CustomBackground.addLocales();
         }
 
         public static void ReorderCharasWithLinq()
