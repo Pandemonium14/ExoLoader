@@ -49,6 +49,7 @@ namespace ExoLoader
         public bool onMap = true;
         public int spriteSize = -1;
         public int[] spriteSizes = new int[3];
+        public float[] overworldScales = new float[3];
 
         public CustomChara MakeChara()
         {

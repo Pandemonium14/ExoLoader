@@ -324,6 +324,22 @@ namespace ExoLoader
                 data.spriteSizes = spriteSizes;
             }
 
+            // OverworldScaleByAge as floats, transform by deviding by 1000, if not present, set the default value of 0.004f
+            // This later on used for SkeletonDataAsset scale
+            JArray overworldScaleByAgeRaw = (JArray)parsedJson.GetValueSafe("OverworldScaleByAge");
+            if (overworldScaleByAgeRaw != null)
+            {
+                ModInstance.log("This character will use overworld scale by age");
+                string[] overworldScaleStrings = overworldScaleByAgeRaw.ToObject<string[]>();
+                float[] overworldScales = { float.Parse(overworldScaleStrings[0]) / 1000f, float.Parse(overworldScaleStrings[1]) / 1000f, float.Parse(overworldScaleStrings[2]) / 1000f };
+                data.overworldScales = overworldScales;
+            }
+            else
+            {
+                ModInstance.log("This character will use default overworld scale");
+                data.overworldScales = new float[] { 0.004f, 0.004f, 0.004f };
+            }
+
             data.ages = (string)parsedJson["Ages"] == "TRUE";
 
             object rawJobs = parsedJson.GetValueSafe("Jobs");
@@ -381,8 +397,7 @@ namespace ExoLoader
             return Directory.GetDirectories(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CustomContent"));
         }
 
-
-        public static Dictionary<string,Sprite> customSprites = new Dictionary<string,Sprite>();
+        public static Dictionary<string, Sprite> customSprites = new Dictionary<string, Sprite>();
 
         public static Sprite GetCustomImage(string folderName, string imageName)
         {
