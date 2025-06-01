@@ -39,7 +39,9 @@ namespace ExoLoader
         public string[] jobs;
 
         public float[] stratoMapSpot;
+        public Dictionary<string, float[]> stratoMapSpots;
         public float[] helioMapSpot;
+        public Dictionary<string, float[]> helioMapSpots;
         public float[] destroyedMapSpot;
 
         public string folderName;
@@ -47,6 +49,7 @@ namespace ExoLoader
         public bool onMap = true;
         public int spriteSize = -1;
         public int[] spriteSizes = new int[3];
+        public float[] overworldScales = new float[3];
 
         public CustomChara MakeChara()
         {

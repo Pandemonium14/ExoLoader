@@ -15,6 +15,7 @@ namespace ExoLoader
     [HarmonyPatch]
     public class ImagePatches
     {
+        // For story sprites at the current age
         [HarmonyPatch(typeof(Chara))]
         [HarmonyPatch(nameof(Chara.GetStorySprite))]
         [HarmonyPostfix]
@@ -49,6 +50,32 @@ namespace ExoLoader
             catch (Exception e)
             {
                 ModInstance.log($"Error loading custom sprite for {__instance.nickname}: {e}");
+            }
+        }
+
+        // For calling custom sprites of specific ages
+        [HarmonyPatch(typeof(AssetManager))]
+        [HarmonyPatch(nameof(AssetManager.LoadCharaSprite))]
+        [HarmonyPostfix]
+        public static void LoadCustomCharaSprite(ref Sprite __result, string spriteName)
+        {
+            if (__result != null)
+            {
+                return;
+            }
+
+            ModInstance.log("Loading custom chara sprite with name " + spriteName);
+            Chara ch = Chara.FromCharaImageID(spriteName);
+            if (ch == null || !(ch is CustomChara))
+            {
+                return;
+            }
+            else
+            {
+                CustomChara customChara = (CustomChara)ch;
+                int targetSpriteSize = Math.Max(customChara.data.spriteSize, customChara.data.spriteSizes[getArtStageFromSpriteName(spriteName) - 1]);
+                __result = CFileManager.GetCustomImage(customChara.data.folderName, MakeRealSpriteName(spriteName, customChara), targetSpriteSize);
+                return;
             }
         }
 

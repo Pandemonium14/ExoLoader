@@ -13,7 +13,7 @@ namespace ExoLoader
     public class AddMapSpotPatches
     {
 
-        [HarmonyPatch(typeof(BillboardManager), nameof(BillboardManager.OnMapLoaded))]
+        [HarmonyPatch(typeof(BillboardManager), nameof(BillboardManager.FillMapspots))]
         [HarmonyPrefix]
         public static void AddCustomMapSpots()
         {
@@ -27,33 +27,20 @@ namespace ExoLoader
             ModInstance.log(season);
             int week = Princess.monthOfSeason;
 
-            foreach (CustomChara cC in CustomChara.customCharasById.Values)
+            try
             {
-                if (cC.data.onMap && (!cC.data.helioOnly || scene.Equals("helio")))
+                foreach (CustomChara cC in CustomChara.customCharasById.Values)
                 {
-                    Tuple<GameObject, Transform> pair = CustomMapObjectMaker.MakeCustomMapObject(cC.charaID, season, week, scene);
-
-                    if (pair != null && pair.Item1 != null && pair.Item2 != null)
+                    if (cC.data.onMap && (!cC.data.helioOnly || scene.Equals("helio")))
                     {
-                        /*ModInstance.log("GameObject-Transform pair wasn't null");
-                        ModInstance.log("GameObject active state : " + pair.Item1.activeSelf.ToString() + " self, and " + pair.Item1.activeInHierarchy.ToString() + " in hierarchy");
-                        
-                        pair.Item1.transform.parent = pair.Item2;
-                        ModInstance.log("Object parent set to provided Transform");
-                        if (!MapSpot.allMapSpots.Contains(pair.Item1.GetComponent<MapSpot>()))
-                        {
-                            MapSpot.allMapSpots.Add(pair.Item1.GetComponent<MapSpot>());
-                        }*/
-                        GameObject actualSpot = PoolManager.Spawn(pair.Item1, GameObject.Find("Seasonal").transform);
-                        actualSpot.transform.localPosition = pair.Item1.transform.localPosition;
-                        pair.Item1.DestroySafe();
+                        CustomMapManager.MakeCustomMapObject(cC, season, week, scene);
                     }
-                    else
-                    {
-                        ModInstance.log("GameObject-Transform pair was null");
-                    }
-
                 }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log("Error while trying to add custom map spots: " + e.Message);
+                ModInstance.log(e.StackTrace);
             }
         }
 
