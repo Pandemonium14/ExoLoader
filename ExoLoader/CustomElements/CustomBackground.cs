@@ -13,6 +13,7 @@ namespace ExoLoader
     {
         public static Dictionary<string, CustomBackground> allBackgrounds = [];
         public static Dictionary<string, Sprite> loadedBackgrounds = new Dictionary<string, Sprite>();
+        public static Dictionary<string, Sprite> backgroundThumbnails = new Dictionary<string, Sprite>();
 
 
         public string file;

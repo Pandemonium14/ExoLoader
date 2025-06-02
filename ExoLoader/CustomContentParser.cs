@@ -46,6 +46,13 @@ namespace ExoLoader
             "Plural",
         };
 
+        private static readonly string[] expectedCheevoEntries = new string[]
+        {
+            "ID",
+            "Name",
+            "Description"
+        };
+
         public static void ParseContentFolder(string contentFolderPath, string contentType)
         {
             string[] folders = Directory.GetDirectories(contentFolderPath);
@@ -92,18 +99,18 @@ namespace ExoLoader
                                 List<string> cBgs = new List<string>(Singleton<AssetManager>.instance.backgroundAndEndingNames);
                                 foreach (string file in Directory.GetFiles(folder))
                                 {
-                                  if (file.EndsWith(".png"))
-                                  {
-                                      string bgName = Path.GetFileName(file).Replace(".png", "").ToLower();
-                                      if (!Singleton<AssetManager>.instance.backgroundAndEndingNames.Contains(bgName))
-                                      {
-                                          ModInstance.log("Found bg " +  bgName);
-                                          cBgs.Add(bgName);
-                                          Singleton<AssetManager>.instance.backgroundAndEndingNames.Append(bgName);
-                                          CustomBackground.Add(bgName, Path.GetDirectoryName(file));
-                                          ModInstance.log("Added " + bgName + "to list");
-                                      }
-                                  }
+                                    if (file.EndsWith(".png") && !file.Contains("_thumbnail"))
+                                    {
+                                        string bgName = Path.GetFileName(file).Replace(".png", "").ToLower();
+                                        if (!Singleton<AssetManager>.instance.backgroundAndEndingNames.Contains(bgName))
+                                        {
+                                            ModInstance.log("Found bg " + bgName);
+                                            cBgs.Add(bgName);
+                                            Singleton<AssetManager>.instance.backgroundAndEndingNames.Append(bgName);
+                                            CustomBackground.Add(bgName, Path.GetDirectoryName(file));
+                                            ModInstance.log("Added " + bgName + "to list");
+                                        }
+                                    }
                                 }
                                 Singleton<AssetManager>.instance.backgroundAndEndingNames = cBgs.ToArray();
                                 break;
@@ -223,6 +230,38 @@ namespace ExoLoader
                                                 else
                                                 {
                                                     DataDebugHelper.PrintDataError("Unexpected error when loading collectible " + Path.GetFileNameWithoutExtension(file), ex.Message);
+                                                }
+                                                throw ex;
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+
+                        case "Achievements":
+                            {
+                                ModInstance.log("Parsing achievements folders");
+                                foreach (string jobFolder in CFileManager.GetAllCustomContentFolders("Achievements"))
+                                {
+                                    foreach (string file in Directory.GetFiles(jobFolder))
+                                    {
+                                        if (file.EndsWith(".json"))
+                                        {
+                                            ModInstance.log("Found achievement file " + Path.GetFileName(file) + ", parsing...");
+                                            try
+                                            {
+                                                ParseCheevoData(file);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                if (ex is InvalidCastException)
+                                                {
+                                                    DataDebugHelper.PrintDataError("Invalid cast when loading achievement " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
+                                                }
+                                                else
+                                                {
+                                                    DataDebugHelper.PrintDataError("Unexpected error when loading achievement " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                                 }
                                                 throw ex;
                                             }
@@ -741,6 +780,72 @@ namespace ExoLoader
             CustomBackground.updateBackgroundNames("ending_" + ID.ToLower(), name);
 
             ModInstance.log("Parsed and created ending");
+        }
+
+        private static void ParseCheevoData(string file)
+        {
+            string fullJson = File.ReadAllText(file);
+            if (fullJson == null || fullJson.Length == 0)
+            {
+                DataDebugHelper.PrintDataError("Couldn't read json file for " + Path.GetFileName(file));
+                ModInstance.instance.Log("Couldn't read text for " + Path.GetFileNameWithoutExtension(file));
+                return;
+            }
+            Dictionary<string, object> data = JsonConvert.DeserializeObject<Dictionary<string, object>>(fullJson);
+            if (data == null || data.Count == 0)
+            {
+                DataDebugHelper.PrintDataError("Couldn't parse json file for " + Path.GetFileNameWithoutExtension(file), "Json file could be read as text but the text coudln't be parsed. Check for any missing \",{}, or comma");
+                ModInstance.instance.Log("Couldn't parse json for " + Path.GetFileName(file));
+                return;
+            }
+            List<string> missingKeys = new List<string>() { "The following keys are mandatory for a cheevo file but were missing:" };
+            foreach (string key in expectedCheevoEntries)
+            {
+                if (!data.ContainsKey(key))
+                {
+                    missingKeys.Add(key);
+                }
+            }
+            if (missingKeys.Count > 1)
+            {
+                DataDebugHelper.PrintDataError("Missing mandatory keys for cheevo " + Path.GetFileNameWithoutExtension(file), missingKeys.ToArray());
+                return;
+            }
+
+            if (CustomCheevo.customCheevosByID.ContainsKey((string)data["ID"]))
+            {
+                ModInstance.log("Cheevo with ID " + (string)data["ID"] + " already exists, skipping creation");
+                DataDebugHelper.PrintDataError("Cheevo with ID " + (string)data["ID"] + " already exists", "Please make sure that the ID is unique for each cheevo, maybe another mod has the same ID?");
+                return;
+            }
+
+            List<string> loveAll = null;
+            if (data.ContainsKey("LoveAll"))
+            {
+                if (data["LoveAll"] is JArray loveAllArray && loveAllArray.Count > 0)
+                {
+                    loveAll = loveAllArray.ToObject<List<string>>();
+                }
+            }
+
+            List<string> requiredCheevos = null;
+            if (data.ContainsKey("RequiredCheevos"))
+            {
+                if (data["RequiredCheevos"] is JArray requiredCheevosArray && requiredCheevosArray.Count > 0)
+                {
+                    requiredCheevos = requiredCheevosArray.ToObject<List<string>>();
+                }
+            }
+
+            new CustomCheevo(
+                ((string)data["ID"]).ToLower(),
+                (string)data["Name"],
+                (string)data["Description"],
+                data.ContainsKey("Hidden") && bool.Parse((string)data["Hidden"]),
+                file,
+                loveAll,
+                requiredCheevos
+            );
         }
     }
 }

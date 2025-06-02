@@ -337,7 +337,7 @@ namespace ExoLoader
             else
             {
                 ModInstance.log("This character will use default overworld scale");
-                data.overworldScales = new float[] { 0.004f, 0.004f, 0.004f };
+                data.overworldScales = [0.004f, 0.004f, 0.004f];
             }
 
             data.ages = (string)parsedJson["Ages"] == "TRUE";
@@ -353,6 +353,32 @@ namespace ExoLoader
                 else
                 {
                     DataDebugHelper.PrintDataError("Jobs entry for " + Path.GetFileName(folderName) + "broken");
+                }
+            }
+
+            if (parsedJson.TryGetValue("MainMenu", out object mainMenuObj))
+            {
+                JObject mainMenuJson = (JObject)mainMenuObj;
+                data.mainMenu = new MainMenuPosition();
+
+                try
+                {
+                    data.mainMenu.template = (string)mainMenuJson.Value<string>("Template");
+                    JArray positionArray = (JArray)mainMenuJson.GetValue("Position");
+                    if (positionArray != null && positionArray.Count == 2)
+                    {
+                        data.mainMenu.position = [float.Parse((string)positionArray[0]), float.Parse((string)positionArray[1])];
+                    }
+                    else
+                    {
+                        DataDebugHelper.PrintDataError("Main menu position for " + Path.GetFileName(folderName) + " is broken", "It should be an array of 2 floats");
+                        return null;
+                    }
+                }
+                catch (Exception e)
+                {
+                    ModInstance.log("Error parsing main menu entry for " + TrimFolderName(folderName) + ": " + e.Message);
+                    data.mainMenu = null;
                 }
             }
 
@@ -473,7 +499,7 @@ namespace ExoLoader
             return image;
         }
 
-        public static Texture2D GetTexture(string path)
+        public static Texture2D GetTexture(string path, bool silent = false)
         {
             Texture2D texture = null;
             Byte[] bytes = null;
@@ -486,10 +512,14 @@ namespace ExoLoader
             }
             catch (Exception e)
             {
-                ModInstance.log("Couldn't make sprite from file " + TrimFolderName(path));
-                ModInstance.log(texture == null ? "The texture is null" : texture.isReadable.ToString());
-                ModInstance.log(bytes.Length.ToString() + "bytes in the image");
-                ModInstance.log(e.ToString());
+                if (!silent)
+                {
+                    ModInstance.log("Couldn't make sprite from file " + TrimFolderName(path));
+                    ModInstance.log(texture == null ? "The texture is null" : texture.isReadable.ToString());
+                    ModInstance.log(bytes?.Length.ToString() + "bytes in the image");
+                    ModInstance.log(e.ToString());
+                }
+                return null;
             }
             return texture;
         }
@@ -541,9 +571,9 @@ namespace ExoLoader
             return image;
         }
 
-    public static string TrimFolderName(string folderName)
-    {
-        return folderName.RemoveStart(AppDomain.CurrentDomain.BaseDirectory);
-    }
+        public static string TrimFolderName(string folderName)
+        {
+            return folderName.RemoveStart(AppDomain.CurrentDomain.BaseDirectory);
+        }
     }
 }
