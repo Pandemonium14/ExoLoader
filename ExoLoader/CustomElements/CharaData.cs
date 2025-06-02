@@ -8,6 +8,12 @@ using System.Threading.Tasks;
 
 namespace ExoLoader
 {
+    public class MainMenuPosition
+    {
+        public string template;
+        public float[] position;
+    }
+
     public class CharaData
     {
         public string id;
@@ -50,6 +56,7 @@ namespace ExoLoader
         public int spriteSize = -1;
         public int[] spriteSizes = new int[3];
         public float[] overworldScales = new float[3];
+        public MainMenuPosition mainMenu;
 
         public CustomChara MakeChara()
         {
@@ -79,7 +86,7 @@ namespace ExoLoader
             fillbar3.value2 = slider3values[1];
             fillbar3.value3 = slider3values[2];
 
-            CharaFillbarData[] charaFillbarDatas = {fillbar1, fillbar2, fillbar3};
+            CharaFillbarData[] charaFillbarDatas = { fillbar1, fillbar2, fillbar3 };
 
             return new CustomChara(id, nickname, gender, canLove, ageOffset, birthMonth, dialogueColor, defaultBg, charaFillbarDatas, name, basicInfo, moreInfo, augment, this);
         }

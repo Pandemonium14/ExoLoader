@@ -288,6 +288,111 @@ namespace ExoLoader
                 ModInstance.log("===== Called SetCharaImage with a null spriteName");
             }
         }
+
+        // BackgroundMenu.LateUpdate postfix, empty for now
+        [HarmonyPatch(typeof(MainMenuCharas), "OnEnable")]
+        [HarmonyPostfix]
+        static void MainMenuCharasOnEnablePostfix(MainMenuCharas __instance)
+        {
+            MainMenuCharas instance = __instance;
+            foreach (CustomChara chara in CustomChara.customCharasById.Values)
+            {
+                if (!chara.canLove || !chara.hasCard3 || chara.data.mainMenu == null)
+                {
+                    continue;
+                }
+
+                try
+                {
+                    // Find the template object to copy
+                    Transform templateChara = instance.charaContainer.GetChildByName("chara_" + chara.data.mainMenu.template);
+                    if (templateChara == null)
+                    {
+                        ModInstance.log($"Template chara not found: chara_{chara.data.mainMenu.template}");
+                        continue;
+                    }
+
+                    // Check if custom chara already exists
+                    string customCharaName = "chara_" + chara.charaID;
+                    Transform existingCustomChara = instance.charaContainer.GetChildByName(customCharaName);
+                    if (existingCustomChara != null)
+                    {
+                        // Already exists, just make sure it's active
+                        existingCustomChara.SetActiveMaybe();
+                        continue;
+                    }
+
+                    // existing sprite object
+                    Sprite templateSprite = templateChara.GetComponentInChildren<SpriteRenderer>()?.sprite;
+                    if (templateSprite != null)
+                    {
+                        // Log pixel density of the template sprite
+                        ModInstance.log($"Template sprite found for {chara.charaID}, pixel density: {templateSprite.pixelsPerUnit}");
+                    }
+
+                    // Load custom sprite
+                    Texture2D texture = CFileManager.GetTexture(Path.Combine(chara.data.folderName, "Sprites", customCharaName + ".png"));
+
+                    if (texture == null)
+                    {
+                        ModInstance.log("Couldn't find texture for " + customCharaName);
+                        continue;
+                    }
+
+                    GameObject customCharaObj = UnityEngine.Object.Instantiate(templateChara.gameObject);
+                    customCharaObj.name = customCharaName;
+
+                    Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0), 100);
+
+                    SpriteRenderer childSpriteRenderer = customCharaObj.GetComponentInChildren<SpriteRenderer>();
+                    if (childSpriteRenderer != null)
+                    {
+                        ModInstance.log($"Applying custom sprite to child SpriteRenderer in {customCharaObj.name}");
+                        childSpriteRenderer.sprite = sprite;
+                    }
+                    else
+                    {
+                        ModInstance.log($"Failed to apply sprite for {chara.charaID}");
+                        UnityEngine.Object.Destroy(customCharaObj);
+                        continue;
+                    }
+
+                    customCharaObj.transform.SetParent(instance.charaContainer);
+                    customCharaObj.transform.localPosition = new Vector3(
+                        chara.data.mainMenu.position[0],
+                        chara.data.mainMenu.position[1],
+                        0.00f
+                    );
+                    customCharaObj.transform.localScale = new Vector3(1.0f, 1.0f, 1.0f);
+
+                    SpriteRenderer templateRenderer = templateChara.GetComponentInChildren<SpriteRenderer>();
+                    if (templateRenderer != null)
+                    {
+                        SpriteRenderer customRenderer = customCharaObj.GetComponentInChildren<SpriteRenderer>();
+                        if (customRenderer != null)
+                        {
+                            ModInstance.log($"Copying sorting layer and order from template for {chara.charaID}, layerid: {templateRenderer.sortingLayerID}, order: {templateRenderer.sortingOrder}, {templateRenderer.sortingLayerName}");
+                            customRenderer.sortingLayerID = templateRenderer.sortingLayerID;
+                            customRenderer.sortingOrder = templateRenderer.sortingOrder;
+                            customRenderer.sortingLayerName = templateRenderer.sortingLayerName;
+                        }
+                        else
+                        {
+                            ModInstance.log($"No SpriteRenderer found in {customCharaObj.name}");
+                        }
+                    }
+
+                    // Activate the object
+                    customCharaObj.SetActiveMaybe();
+
+                    ModInstance.log($"Successfully added custom character: {chara.charaID}");
+                }
+                catch (System.Exception ex)
+                {
+                    ModInstance.log($"Error adding custom character {chara.charaID}: {ex}");
+                }
+            }
+        }
     }
    
 }

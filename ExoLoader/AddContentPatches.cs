@@ -124,6 +124,8 @@ namespace ExoLoader
         {
             FinalizeCharacters();
             LoadCustomContent("ScriptExtensions");
+            // Add locale keys for all custom backgrounds
+            CustomBackground.addLocales();
         }
 
         public static void FinalizeCharacters() //Loads likes, dislikes
@@ -157,9 +159,6 @@ namespace ExoLoader
             // With this sorting, we maintain the order of original charas, but add custom charas with .canLove before original charas with .canLove = false
             // This is done to maintain the order of charas in the menu, and to make it easier to find custom charas
             ReorderCharasWithLinq();
-
-            // Add locale keys for all custom backgrounds
-            CustomBackground.addLocales();
         }
 
         public static void ReorderCharasWithLinq()
