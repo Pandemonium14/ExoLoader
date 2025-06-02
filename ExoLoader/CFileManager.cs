@@ -473,7 +473,7 @@ namespace ExoLoader
             return image;
         }
 
-        public static Texture2D GetTexture(string path)
+        public static Texture2D GetTexture(string path, bool silent = false)
         {
             Texture2D texture = null;
             Byte[] bytes = null;
@@ -486,10 +486,14 @@ namespace ExoLoader
             }
             catch (Exception e)
             {
-                ModInstance.log("Couldn't make sprite from file " + TrimFolderName(path));
-                ModInstance.log(texture == null ? "The texture is null" : texture.isReadable.ToString());
-                ModInstance.log(bytes.Length.ToString() + "bytes in the image");
-                ModInstance.log(e.ToString());
+                if (!silent)
+                {
+                    ModInstance.log("Couldn't make sprite from file " + TrimFolderName(path));
+                    ModInstance.log(texture == null ? "The texture is null" : texture.isReadable.ToString());
+                    ModInstance.log(bytes?.Length.ToString() + "bytes in the image");
+                    ModInstance.log(e.ToString());
+                }
+                return null;
             }
             return texture;
         }

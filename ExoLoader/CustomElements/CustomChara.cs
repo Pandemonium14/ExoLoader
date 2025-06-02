@@ -8,7 +8,7 @@ namespace ExoLoader
 {
     public class CustomChara : Chara
     {
-        public static Dictionary<string,CustomChara> customCharasById = new Dictionary<string, CustomChara>();
+        public static Dictionary<string, CustomChara> customCharasById = new Dictionary<string, CustomChara>();
         public static List<string> newCharaSprites = new List<string>();
 
 
@@ -18,7 +18,6 @@ namespace ExoLoader
             : base(idString, nickname, genderID, canLove, ageOffset, birthMonthOfYear, dialogColor, defaultBackground, fillbarDatas, name, basics, more, enhancement)
         {
             this.data = data;
-            
         }
 
         public float[] GetMapSpot(string scene, string seasonId)
@@ -82,7 +81,7 @@ namespace ExoLoader
             }
             catch (Exception e)
             {
-                ModInstance.log("Character with ID " + charaID + " failed the dictionary tests");
+                ModInstance.log("Character with ID " + charaID + " failed the dictionary tests" + e);
             }
         }
     }

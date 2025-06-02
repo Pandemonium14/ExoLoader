@@ -111,6 +111,11 @@ namespace ExoLoader
             {
                 LoadCustomContent("Collectibles");
             }
+            else if (filename == "Exocolonist - cheevos")
+            {
+                ModInstance.log("Loading custom achievements");
+                LoadCustomContent("Achievements");
+            }
         }
 
         [HarmonyPatch(typeof(ParserData), nameof(ParserData.LoadAllData))]

@@ -180,8 +180,8 @@ namespace ExoLoader
             {
                 ModInstance.log("Loading custom gallery thumbnail with id " + backgroundName);
 
-                // First try and get the image from CustomBackgrounds.loadedBackgrounds dictionary, it may be already loaded
-                if (CustomBackground.loadedBackgrounds.TryGetValue(backgroundName, out Sprite existingSprite))
+                // First try and get the image from CustomBackgrounds.backgroundThumbnails dictionary, it may be already loaded
+                if (CustomBackground.backgroundThumbnails.TryGetValue(backgroundName, out Sprite existingSprite))
                 {
                     __result = existingSprite;
                     return;
@@ -191,13 +191,21 @@ namespace ExoLoader
                 {
                     ModInstance.log($"Found custom gallery thumbnail with id {backgroundName}, file {background.file}");
                     string folder = background.file;
-                    Texture2D thumbnailTexture = CFileManager.GetTexture(Path.Combine(folder, backgroundName + ".png"));
+                    Texture2D thumbnailTexture = CFileManager.GetTexture(Path.Combine(folder, backgroundName + "_thumbnail.png"), true);
+
+                    // If the thumbnail texture is not found, try to load the full background texture
+                    if (thumbnailTexture == null)
+                    {
+                        ModInstance.log($"Thumbnail texture not found for {backgroundName}, trying to load full background texture");
+                        thumbnailTexture = CFileManager.GetTexture(Path.Combine(folder, backgroundName + ".png"));
+                    }
+
                     if (thumbnailTexture != null)
                     {
                         ModInstance.log($"Successfully loaded thumbnail texture for {backgroundName}");
                         Sprite bgSprite = Sprite.Create(thumbnailTexture, new Rect(0, 0, thumbnailTexture.width, thumbnailTexture.height), new Vector2(0.5f, 0), 1);
                         bgSprite.name = backgroundName; // Use the background's name if available, otherwise use the id
-                        CustomBackground.loadedBackgrounds[backgroundName] = bgSprite;
+                        CustomBackground.backgroundThumbnails[backgroundName] = bgSprite;
 
                         __result = bgSprite;
 
@@ -218,7 +226,7 @@ namespace ExoLoader
         public static void ReleaseGalleryThumbnails()
         {
             ModInstance.log("Releasing gallery thumbnails");
-            CustomBackground.loadedBackgrounds.Clear();
+            CustomBackground.backgroundThumbnails.Clear();
         }
 
         [HarmonyPatch(typeof(AssetManager))]
