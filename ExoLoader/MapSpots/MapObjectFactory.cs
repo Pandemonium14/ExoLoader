@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.IO;
 using UnityEngine;
 using Spine.Unity;
 
@@ -10,30 +9,6 @@ namespace ExoLoader
 {
     internal class MapObjectFactory
     {
-        // Preloaded skeleton data for static art objects
-        private readonly TextAsset staticSkeletonData;
-        private readonly TextAsset staticSkeletonAtlas;
-
-        public MapObjectFactory()
-        {
-            // Load static skeleton data once during construction
-            string staticSkeletonDataPath = Path.Combine(CFileManager.commonFolderPath, "skeleton", "skeleton.json");
-            string staticSkeletonAtlasPath = Path.Combine(CFileManager.commonFolderPath, "skeleton", "skeleton.atlas");
-
-            try
-            {
-                staticSkeletonData = new TextAsset(File.ReadAllText(staticSkeletonDataPath));
-                staticSkeletonAtlas = new TextAsset(File.ReadAllText(staticSkeletonAtlasPath));
-                ModInstance.log("Successfully loaded static skeleton data in MapObjectFactory constructor");
-            }
-            catch (Exception e)
-            {
-                ModInstance.log($"Failed to load static skeleton data: {e.Message}");
-                staticSkeletonData = null;
-                staticSkeletonAtlas = null;
-            }
-        }
-
         public GameObject GetMapObjectTemplate(string charaId, string season, int week)
         {
             GameObject o = GameObject.Find("Seasonal");
@@ -168,52 +143,25 @@ namespace ExoLoader
             }
         }
 
-        private void ModifyArtObject(GameObject artObject, CustomChara chara, int artStage, float scale)
+        private void ModifyArtObject(GameObject existingSpineObject, CustomChara chara, int artStage, float scale)
         {
-            string spriteFolder = Path.Combine(chara.data.folderName, "Sprites", chara.charaID + "_model_" + artStage.ToString());
-
-            if (!Directory.Exists(spriteFolder))
+            SkeletonAsset skeletonAsset = ModAssetManager.GetSkeletonData(AssetContentType.CharacterModel, chara.charaID + "_model_" + artStage.ToString());
+            if (skeletonAsset == null)
             {
-                ModInstance.log($"Sprite folder {spriteFolder} does not exist for {chara.charaID} art stage {artStage}");
-                ModifyStaticArtObject(artObject, chara, artStage, scale);
+                ModInstance.log($"Skeleton asset not found for {chara.charaID} art stage {artStage}");
                 return;
             }
 
-            string skeletonDataPath = Directory.GetFiles(spriteFolder, "*.json").FirstOrDefault();
-            if (string.IsNullOrEmpty(skeletonDataPath))
+            TextAsset atlasText = skeletonAsset.AtlasText;
+            TextAsset skeletonJson = skeletonAsset.SkeletonJson;
+            Texture2D[] textures = skeletonAsset.Textures;
+            bool isAnimated = skeletonAsset.isAnimated;
+            if (atlasText == null || skeletonJson == null || textures == null || textures.Length == 0)
             {
-                ModInstance.log($"No skeleton data found in {spriteFolder} for {chara.charaID} art stage {artStage}");
-                ModifyStaticArtObject(artObject, chara, artStage, scale);
+                ModInstance.log($"Invalid skeleton asset for {chara.charaID} art stage {artStage}");
                 return;
             }
 
-            ModInstance.log($"Found skeleton data at {skeletonDataPath} for {chara.charaID} art stage {artStage}");
-
-            string skeletonAtlasPath = Directory.GetFiles(spriteFolder, "*.atlas").FirstOrDefault();
-            if (string.IsNullOrEmpty(skeletonAtlasPath))
-            {
-                ModInstance.log($"No skeleton atlas found in {spriteFolder} for {chara.charaID} art stage {artStage}");
-                ModifyStaticArtObject(artObject, chara, artStage, scale);
-                return;
-            }
-
-            ModInstance.log($"Found skeleton atlas at {skeletonAtlasPath} for {chara.charaID} art stage {artStage}");
-
-            string texturePath = Directory.GetFiles(spriteFolder, "*.png").FirstOrDefault();
-            if (string.IsNullOrEmpty(texturePath))
-            {
-                ModInstance.log($"No texture found in {spriteFolder} for {chara.charaID} art stage {artStage}");
-                ModifyStaticArtObject(artObject, chara, artStage, scale);
-                return;
-            }
-
-            ModInstance.log($"Found texture at {texturePath} for {chara.charaID} art stage {artStage}");
-
-            ReplaceSkeletonData(artObject, skeletonDataPath, skeletonAtlasPath, texturePath, scale);
-        }
-
-        private void ReplaceSkeletonData(GameObject existingSpineObject, string jsonPath, string atlasPath, string texturePath, float scale)
-        {
             SkeletonMecanim skeletonMecanim = existingSpineObject.GetComponent<SkeletonMecanim>();
 
             if (skeletonMecanim == null)
@@ -249,18 +197,9 @@ namespace ExoLoader
                 ModInstance.log("No existing SkeletonDataAsset found on the SkeletonMecanim component.");
             }
 
-            // Load texture
-            byte[] textureBytes = File.ReadAllBytes(texturePath);
-            Texture2D texture = new Texture2D(2, 2);
-            texture.LoadImage(textureBytes);
-            texture.name = Path.GetFileNameWithoutExtension(texturePath);
-
-            // Load atlas and skeleton data
-            TextAsset atlasText = new TextAsset(File.ReadAllText(atlasPath));
-            TextAsset skeletonJson = new TextAsset(File.ReadAllText(jsonPath));
             Material materialPropertySource = existingSpineObject.GetComponent<MeshRenderer>().materials[0];
 
-            var atlasAsset = SpineAtlasAsset.CreateRuntimeInstance(atlasText, new Texture2D[] { texture }, materialPropertySource, true);
+            var atlasAsset = SpineAtlasAsset.CreateRuntimeInstance(atlasText, textures, materialPropertySource, true);
 
             // Validate atlasAsset
             if (atlasAsset == null || atlasAsset.Materials == null || atlasAsset.Materials.Count() == 0)
@@ -271,16 +210,17 @@ namespace ExoLoader
 
             var skeletonDataAsset = SkeletonDataAsset.CreateRuntimeInstance(skeletonJson, atlasAsset, true, scale);
 
-            ModInstance.log($"Assigning new asset: {skeletonDataAsset.name}, valid: {skeletonDataAsset.GetSkeletonData(true) != null}");
-
             // Replace the skeleton data asset
             skeletonMecanim.enabled = false;
             skeletonMecanim.skeletonDataAsset = skeletonDataAsset;
             skeletonMecanim.enabled = true;
 
-            // Clear and reinitialize
-            skeletonMecanim.ClearState();
-            skeletonMecanim.Initialize(true);
+            if (isAnimated)
+            {
+                // Clear and reinitialize
+                skeletonMecanim.ClearState();
+                skeletonMecanim.Initialize(true);
+            }
 
             // Fix rendering after initialization
             meshRenderer = existingSpineObject.GetComponent<MeshRenderer>();
@@ -307,65 +247,14 @@ namespace ExoLoader
             // Force update the skeleton
             if (skeletonMecanim.skeleton != null)
             {
-                skeletonMecanim.skeleton.SetSkin("default");
-                skeletonMecanim.skeleton.SetToSetupPose();
-                skeletonMecanim.LateUpdate(); // Force a rendering update
-            }
-            else
-            {
-                ModInstance.log("SkeletonMecanim skeleton is null after initialization, cannot force update.");
-            }
-
-            ModInstance.log($"Skeleton replaced. Bone count: {skeletonMecanim.skeleton?.Bones?.Count ?? 0}");
-        }
-
-        private void ModifyStaticArtObject(GameObject artObject, CustomChara chara, int artStage, float scale)
-        {
-            artObject.name = chara.charaID + artStage.ToString();
-
-            try
-            {
-                // Check if preloaded skeleton data is available
-                if (staticSkeletonData == null || staticSkeletonAtlas == null)
+                if (isAnimated)
                 {
-                    ModInstance.log("Static skeleton data not loaded, cannot modify static art object");
-                    return;
+                    skeletonMecanim.skeleton.SetSkin("default");
+                    skeletonMecanim.skeleton.SetToSetupPose();
+                    skeletonMecanim.LateUpdate();
                 }
 
-                Shader shader = artObject.GetComponent<MeshRenderer>().materials[0].shader;
-                if (shader == null) throw new Exception("shader is null");
-
-                Texture2D[] textures = new Texture2D[1];
-                textures[0] = CFileManager.GetCustomImage(chara.data.folderName, chara.charaID + "_model_" + artStage.ToString()).texture;
-                textures[0].name = "skeleton";
-
-                // Use preloaded skeleton data instead of loading from file
-                SpineAtlasAsset spineAtlas = SpineAtlasAsset.CreateRuntimeInstance(staticSkeletonAtlas, textures, shader, true);
-                SkeletonDataAsset skeData = SkeletonDataAsset.CreateRuntimeInstance(staticSkeletonData, spineAtlas, true, scale);
-
-                try
-                {
-                    artObject.GetComponent<SkeletonMecanim>().skeletonDataAsset = skeData;
-                    artObject.GetComponent<SkeletonMecanim>().Initialize(true);
-                }
-                catch (Exception e)
-                {
-                    ModInstance.log("Failed to initialize SkeletonMecanim: " + e.Message);
-                    return;
-                }
-
-                if (shader == null) throw new Exception("shader is null after destroy");
-
-                artObject.AddComponent<MeshRenderer>();
-                MeshRenderer newMeshRenderer = artObject.GetComponent<MeshRenderer>();
-                if (newMeshRenderer == null) throw new Exception("newMesh is null");
-                newMeshRenderer.sharedMaterial = new Material(shader);
-                newMeshRenderer.sharedMaterial.SetTexture("_MainTex", CFileManager.GetTexture(Path.Combine(CFileManager.commonFolderPath, "skeleton", "stickman.png")));
-            }
-            catch (Exception e)
-            {
-                ModInstance.log(e.StackTrace);
-                ModInstance.log(e.Message);
+                ModInstance.log($"Skeleton replaced. Bone count: {skeletonMecanim.skeleton?.Bones?.Count ?? 0}");
             }
         }
     }

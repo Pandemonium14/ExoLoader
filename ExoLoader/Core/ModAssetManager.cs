@@ -18,6 +18,8 @@ namespace ExoLoader
         private static readonly Dictionary<AssetContentType, int> _assetCounts = 
             new Dictionary<AssetContentType, int>();
 
+        private static readonly List<string> _existingStorySprites = [];
+
         #region Public API
 
         public static void StoreSprite(AssetContentType contentType, string key, Sprite sprite)
@@ -25,12 +27,32 @@ namespace ExoLoader
             var asset = new SpriteAsset(sprite);
             StoreAsset(contentType, key, asset);
             _spriteCache[GetFullKey(contentType, key)] = sprite;
+
+            if (contentType == AssetContentType.CharacterStory)
+            {
+                string[] parts = key.Split('_');
+                // remove any numbers if present from parts[0]
+                string charaId = parts[0].RemoveEnding("1").RemoveEnding("2").RemoveEnding("3");
+                if (!_existingStorySprites.Contains(charaId))
+                {
+                    _existingStorySprites.Add(charaId);
+                }
+
+                if (parts[1] != null)
+                {
+                    string storySpriteKey = $"{charaId}_{parts[1]}";
+                    if (!_spriteCache.ContainsKey(storySpriteKey))
+                    {
+                        _spriteCache[storySpriteKey] = sprite;
+                    }
+                }
+            }
         }
 
         public static void StoreSkeletonData(AssetContentType contentType, string key, Texture2D[] textures, 
-            TextAsset atlasText, TextAsset skeletonJson)
+            TextAsset atlasText, TextAsset skeletonJson, bool isAnimated)
         {
-            var asset = new SkeletonAsset(textures, atlasText, skeletonJson);
+            var asset = new SkeletonAsset(textures, atlasText, skeletonJson, isAnimated);
             StoreAsset(contentType, key, asset);
         }
 
@@ -66,6 +88,11 @@ namespace ExoLoader
         {
             return _assetStore.ContainsKey(contentType) && 
                    _assetStore[contentType].ContainsKey(key);
+        }
+
+        public static bool StorySpriteExists(string spriteName)
+        {
+            return _existingStorySprites.Contains(spriteName);
         }
 
         public static IEnumerable<string> GetAssetKeys(AssetContentType contentType)
@@ -174,6 +201,7 @@ namespace ExoLoader
         CharacterStory,
         CharacterModel,
         Background,
+        BackgroundThumbnail,
         Card,
         Achievement
     }
@@ -218,15 +246,17 @@ namespace ExoLoader
         public Texture2D[] Textures { get; private set; }
         public TextAsset AtlasText { get; private set; }
         public TextAsset SkeletonJson { get; private set; }
+        public bool isAnimated;
         public SkeletonDataAsset SkeletonData { get; private set; }
         public AssetType Type => AssetType.SkeletonData;
         public bool IsLoaded => false;
 
-        public SkeletonAsset(Texture2D[] textures, TextAsset atlas, TextAsset skeletonJson)
+        public SkeletonAsset(Texture2D[] textures, TextAsset atlas, TextAsset skeletonJson, bool isAnimated)
         {
             Textures = textures;
             AtlasText = atlas;
             SkeletonJson = skeletonJson;
+            this.isAnimated = isAnimated;
         }
 
         public void Dispose()

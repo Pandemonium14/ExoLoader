@@ -2,11 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
-using Northway.Utils;
-using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
-using UnityEngine.UIElements;
 
 namespace ExoLoader
 {
@@ -28,44 +24,46 @@ namespace ExoLoader
 
             if (LoadingProgress.Instance == null)
             {
-                ModInstance.instance.Log("Creating LoadingProgress instance...");
+                ModInstance.log("Creating LoadingProgress instance...");
                 GameObject overlayObj = new GameObject("LoadingProgress");
                 overlayObj.AddComponent<LoadingProgress>();
             }
 
-            ModInstance.instance.Log("Loading mod assets...");
+            ModInstance.log("Loading mod assets...");
             LoadingProgress.Instance?.Show("Loading mod assets...");
 
-            if (LoadingProgress.Instance != null)
-                LoadingProgress.Instance.UpdateProgress(0.1f, "Loading skeleton data...");
+            LoadingProgress.Instance?.UpdateProgress(0.1f, "Loading skeleton data...");
             yield return null;
 
             LoadStaticSkeletonData();
 
-            if (LoadingProgress.Instance != null)
-                LoadingProgress.Instance.UpdateProgress(0.2f, "Loading characters...");
+            LoadingProgress.Instance?.UpdateProgress(0.2f, "Loading characters...");
             yield return null;
 
             LoadCharacterAssets();
 
-            if (LoadingProgress.Instance != null)
-                LoadingProgress.Instance.UpdateProgress(0.7f, "Loading backgrounds...");
+            LoadingProgress.Instance?.UpdateProgress(0.7f, "Loading backgrounds...");
             yield return null;
 
             LoadBackgrounds();
 
-            if (LoadingProgress.Instance != null)
-                LoadingProgress.Instance.UpdateProgress(0.9f, "Loading cards...");
+            LoadingProgress.Instance?.UpdateProgress(0.8f, "Loading achievements...");
             yield return null;
+
+            LoadAchievements();
+
+            LoadingProgress.Instance?.UpdateProgress(0.9f, "Loading cards...");
+            yield return null;
+            yield return new WaitForSeconds(0.2f);
 
             LoadCards();
 
-            if (LoadingProgress.Instance != null)
-                LoadingProgress.Instance.UpdateProgress(1.0f, "ExoLoader loading complete!");
+            LoadingProgress.Instance?.UpdateProgress(1.0f, "ExoLoader loading complete!");
             yield return null;
+            yield return new WaitForSeconds(0.2f);
 
             Loaded = true;
-            ModInstance.instance.Log("Mod assets loaded successfully.");
+            ModInstance.log("Mod assets loaded successfully.");
 
             if (ModLoadingStatus.HasErrors())
             {
@@ -103,7 +101,7 @@ namespace ExoLoader
                 if (chara == null || chara.data == null)
                     continue;
 
-                ModInstance.instance.Log($"Loading assets for character: {chara.charaID}");
+                ModInstance.log($"Loading assets for character: {chara.charaID}");
 
                 string folderName = chara.data.folderName;
                 string spritesFolder = Path.Combine(folderName, "Sprites");
@@ -113,6 +111,7 @@ namespace ExoLoader
                     bool SilentErrors = artStage == 1 && chara.data.helioOnly;
                     // Portrait for the art stage
                     string portraitName = $"portrait_{chara.charaID}{artStage}";
+                    ModInstance.log($"Loading character portrait: {portraitName} for art stage {artStage}");
                     LoadCharacterPortrait(spritesFolder, portraitName, SilentErrors);
 
                     // Load character models
@@ -125,6 +124,7 @@ namespace ExoLoader
                     // Story sprites
                     string storySpritePrefix = $"{chara.charaID}{artStage}_";
                     int targetSpriteSize = Math.Max(chara.data.spriteSize, chara.data.spriteSizes[artStage - 1]);
+                    ModInstance.log($"Loading story sprites {storySpritePrefix} story sprites for art stage {artStage} with target size {targetSpriteSize}");
                     LoadCharacterStorySprites(spritesFolder, storySpritePrefix, SilentErrors, targetSpriteSize);
                 }
 
@@ -180,8 +180,8 @@ namespace ExoLoader
 
                     if (textures != null && textures.Length > 0 && atlasText != null && skeletonJson != null)
                     {
-                        ModAssetManager.StoreSkeletonData(AssetContentType.CharacterModel, modelName, textures, atlasText, skeletonJson);
-                        ModInstance.instance.Log($"Loaded animated character model: {modelName}");
+                        ModAssetManager.StoreSkeletonData(AssetContentType.CharacterModel, modelName, textures, atlasText, skeletonJson, true);
+                        ModInstance.log($"Loaded animated character model: {modelName}");
                     }
                     else
                     {
@@ -196,11 +196,12 @@ namespace ExoLoader
                 else
                 {
                     Texture2D texture = ImageUtils.LoadTexture(Path.Combine(spritesFolder, modelName + ".png"), SilentErrors);
+                    texture.name = "skeleton";
 
                     if (texture != null)
                     {
-                        ModAssetManager.StoreSkeletonData(AssetContentType.CharacterModel, modelName, new[] { texture }, staticSkeletonAtlas, staticSkeletonData);
-                        ModInstance.instance.Log($"Loaded static character model: {modelName}");
+                        ModAssetManager.StoreSkeletonData(AssetContentType.CharacterModel, modelName, new[] { texture }, staticSkeletonAtlas, staticSkeletonData, false);
+                        ModInstance.log($"Loaded static character model: {modelName}");
                     }
                     else
                     {
@@ -233,7 +234,7 @@ namespace ExoLoader
                 };
                 Sprite mainMenuSprite = ImageUtils.LoadSprite(Path.Combine(spritesFolder, spriteName + ".png"), config);
                 ModAssetManager.StoreSprite(AssetContentType.CharacterMainMenu, spriteName, mainMenuSprite);
-                ModInstance.instance.Log($"Loaded main menu sprite: {spriteName}");
+                ModInstance.log($"Loaded main menu sprite: {spriteName}");
             }
             catch (Exception e)
             {
@@ -253,7 +254,7 @@ namespace ExoLoader
                 };
                 Sprite storySprite = ImageUtils.LoadSprite(Path.Combine(spritesFolder, spriteName + ".png"), config);
                 ModAssetManager.StoreSprite(AssetContentType.CharacterStory, spriteName, storySprite);
-                ModInstance.instance.Log($"Loaded story sprite: {spriteName}");
+                ModInstance.log($"Loaded story sprite: {spriteName}");
             }
             catch (Exception e)
             {
@@ -294,7 +295,7 @@ namespace ExoLoader
 
         public static void LoadBackgrounds()
         {
-            ModInstance.instance.Log("Loading custom backgrounds...");
+            ModInstance.log("Loading custom backgrounds...");
 
             foreach (var kvp in CustomBackground.allBackgrounds)
             {
@@ -308,32 +309,65 @@ namespace ExoLoader
                 }
 
                 LoadBackground(spriteName, background);
+                LoadBackgroundThumbnail(spriteName, background);
             }
 
-            ModInstance.instance.Log("Custom backgrounds loaded successfully.");
+            ModInstance.log("Custom backgrounds loaded successfully.");
         }
 
         private static void LoadBackground(string spriteName, CustomBackground background)
         {
             try
             {
-                ModInstance.instance.Log($"Loading background: {spriteName} from {background.file}");
+                ModInstance.log($"Loading background: {spriteName} from {background.file}");
 
                 string spritePath = Path.Combine(background.file, spriteName + ".png");
                 SpriteLoadConfig config = new SpriteLoadConfig
                 {
-                    SpriteName = spriteName,
+                    SpriteName = background.name ?? spriteName,
                     PixelsPerUnit = 1
                 };
                 Sprite sprite = ImageUtils.LoadSprite(spritePath, config);
                 if (sprite != null)
                 {
                     ModAssetManager.StoreSprite(AssetContentType.Background, spriteName, sprite);
-                    ModInstance.instance.Log($"Loaded background sprite: {spriteName}");
+                    ModInstance.log($"Loaded background sprite: {spriteName}");
                 }
                 else
                 {
                     throw new Exception($"Sprite not found at path: {spritePath}");
+                }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log($"Failed to load background sprite: {spriteName}");
+                ModLoadingStatus.LogError($"Error loading background sprite {spriteName}: {e.Message}");
+            }
+        }
+
+        private static void LoadBackgroundThumbnail(string spriteName, CustomBackground background)
+        {
+            try
+            {
+                ModInstance.log($"Loading background: {spriteName} from {background.file}");
+
+                string spritePath = Path.Combine(background.file, spriteName + "_thumbnail.png");
+                SpriteLoadConfig config = new SpriteLoadConfig
+                {
+                    SpriteName = background.name ?? spriteName,
+                    PixelsPerUnit = 1,
+                    SilentErrors = true
+                };
+                Sprite sprite = ImageUtils.LoadSprite(spritePath, config);
+                if (sprite != null)
+                {
+                    ModAssetManager.StoreSprite(AssetContentType.BackgroundThumbnail, spriteName, sprite);
+                    ModInstance.log($"Loaded background sprite: {spriteName}");
+                }
+                else
+                {
+                    // No errors here, as we can use background itself as a fallback
+                    ModInstance.log($"Thumbnail not found for background sprite: {spriteName}, using main sprite instead.");
                 }
             }
             catch (Exception e)
@@ -349,7 +383,7 @@ namespace ExoLoader
 
         public static void LoadCards()
         {
-            ModInstance.instance.Log("Loading custom cards...");
+            ModInstance.log("Loading custom cards...");
 
             // Load all custom cards
             foreach (var kvp in CustomCardData.idToFile)
@@ -360,7 +394,7 @@ namespace ExoLoader
                 LoadCard(cardID, cardFile);
             }
 
-            ModInstance.instance.Log("Custom cards loaded successfully.");
+            ModInstance.log("Custom cards loaded successfully.");
         }
 
         private static void LoadCard(string cardID, string originFile)
@@ -370,7 +404,7 @@ namespace ExoLoader
                 string spriteName = "card_" + cardID;
                 string path = originFile.Replace(".json", ".png");
 
-                ModInstance.instance.Log($"Loading card: {cardID} from {path}");
+                ModInstance.log($"Loading card: {cardID} from {path}");
 
                 Sprite sprite = ImageUtils.LoadSprite(path, new SpriteLoadConfig
                 {
@@ -379,8 +413,8 @@ namespace ExoLoader
 
                 if (sprite != null)
                 {
-                    ModAssetManager.StoreSprite(AssetContentType.Card, cardID, sprite);
-                    ModInstance.instance.Log($"Loaded card sprite: {cardID}");
+                    ModAssetManager.StoreSprite(AssetContentType.Card, spriteName, sprite);
+                    ModInstance.log($"Loaded card sprite: {spriteName}");
                 }
                 else
                 {
@@ -396,9 +430,61 @@ namespace ExoLoader
 
         #endregion
 
-        #region Public (runtime loading)
-        // We load background thumbnails and achievement icons at runtime (because they are only needed in the gallery)
-        // FIXME
+        #region Achievements
+
+        public static void LoadAchievements()
+        {
+            ModInstance.log("Loading custom achievements...");
+
+            // Load all custom achievements
+            foreach (CustomCheevo cheevo in CustomCheevo.customCheevos)
+            {
+                LoadAchievementIcon(cheevo);
+            }
+
+            ModInstance.log("Custom achievements loaded successfully.");
+        }
+
+        public static void LoadAchievementIcon(CustomCheevo cheevo)
+        {
+            if (cheevo == null || string.IsNullOrEmpty(cheevo.file))
+            {
+                ModInstance.log($"Skipping achievement {cheevo.customID} due to missing file path.");
+                ModLoadingStatus.LogError($"Missing file path for achievement {cheevo.customID}");
+                return;
+            }
+
+            try
+            {
+                string path = cheevo.file.Replace(".json", ".png");
+                if (!File.Exists(path))
+                {
+                    ModInstance.log($"Achievement file not found: {path}");
+                    ModLoadingStatus.LogError($"Achievement file not found: {path}");
+                    return;
+                }
+                
+                SpriteLoadConfig config = new SpriteLoadConfig
+                {
+                    SpriteName = cheevo.customID
+                };
+                Sprite icon = ImageUtils.LoadSprite(path, config);
+                if (icon != null)
+                {
+                    ModAssetManager.StoreSprite(AssetContentType.Achievement, cheevo.customID, icon);
+                    ModInstance.log($"Loaded achievement icon: {cheevo.customID}");
+                }
+                else
+                {
+                    throw new Exception($"Could not load the sprite for achievement {cheevo.customID}: {path}");
+                }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log($"Error loading achievement {cheevo.customID}: {e.Message}");
+                ModLoadingStatus.LogError($"Error loading achievement {cheevo.customID}: {e.Message}");
+            }
+        }
 
         #endregion
     }

@@ -86,7 +86,7 @@ namespace ExoLoader
             foreach (var cheevo in CustomCheevo.customCheevos)
             {
                 bool show = ExoLoaderSave.HasCheevo(cheevo.customID);
-                Sprite sprite = cheevo.GetSprite();
+                Sprite sprite = ModAssetManager.GetSprite(AssetContentType.Achievement, cheevo.customID);
                 if (sprite == null)
                 {
                     ModInstance.log($"Cheevo {cheevo.customID} has no sprite, skipping.");

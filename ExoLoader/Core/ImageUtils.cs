@@ -26,6 +26,7 @@ namespace ExoLoader
                 var bytes = File.ReadAllBytes(filePath);
                 ImageConversion.LoadImage(texture, bytes);
                 texture.Apply();
+                texture.name = Path.GetFileNameWithoutExtension(filePath);
                 return texture;
             }
             catch (Exception e)

@@ -1,14 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Security.Permissions;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 using HarmonyLib;
-using Northway.Utils;
 using UnityEngine;
-using UnityEngine.Windows;
 
 namespace ExoLoader
 {
@@ -18,14 +10,9 @@ namespace ExoLoader
         // For story sprites at the current age
         [HarmonyPatch(typeof(Chara))]
         [HarmonyPatch(nameof(Chara.GetStorySprite))]
-        [HarmonyPostfix]
-        public static void GetCustomSprite(Chara __instance, ref Sprite __result, string expression, int overrideArtStage)
+        [HarmonyPrefix]
+        public static bool GetCustomStorySprite(Chara __instance, ref Sprite __result, string expression, int overrideArtStage)
         {
-            if (__result)
-            {
-                return;
-            }
-
             ModInstance.log($"Loading custom sprite for {__instance.nickname} with expression {expression} and override art stage {overrideArtStage}");
 
             try
@@ -33,17 +20,33 @@ namespace ExoLoader
                 if (__instance is CustomChara ch)
                 {
                     ModInstance.log("Chara is getting a custom chara sprite, getting image " + expression + "...");
-                    try
+                    int artStage = overrideArtStage > 0 ? overrideArtStage : Princess.artStage;
+                    string spriteName = __instance.charaID + artStage + "_" + expression;
+                    ModInstance.log($"Using art stage {artStage} for custom sprite: {spriteName}");
+                    Sprite sprite = ModAssetManager.GetSprite(AssetContentType.CharacterStory, spriteName);
+
+                    if (sprite != null)
                     {
-                        int artStage = overrideArtStage > 0 ? overrideArtStage : Princess.artStage;
-                        string spriteName = __instance.charaID + artStage + "_" + expression;
-                        int targetSpriteSize = Math.Max(ch.data.spriteSize, ch.data.spriteSizes[artStage - 1]);
-                        ModInstance.log("Getting story sprite with size " + targetSpriteSize);
-                        __result = CFileManager.GetCustomImage(ch.data.folderName, spriteName, targetSpriteSize);
+                        ModInstance.log($"Loaded chara sprite: {spriteName}, {sprite.name}");
+                        __result = sprite;
+                        return false;
                     }
-                    catch (Exception e)
+                    else
                     {
-                        ModInstance.log($"Error loading custom sprite for {__instance.nickname} with expression {expression}: {e}");
+                        // Maybe adult sprite, in that case no artStage
+                        spriteName = __instance.charaID + "_" + expression;
+                        sprite = ModAssetManager.GetSprite(AssetContentType.CharacterStory, spriteName);
+
+                        if (sprite != null)
+                        {
+                            ModInstance.log($"Loaded chara sprite without art stage: {spriteName}");
+                            __result = sprite;
+                            return false;
+                        }
+                        else
+                        {
+                            ModInstance.log($"No custom sprite found for {__instance.nickname} with expression {expression} and art stage {artStage}");
+                        }
                     }
                 }
             }
@@ -51,50 +54,84 @@ namespace ExoLoader
             {
                 ModInstance.log($"Error loading custom sprite for {__instance.nickname}: {e}");
             }
+
+            return true;
         }
+
+        [HarmonyPatch(typeof(CharaImage))]
+        [HarmonyPatch(nameof(CharaImage.GetSprite))]
+        [HarmonyPrefix]
+        public static bool GetCustomCharaImageSprite(ref Sprite __result, string spriteName)
+        {
+            if (spriteName == null)
+            {
+                ModInstance.log("Trying to load a story sprite with null ID string (from CharaImage)");
+            }
+            Chara ch = Chara.FromCharaImageID(spriteName);
+            if (ch is not CustomChara)
+            {
+                return true;
+            }
+            else
+            {
+                ModInstance.log("CharaImage is loading a custom chara sprite, getting image " + spriteName + "...");
+                try
+                {
+                    string realSpriteName = MakeRealSpriteName(spriteName, (CustomChara)ch);
+                    ModInstance.log($"Using real sprite name: {realSpriteName}");
+                    Sprite sprite = ModAssetManager.GetSprite(AssetContentType.CharacterStory, realSpriteName);
+
+                    if (sprite != null)
+                    {
+                        ModInstance.log($"Loaded chara sprite: {realSpriteName}, {sprite.name}");
+                        __result = sprite;
+                        return false;
+                    }
+                    else
+                    {
+                        ModInstance.log($"No custom sprite found for {realSpriteName}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    ModInstance.log("Couldn't get image");
+                    ModInstance.log(e.ToString());
+                    return true;
+                }
+            }
+            
+            return true;
+        }
+
 
         // For calling custom sprites of specific ages
         [HarmonyPatch(typeof(AssetManager))]
         [HarmonyPatch(nameof(AssetManager.LoadCharaSprite))]
-        [HarmonyPostfix]
-        public static void LoadCustomCharaSprite(ref Sprite __result, string spriteName)
+        [HarmonyPrefix]
+        public static bool LoadCustomCharaSprite(ref Sprite __result, string spriteName)
         {
-            if (__result != null)
+            Chara chara = Chara.FromCharaImageID(spriteName);
+            if (chara == null || chara is not CustomChara)
             {
-                return;
+                return true; ;
             }
 
-            ModInstance.log("Loading custom chara sprite with name " + spriteName);
-            Chara ch = Chara.FromCharaImageID(spriteName);
-            if (ch == null || !(ch is CustomChara))
+            string realSpriteName = MakeRealSpriteName(spriteName, (CustomChara)chara);
+            Sprite sprite = ModAssetManager.GetSprite(AssetContentType.CharacterStory, realSpriteName);
+
+            if (sprite != null)
             {
-                return;
+                __result = sprite;
+                ModInstance.log($"Loaded custom sprite: {realSpriteName}");
+                return false;
             }
             else
             {
-                CustomChara customChara = (CustomChara)ch;
-                int targetSpriteSize = Math.Max(customChara.data.spriteSize, customChara.data.spriteSizes[getArtStageFromSpriteName(spriteName) - 1]);
-                __result = CFileManager.GetCustomImage(customChara.data.folderName, MakeRealSpriteName(spriteName, customChara), targetSpriteSize);
-                return;
+                ModInstance.log($"No custom sprite found for {realSpriteName}");
             }
-        }
 
-        private static int getArtStageFromSpriteName(string spriteName)
-        {
-            string[] split = spriteName.Split('_');
-            string first = split[0];
-            if ((!first.EndsWith("1") && !first.EndsWith("2") && !first.EndsWith("3")))
-            {
-                ModInstance.log("For age " + Princess.artStage);
-                return Princess.artStage;
-            }
-            else
-            {
-                ModInstance.log("For age " + int.Parse(first[first.Length - 1].ToString()));
-                return int.Parse(first[first.Length - 1].ToString());
-            }
+            return true;
         }
-
 
         private static string MakeRealSpriteName(string input, CustomChara ch)
         {
@@ -105,7 +142,7 @@ namespace ExoLoader
             {
                 second = split[1];
             }
-            if ((!first.EndsWith("1") && !first.EndsWith("2") && !first.EndsWith("3")) && ch.data.ages)
+            if (!first.EndsWith("1") && !first.EndsWith("2") && !first.EndsWith("3") && ch.data.ages)
             {
                 first += Princess.artStage.ToString();
             }
@@ -123,47 +160,58 @@ namespace ExoLoader
         public static bool LoadCustomPortrait(ref Sprite __result, string spriteName)
         {
             Chara ch = Chara.FromCharaImageID(spriteName);
-            if (ch == null || !(ch is CustomChara))
+            if (ch == null || ch is not CustomChara)
             {
                 return true;
             }
             else
             {
-                __result = CFileManager.GetCustomPortrait(((CustomChara)ch).data.folderName, MakeActualPortraitName(spriteName, (CustomChara)ch));
-                return false;
+                string portraitName = "portrait_" + MakeActualPortraitName(spriteName, (CustomChara)ch);
+                Sprite sprite = ModAssetManager.GetSprite(AssetContentType.CharacterPortrait, portraitName);
+                if (sprite != null)
+                {
+                    __result = sprite;
+                    ModInstance.log($"Loaded custom portrait: {portraitName}");
+                    return false;
+                }
+                else
+                {
+                    ModInstance.log($"No custom portrait found for {portraitName}");
+                }
             }
+
+            return true;
         }
 
         private static string MakeActualPortraitName(string input, CustomChara ch)
         {
+            string result = input;
             if (!input.EndsWith("1") && !input.EndsWith("2") && !input.EndsWith("3") && ch.data.ages)
             {
-                input += Princess.artStage.ToString();
+                result = input + Princess.artStage.ToString();
             }
             else if (!ch.data.ages && (input.EndsWith("1") || input.EndsWith("2") || !input.EndsWith("3")))
             {
-                input = input.RemoveEnding(input[-1].ToString());
+                result = input.RemoveEnding(input[-1].ToString());
             }
-            return input;
+            return result;
         }
-
 
         [HarmonyPatch(typeof(AssetManager))]
         [HarmonyPatch(nameof(AssetManager.GetCardSprite))]
         [HarmonyPrefix]
         public static bool LoadCustomCardSprite(ref Sprite __result, string cardID)
         {
-            //ModInstance.log("Loading a card image, id = " + cardID);
-            string file = CustomCardData.idToFile.GetSafe(cardID);
-            if (file != null)
+            string spriteName = "card_" + cardID;
+            Sprite sprite = ModAssetManager.GetSprite(AssetContentType.Card, spriteName);
+            if (sprite != null)
             {
-                __result = CFileManager.GetCustomCardSprite(cardID, file);
+                __result = sprite;
+                ModInstance.log($"Loaded custom card sprite: {spriteName}");
                 return false;
             }
-            else
-            {
-                return true;
-            }
+
+            return true;
         }
 
         [HarmonyPatch(typeof(AssetManager))]
@@ -180,53 +228,28 @@ namespace ExoLoader
             {
                 ModInstance.log("Loading custom gallery thumbnail with id " + backgroundName);
 
-                // First try and get the image from CustomBackgrounds.backgroundThumbnails dictionary, it may be already loaded
-                if (CustomBackground.backgroundThumbnails.TryGetValue(backgroundName, out Sprite existingSprite))
+                Sprite sprite = ModAssetManager.GetSprite(AssetContentType.BackgroundThumbnail, backgroundName);
+
+                if (sprite != null)
                 {
-                    __result = existingSprite;
+                    __result = sprite;
+                    ModInstance.log($"Loaded custom gallery thumbnail: {backgroundName}");
                     return;
                 }
 
-                if (CustomBackground.allBackgrounds.TryGetValue(backgroundName, out CustomBackground background))
+                // Fallback to just background
+                sprite = ModAssetManager.GetSprite(AssetContentType.Background, backgroundName);
+                if (sprite != null)
                 {
-                    ModInstance.log($"Found custom gallery thumbnail with id {backgroundName}, file {background.file}");
-                    string folder = background.file;
-                    Texture2D thumbnailTexture = CFileManager.GetTexture(Path.Combine(folder, backgroundName + "_thumbnail.png"), true);
-
-                    // If the thumbnail texture is not found, try to load the full background texture
-                    if (thumbnailTexture == null)
-                    {
-                        ModInstance.log($"Thumbnail texture not found for {backgroundName}, trying to load full background texture");
-                        thumbnailTexture = CFileManager.GetTexture(Path.Combine(folder, backgroundName + ".png"));
-                    }
-
-                    if (thumbnailTexture != null)
-                    {
-                        ModInstance.log($"Successfully loaded thumbnail texture for {backgroundName}");
-                        Sprite bgSprite = Sprite.Create(thumbnailTexture, new Rect(0, 0, thumbnailTexture.width, thumbnailTexture.height), new Vector2(0.5f, 0), 1);
-                        bgSprite.name = backgroundName; // Use the background's name if available, otherwise use the id
-                        CustomBackground.backgroundThumbnails[backgroundName] = bgSprite;
-
-                        __result = bgSprite;
-
-                        return;
-                    }
+                    __result = sprite;
+                    ModInstance.log($"Loaded custom gallery thumbnail as fallback: {backgroundName}");
+                    return;
                 }
             }
             catch (Exception e)
             {
                 ModInstance.log($"Error loading custom gallery thumbnail with id {backgroundName}: {e}");
             }
-        }
-
-        // Patch for AssetManager.ReleaseGalleryThumbnails - clean up loaded backgrounds
-        [HarmonyPatch(typeof(AssetManager))]
-        [HarmonyPatch(nameof(AssetManager.ReleaseGalleryThumbnails))]
-        [HarmonyPostfix]
-        public static void ReleaseGalleryThumbnails()
-        {
-            ModInstance.log("Releasing gallery thumbnails");
-            CustomBackground.backgroundThumbnails.Clear();
         }
 
         [HarmonyPatch(typeof(AssetManager))]
@@ -243,49 +266,17 @@ namespace ExoLoader
             {
                 ModInstance.log("Loading custom background with id " + spriteName);
 
-                // First try and get the image from CustomBackgrounds.loadedBackgrounds dictionary, it may be already loaded
-                if (CustomBackground.loadedBackgrounds.TryGetValue(spriteName, out Sprite existingSprite))
+                Sprite sprite = ModAssetManager.GetSprite(AssetContentType.Background, spriteName);
+                if (sprite != null)
                 {
-                    __result = existingSprite;
+                    __result = sprite;
+                    ModInstance.log($"Loaded custom background: {spriteName}");
                     return;
-                }
-
-                if (CustomBackground.allBackgrounds.TryGetValue(spriteName, out CustomBackground background))
-                {
-                    ModInstance.log($"Found custom background with id {spriteName}, file {background.file}");
-                    string folder = background.file;
-                    Texture2D bgTexture = CFileManager.GetTexture(Path.Combine(folder, spriteName + ".png"));
-                    if (bgTexture != null)
-                    {
-                        ModInstance.log($"Successfully loaded background texture for {spriteName}");
-                        Sprite bgSprite = Sprite.Create(bgTexture, new Rect(0, 0, bgTexture.width, bgTexture.height), new Vector2(0.5f, 0), 1);
-                        bgSprite.name = spriteName;
-                        CustomBackground.loadedBackgrounds[spriteName] = bgSprite;
-                        Princess.seenBackgrounds.AddSafe(spriteName, -1, false); // Register the background as seen for the gallery
-                        __result = bgSprite;
-
-                        return;
-                    }
                 }
             }
             catch (Exception e)
             {
                 ModInstance.log($"Error loading custom background with id {spriteName}: {e}");
-            }
-        }
-
-        [HarmonyPatch(typeof(Result))]
-        [HarmonyPatch(nameof(Result.SetCharaImage))]
-        [HarmonyPrefix]
-        public static void LoggingPatch(CharaImageLocation location, string spriteName)
-        {
-            if (spriteName != null)
-            {
-                ModInstance.log("===== Called SetCharaImage with location " + location.ToString() + " and spriteName '" + spriteName + "'");
-            }
-            else
-            {
-                ModInstance.log("===== Called SetCharaImage with a null spriteName");
             }
         }
 
@@ -390,5 +381,4 @@ namespace ExoLoader
             }
         }
     }
-   
 }

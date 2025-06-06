@@ -42,21 +42,33 @@ namespace ExoLoader
             }
         }
 
-        // ResultsSkillBubble.SetContent
         [HarmonyPatch(typeof(ResultsSkillBubble), nameof(ResultsSkillBubble.SetContent))]
         [HarmonyPostfix]
         public static void SetContentPatch(ResultsSkillBubble __instance, SkillChange change)
         {
-            if (CustomMemChange.changesByID.ContainsKey(change.stringID))
+            try
             {
-                ModInstance.instance.Log("Setting custom memory bubble for " + change.stringID);
-                __instance.SetActiveMaybe(value: true);
-                ResultsSkillBubbleSetIcon(__instance, "other", "other");
-                return;
+                if (change == null || change.stringID == null)
+                {
+                    return;
+                }
+
+                if (CustomMemChange.changesByID.ContainsKey(change.stringID))
+                {
+                    ModInstance.instance.Log("Setting custom memory bubble for " + change.stringID);
+                    __instance.SetActiveMaybe(value: true);
+                    ResultsSkillBubbleSetIcon(__instance, "other", "other");
+                    return;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                ModInstance.instance.Log("Error in SetContentPatch: " + ex.Message);
+                ModInstance.instance.Log("Stack trace: " + ex.StackTrace);
             }
         }
 
-        public static void ResultsSkillBubbleSetIcon(ResultsSkillBubble __instance, string iconName, string bgName, Color color = default(Color))
+        private static void ResultsSkillBubbleSetIcon(ResultsSkillBubble __instance, string iconName, string bgName, Color color = default(Color))
         {
             Color iconColor = color == default(Color) ? Color.white : color;
             Sprite requirementIcon = AssetManager.GetRequirementIcon(iconName);
@@ -83,47 +95,55 @@ namespace ExoLoader
         [HarmonyPostfix]
         public static void GetFormattedStringPatch(SkillChange __instance, ref string __result, bool bonusDetails = false, bool simpleBonusDetails = false)
         {
-            if (__instance.stringID != null && CustomMemChange.changesByID.ContainsKey(__instance.stringID))
+            try
             {
-                ModInstance.instance.Log("Formatting custom memory change string for " + __instance.stringID);
-
-                CustomMemChange change = CustomMemChange.changesByID[__instance.stringID];
-                int num = __instance.value.Clamp(-100, 100);
-                string text = num.ToSignedString() + " " + change.name;
-
-                // This part probably is not needed
-                if (__instance.bonusValue != 0 || !__instance.bonusText.IsNullOrEmptyOrWhitespace())
+                if (__instance.stringID != null && CustomMemChange.changesByID.ContainsKey(__instance.stringID))
                 {
-                    if (bonusDetails)
+                    ModInstance.instance.Log("Formatting custom memory change string for " + __instance.stringID);
+
+                    CustomMemChange change = CustomMemChange.changesByID[__instance.stringID];
+                    int num = __instance.value.Clamp(-100, 100);
+                    string text = num.ToSignedString() + " " + change.name;
+
+                    // This part probably is not needed
+                    if (__instance.bonusValue != 0 || !__instance.bonusText.IsNullOrEmptyOrWhitespace())
                     {
-                        string[] array = __instance.bonusText?.Split(new char[1] { ';' }, System.StringSplitOptions.RemoveEmptyEntries);
-                        if (array == null || array.Length == 0)
+                        if (bonusDetails)
                         {
-                            text = text + " (" + __instance.bonusValue.ToSignedString() + ")";
-                        }
-                        else if (array.Length == 1)
-                        {
-                            text = text + " (" + TextLocalized.Localize("battleBonus_from", __instance.bonusValue.ToSignedString(), array[0]) + ")";
-                        }
-                        else if (array.Length == 2)
-                        {
-                            string text6 = array.JoinSafe(" " + TextLocalized.Localize("battleBonus_and") + " ");
-                            text = text + " (" + TextLocalized.Localize("battleBonus_from", __instance.bonusValue.ToSignedString(), text6) + ")";
+                            string[] array = __instance.bonusText?.Split(new char[1] { ';' }, System.StringSplitOptions.RemoveEmptyEntries);
+                            if (array == null || array.Length == 0)
+                            {
+                                text = text + " (" + __instance.bonusValue.ToSignedString() + ")";
+                            }
+                            else if (array.Length == 1)
+                            {
+                                text = text + " (" + TextLocalized.Localize("battleBonus_from", __instance.bonusValue.ToSignedString(), array[0]) + ")";
+                            }
+                            else if (array.Length == 2)
+                            {
+                                string text6 = array.JoinSafe(" " + TextLocalized.Localize("battleBonus_and") + " ");
+                                text = text + " (" + TextLocalized.Localize("battleBonus_from", __instance.bonusValue.ToSignedString(), text6) + ")";
+                            }
+                            else
+                            {
+                                string text7 = array.JoinSafe(", ");
+                                text = text + " (" + TextLocalized.Localize("battleBonus_from", __instance.bonusValue.ToSignedString(), text7) + ")";
+                            }
                         }
                         else
                         {
-                            string text7 = array.JoinSafe(", ");
-                            text = text + " (" + TextLocalized.Localize("battleBonus_from", __instance.bonusValue.ToSignedString(), text7) + ")";
+                            text = text + " (" + __instance.bonusValue.ToSignedString() + ")";
                         }
                     }
-                    else
-                    {
-                        text = text + " (" + __instance.bonusValue.ToSignedString() + ")";
-                    }
-                }
 
-                __result = text.ReplaceAll("  ", " ");
-                return;
+                    __result = text.ReplaceAll("  ", " ");
+                    return;
+                }
+            }
+            catch (System.Exception ex)
+            {
+                ModInstance.instance.Log("Error in GetFormattedStringPatch: " + ex.Message);
+                ModInstance.instance.Log("Stack trace: " + ex.StackTrace);
             }
         }
     }

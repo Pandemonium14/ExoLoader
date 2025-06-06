@@ -24,7 +24,6 @@ namespace ExoLoader
 
             string scene = MapManager.currentScene.RemoveStart("Colony").ToLower();
             string season = Princess.season.seasonID;
-            ModInstance.log(season);
             int week = Princess.monthOfSeason;
 
             try
