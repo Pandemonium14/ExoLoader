@@ -289,12 +289,16 @@ namespace ExoLoader
             }
         }
 
-        // BackgroundMenu.LateUpdate postfix, empty for now
         [HarmonyPatch(typeof(MainMenuCharas), "OnEnable")]
         [HarmonyPostfix]
         static void MainMenuCharasOnEnablePostfix(MainMenuCharas __instance)
         {
-            MainMenuCharas instance = __instance;
+            ModInstance.log("MainMenuCharas OnEnable called, adding custom characters...");
+            PatchMainManuCharas(__instance);
+        }
+
+        public static void PatchMainManuCharas(MainMenuCharas instance)
+        {
             foreach (CustomChara chara in CustomChara.customCharasById.Values)
             {
                 if (!chara.canLove || !chara.hasCard3 || chara.data.mainMenu == null)
@@ -324,25 +328,23 @@ namespace ExoLoader
 
                     // existing sprite object
                     Sprite templateSprite = templateChara.GetComponentInChildren<SpriteRenderer>()?.sprite;
-                    if (templateSprite != null)
+                    if (templateSprite == null)
                     {
-                        // Log pixel density of the template sprite
-                        ModInstance.log($"Template sprite found for {chara.charaID}, pixel density: {templateSprite.pixelsPerUnit}");
-                    }
-
-                    // Load custom sprite
-                    Texture2D texture = CFileManager.GetTexture(Path.Combine(chara.data.folderName, "Sprites", customCharaName + ".png"));
-
-                    if (texture == null)
-                    {
-                        ModInstance.log("Couldn't find texture for " + customCharaName);
+                        ModInstance.log($"Main menu template sprite not found for {chara.charaID}");
                         continue;
                     }
 
                     GameObject customCharaObj = UnityEngine.Object.Instantiate(templateChara.gameObject);
                     customCharaObj.name = customCharaName;
+                    ModInstance.log($"Instantiated custom character object: {customCharaObj.name}");
+                    Sprite sprite = ModAssetManager.GetSprite(AssetContentType.CharacterMainMenu, customCharaName);
 
-                    Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0), 100);
+                    if (sprite == null)
+                    {
+                        ModInstance.log($"Failed to load sprite for {chara.charaID}");
+                        UnityEngine.Object.Destroy(customCharaObj);
+                        continue;
+                    }
 
                     SpriteRenderer childSpriteRenderer = customCharaObj.GetComponentInChildren<SpriteRenderer>();
                     if (childSpriteRenderer != null)
@@ -371,25 +373,19 @@ namespace ExoLoader
                         SpriteRenderer customRenderer = customCharaObj.GetComponentInChildren<SpriteRenderer>();
                         if (customRenderer != null)
                         {
-                            ModInstance.log($"Copying sorting layer and order from template for {chara.charaID}, layerid: {templateRenderer.sortingLayerID}, order: {templateRenderer.sortingOrder}, {templateRenderer.sortingLayerName}");
                             customRenderer.sortingLayerID = templateRenderer.sortingLayerID;
                             customRenderer.sortingOrder = templateRenderer.sortingOrder;
                             customRenderer.sortingLayerName = templateRenderer.sortingLayerName;
                         }
-                        else
-                        {
-                            ModInstance.log($"No SpriteRenderer found in {customCharaObj.name}");
-                        }
                     }
 
-                    // Activate the object
                     customCharaObj.SetActiveMaybe();
 
-                    ModInstance.log($"Successfully added custom character: {chara.charaID}");
+                    ModInstance.log($"Successfully added custom character to the main menu: {chara.charaID}");
                 }
                 catch (System.Exception ex)
                 {
-                    ModInstance.log($"Error adding custom character {chara.charaID}: {ex}");
+                    ModInstance.log($"Error adding custom character to the main menu {chara.charaID}: {ex}");
                 }
             }
         }

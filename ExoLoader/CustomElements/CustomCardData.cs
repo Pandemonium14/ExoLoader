@@ -9,8 +9,7 @@ namespace ExoLoader
 {
     public class CustomCardData
     {
-        public static Dictionary<string,string> idToFile = new Dictionary<string,string>();
-
+        public static Dictionary<string, string> idToFile = new Dictionary<string, string>();
 
         public string file;
         public string id;
