@@ -118,29 +118,26 @@ namespace ExoLoader
                         case "Jobs":
                             {
                                 ModInstance.log("Parsing job folders");
-                                foreach (string jobFolder in CFileManager.GetAllCustomContentFolders("Jobs"))
+                                foreach (string file in Directory.GetFiles(folder))
                                 {
-                                    foreach (string file in Directory.GetFiles(jobFolder))
+                                    if (file.EndsWith(".json"))
                                     {
-                                        if (file.EndsWith(".json"))
+                                        ModInstance.log("Found job file " + Path.GetFileName(file) + ", parsing...");
+                                        try
                                         {
-                                            ModInstance.log("Found job file " + Path.GetFileName(file) + ", parsing...");
-                                            try
+                                            ParseJobData(file);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            if (ex is InvalidCastException)
                                             {
-                                                ParseJobData(file);
+                                                DataDebugHelper.PrintDataError("Invalid cast when loading job " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
                                             }
-                                            catch (Exception ex)
+                                            else
                                             {
-                                                if (ex is InvalidCastException)
-                                                {
-                                                    DataDebugHelper.PrintDataError("Invalid cast when loading job " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
-                                                }
-                                                else
-                                                {
-                                                    DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(file), ex.Message);
-                                                }
-                                                throw ex;
+                                                DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
+                                            throw ex;
                                         }
                                     }
                                 }
@@ -149,29 +146,26 @@ namespace ExoLoader
                         case "Endings":
                             {
                                 ModInstance.log("Parsing ending folders");
-                                foreach (string jobFolder in CFileManager.GetAllCustomContentFolders("Endings"))
+                                foreach (string file in Directory.GetFiles(folder))
                                 {
-                                    foreach (string file in Directory.GetFiles(jobFolder))
+                                    if (file.EndsWith(".json"))
                                     {
-                                        if (file.EndsWith(".json"))
+                                        ModInstance.log("Found ending file " + Path.GetFileName(file) + ", parsing...");
+                                        try
                                         {
-                                            ModInstance.log("Found ending file " + Path.GetFileName(file) + ", parsing...");
-                                            try
+                                            ParseEndingData(file);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            if (ex is InvalidCastException)
                                             {
-                                                ParseEndingData(file);
+                                                DataDebugHelper.PrintDataError("Invalid cast when loading ending " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
                                             }
-                                            catch (Exception ex)
+                                            else
                                             {
-                                                if (ex is InvalidCastException)
-                                                {
-                                                    DataDebugHelper.PrintDataError("Invalid cast when loading ending " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
-                                                }
-                                                else
-                                                {
-                                                    DataDebugHelper.PrintDataError("Unexpected error when loading ending " + Path.GetFileNameWithoutExtension(file), ex.Message);
-                                                }
-                                                throw ex;
+                                                DataDebugHelper.PrintDataError("Unexpected error when loading ending " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
+                                            throw ex;
                                         }
                                     }
                                 }
@@ -209,30 +203,26 @@ namespace ExoLoader
 
                         case "Collectibles":
                             {
-                                ModInstance.log("Parsing collectibles folders");
-                                foreach (string jobFolder in CFileManager.GetAllCustomContentFolders("Collectibles"))
+                                foreach (string file in Directory.GetFiles(folder))
                                 {
-                                    foreach (string file in Directory.GetFiles(jobFolder))
+                                    if (file.EndsWith(".json"))
                                     {
-                                        if (file.EndsWith(".json"))
+                                        ModInstance.log("Found collectible file " + Path.GetFileName(file) + ", parsing...");
+                                        try
                                         {
-                                            ModInstance.log("Found collectible file " + Path.GetFileName(file) + ", parsing...");
-                                            try
+                                            ParseCollectibleData(file);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            if (ex is InvalidCastException)
                                             {
-                                                ParseCollectibleData(file);
+                                                DataDebugHelper.PrintDataError("Invalid cast when loading collectible " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
                                             }
-                                            catch (Exception ex)
+                                            else
                                             {
-                                                if (ex is InvalidCastException)
-                                                {
-                                                    DataDebugHelper.PrintDataError("Invalid cast when loading collectible " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
-                                                }
-                                                else
-                                                {
-                                                    DataDebugHelper.PrintDataError("Unexpected error when loading collectible " + Path.GetFileNameWithoutExtension(file), ex.Message);
-                                                }
-                                                throw ex;
+                                                DataDebugHelper.PrintDataError("Unexpected error when loading collectible " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
+                                            throw ex;
                                         }
                                     }
                                 }
@@ -242,29 +232,26 @@ namespace ExoLoader
                         case "Achievements":
                             {
                                 ModInstance.log("Parsing achievements folders");
-                                foreach (string jobFolder in CFileManager.GetAllCustomContentFolders("Achievements"))
+                                foreach (string file in Directory.GetFiles(folder))
                                 {
-                                    foreach (string file in Directory.GetFiles(jobFolder))
+                                    if (file.EndsWith(".json"))
                                     {
-                                        if (file.EndsWith(".json"))
+                                        ModInstance.log("Found achievement file " + Path.GetFileName(file) + ", parsing...");
+                                        try
                                         {
-                                            ModInstance.log("Found achievement file " + Path.GetFileName(file) + ", parsing...");
-                                            try
+                                            ParseCheevoData(file);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            if (ex is InvalidCastException)
                                             {
-                                                ParseCheevoData(file);
+                                                DataDebugHelper.PrintDataError("Invalid cast when loading achievement " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
                                             }
-                                            catch (Exception ex)
+                                            else
                                             {
-                                                if (ex is InvalidCastException)
-                                                {
-                                                    DataDebugHelper.PrintDataError("Invalid cast when loading achievement " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
-                                                }
-                                                else
-                                                {
-                                                    DataDebugHelper.PrintDataError("Unexpected error when loading achievement " + Path.GetFileNameWithoutExtension(file), ex.Message);
-                                                }
-                                                throw ex;
+                                                DataDebugHelper.PrintDataError("Unexpected error when loading achievement " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
+                                            throw ex;
                                         }
                                     }
                                 }
