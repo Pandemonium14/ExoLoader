@@ -201,7 +201,6 @@ namespace ExoLoader
 
             var atlasAsset = SpineAtlasAsset.CreateRuntimeInstance(atlasText, textures, materialPropertySource, true);
 
-            // Validate atlasAsset
             if (atlasAsset == null || atlasAsset.Materials == null || atlasAsset.Materials.Count() == 0)
             {
                 ModInstance.log("Failed to create SpineAtlasAsset from provided atlas text and texture.");
@@ -210,30 +209,23 @@ namespace ExoLoader
 
             var skeletonDataAsset = SkeletonDataAsset.CreateRuntimeInstance(skeletonJson, atlasAsset, true, scale);
 
-            // Replace the skeleton data asset
             skeletonMecanim.enabled = false;
             skeletonMecanim.skeletonDataAsset = skeletonDataAsset;
             skeletonMecanim.enabled = true;
 
             if (isAnimated)
             {
-                // Clear and reinitialize
                 skeletonMecanim.ClearState();
                 skeletonMecanim.Initialize(true);
             }
 
-            // Fix rendering after initialization
             meshRenderer = existingSpineObject.GetComponent<MeshRenderer>();
             if (meshRenderer != null)
             {
-                // Restore sorting settings
                 meshRenderer.sortingLayerID = originalSortingLayer;
                 meshRenderer.sortingOrder = originalSortingOrder;
-
-                // Make sure it's enabled
                 meshRenderer.enabled = true;
 
-                // Check if material needs to be restored/fixed
                 if (meshRenderer.material == null && originalMaterial != null)
                 {
                     meshRenderer.material = originalMaterial;
@@ -256,6 +248,66 @@ namespace ExoLoader
 
                 ModInstance.log($"Skeleton replaced. Bone count: {skeletonMecanim.skeleton?.Bones?.Count ?? 0}");
             }
+
+            if (!isAnimated)
+            {
+                Sprite[] spriteFrames = ModAssetManager.GetSpriteAnimation(AssetContentType.CharacterSpriteModel, chara.charaID + "_model_" + artStage.ToString());
+                if (spriteFrames != null && spriteFrames.Length > 0)
+                {
+                    GameObject spriteAnimationObject = new GameObject("SpriteAnimation_" + chara.charaID);
+                    spriteAnimationObject.transform.SetParent(existingSpineObject.transform);
+                    spriteAnimationObject.transform.localPosition = Vector3.zero;
+                    spriteAnimationObject.transform.localRotation = Quaternion.identity;
+                    spriteAnimationObject.transform.localScale = Vector3.one;
+
+                    SpriteRenderer spriteRenderer = spriteAnimationObject.AddComponent<SpriteRenderer>();
+                    spriteRenderer.material = originalMaterial;
+
+                    MeshRenderer originalMeshRenderer = existingSpineObject.GetComponent<MeshRenderer>();
+                    if (originalMeshRenderer != null)
+                    {
+                        spriteRenderer.sortingLayerID = originalSortingLayer;
+                        spriteRenderer.sortingOrder = -200; // FIXME: this may need a change
+                        originalMeshRenderer.enabled = false;
+                    }
+
+                    if (originalMaterial != null)
+                    {
+                        Material spriteMaterial = new Material(originalMaterial.shader);
+                        spriteMaterial.mainTexture = spriteFrames[0].texture;
+                        if (originalMaterial.HasProperty("_Color"))
+                        {
+                            spriteMaterial.SetColor("_Color", originalMaterial.GetColor("_Color"));
+                        }
+
+                        string[] propertiesToCopy = { "_Cutoff", "_ZWrite", "_Cull", "_BlendOp", "_SrcBlend", "_DstBlend" };
+                        foreach (string prop in propertiesToCopy)
+                        {
+                            if (originalMaterial.HasProperty(prop))
+                            {
+                                if (originalMaterial.GetFloat(prop) is float floatVal)
+                                    spriteMaterial.SetFloat(prop, floatVal);
+                            }
+                        }
+
+                        spriteRenderer.material = spriteMaterial;
+
+                        ModInstance.log($"Applied spine material shader {originalMaterial.shader.name} to sprite renderer");
+                    }
+
+                    SpriteAnimationPlayer animationPlayer = spriteAnimationObject.AddComponent<SpriteAnimationPlayer>();
+                    animationPlayer.sprites = spriteFrames;
+                    animationPlayer.frameRate = chara.data.spriteFrameRates[artStage - 1];
+
+                    animationPlayer.PlayAnimation();
+
+                    ModInstance.log($"Created sprite animation for {chara.charaID} art stage {artStage} with {spriteFrames.Length} frames");
+                }
+            }
+
+            // FIXME: figure out later if we need to move the speech bubble, sometimes it looks weird
+            // Transform speechBubbleTransform = existingSpineObject.transform.Find("speechBubble");
+            // ModInstance.log("Got speech bubble transform " + speechBubbleTransform?.name);
         }
     }
 }

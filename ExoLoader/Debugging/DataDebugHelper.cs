@@ -14,7 +14,7 @@ namespace ExoLoader.Debugging
             foreach (string message in messages)
             {
                 writer.WriteLine(message);
-                ModLoadingStatus.LogError(message);
+                ModLoadingStatus.LogError($"{name}: {message}");
             }
             writer.Close();
         }

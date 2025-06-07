@@ -40,7 +40,7 @@ namespace ExoLoader
                 return null;
             }
         }
-        
+
         public static Texture2D[] LoadTexturesFromFolder(string folderPath, bool silentErrors = false)
         {
             if (!Directory.Exists(folderPath))
@@ -66,7 +66,7 @@ namespace ExoLoader
                     }
                     else if (!silentErrors)
                     {
-                        Debug.LogWarning($"Failed to load texture from file: {file}");
+                        ModInstance.log($"Failed to load texture from file: {file}");
                         ModLoadingStatus.LogError($"Failed to load texture from file: {file}");
                     }
                 }
@@ -140,6 +140,42 @@ namespace ExoLoader
             }
 
             return CreateSprite(texture, pixelsPerUnit, config.Pivot, spriteName);
+        }
+
+        public static Sprite[] LoadSpritesFromFolder(string folderPath, SpriteLoadConfig config = null)
+        {
+            if (config == null)
+                config = new SpriteLoadConfig();
+
+            List<Sprite> sprites = [];
+            string[] files = Directory.GetFiles(folderPath, "*.png");
+
+            foreach (string file in files)
+            {
+                try
+                {
+                    var sprite = LoadSprite(file, config);
+                    if (sprite != null)
+                    {
+                        sprites.Add(sprite);
+                    }
+                    else if (!config.SilentErrors)
+                    {
+                        ModInstance.log($"Failed to load sprite from file: {file}");
+                        ModLoadingStatus.LogError($"Failed to load sprite from file: {file}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (!config.SilentErrors)
+                    {
+                        ModInstance.log($"Exception loading sprite {file}: {ex.Message}");
+                        ModLoadingStatus.LogError($"Exception loading sprite {file}: {ex.Message}");
+                    }
+                }
+            }
+
+            return [.. sprites];
         }
     }
 

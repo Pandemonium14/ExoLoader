@@ -20,8 +20,6 @@ namespace ExoLoader
             if (Loaded)
                 yield break;
 
-            ModLoadingStatus.ClearErrors();
-
             if (LoadingProgress.Instance == null)
             {
                 ModInstance.log("Creating LoadingProgress instance...");
@@ -170,9 +168,10 @@ namespace ExoLoader
                 bool modelDirectoryExists = Directory.Exists(modelFolder);
                 string atlasDataPath = modelDirectoryExists ? Directory.GetFiles(modelFolder, "*.atlas").FirstOrDefault() : null;
                 string skeletonDataPath = modelDirectoryExists ? Directory.GetFiles(modelFolder, "*.json").FirstOrDefault() : null;
-                bool isAnimated = modelDirectoryExists && Directory.GetFiles(modelFolder, "*.png").Length > 0 && !string.IsNullOrEmpty(skeletonDataPath) && !string.IsNullOrEmpty(atlasDataPath);
+                bool isAnimatedSpine = modelDirectoryExists && Directory.GetFiles(modelFolder, "*.png").Length > 0 && !string.IsNullOrEmpty(skeletonDataPath) && !string.IsNullOrEmpty(atlasDataPath);
+                bool isAnimatedSprite = modelDirectoryExists && Directory.GetFiles(modelFolder, "*.png").Length > 0;
 
-                if (isAnimated)
+                if (isAnimatedSpine)
                 {
                     Texture2D[] textures = ImageUtils.LoadTexturesFromFolder(modelFolder, SilentErrors);
                     TextAsset atlasText = new TextAsset(File.ReadAllText(atlasDataPath));
@@ -190,6 +189,31 @@ namespace ExoLoader
                             ModInstance.log($"Failed to load animated character model: {modelName}. Missing assets.");
                             ModInstance.log($"Textures: {textures?.Length ?? 0}, Atlas: {atlasText != null}, Skeleton: {skeletonJson != null}");
                             throw new Exception($"Missing assets for animated character model: {modelName}");
+                        }
+                    }
+                }
+                else if (isAnimatedSprite)
+                {
+                    SpriteLoadConfig config = new SpriteLoadConfig
+                    {
+                        SilentErrors = SilentErrors
+                    };
+                    Sprite[] sprites = ImageUtils.LoadSpritesFromFolder(modelFolder, config);
+
+                    if (sprites != null && sprites.Length > 0)
+                    {
+                        Texture2D texture = sprites[0].texture;
+                        texture.name = "skeleton";
+                        ModAssetManager.StoreSkeletonData(AssetContentType.CharacterModel, modelName, new[] { texture }, staticSkeletonAtlas, staticSkeletonData, false);
+                        ModAssetManager.StoreSpriteAnimation(AssetContentType.CharacterSpriteModel, modelName, sprites);
+                        ModInstance.log($"Loaded animated sprite character model: {modelName}");
+                    }
+                    else
+                    {
+                        if (!SilentErrors)
+                        {
+                            ModInstance.log($"Failed to load animated sprite character model: {modelName}. No textures found.");
+                            throw new Exception($"No textures found for animated sprite character model: {modelName}");
                         }
                     }
                 }

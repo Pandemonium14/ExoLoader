@@ -287,6 +287,15 @@ namespace ExoLoader
                 }
 
                 ModInstance.log("Helio map spot read");
+
+                JArray spriteFrameRatesRaw = (JArray)parsedJson.GetValueSafe("AnimationFrameRates");
+                if (spriteFrameRatesRaw != null)
+                {
+                    ModInstance.log("This character will use sprite frame rates by age");
+                    string[] spriteFrameRatesStrings = spriteFrameRatesRaw.ToObject<string[]>();
+                    float[] spriteFrameRates = { float.Parse(spriteFrameRatesStrings[0]), float.Parse(spriteFrameRatesStrings[1]), float.Parse(spriteFrameRatesStrings[2]) };
+                    data.spriteFrameRates = spriteFrameRates;
+                }
             }
 
             string[] likes = ((JArray)(parsedJson.GetValueSafe("Likes"))).ToObject<string[]>();
@@ -314,7 +323,7 @@ namespace ExoLoader
             {
                 data.spriteSize = int.Parse(spriteSizeString);
             }
-            
+
             JArray spriteSizesRaw = ((JArray)(parsedJson.GetValueSafe("SpriteSizesByAge")));
             if (spriteSizesRaw != null)
             {

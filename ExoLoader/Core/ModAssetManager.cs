@@ -49,7 +49,13 @@ namespace ExoLoader
             }
         }
 
-        public static void StoreSkeletonData(AssetContentType contentType, string key, Texture2D[] textures, 
+        public static void StoreSpriteAnimation(AssetContentType contentType, string key, Sprite[] sprites)
+        {
+            var asset = new SpriteAnimationAsset(sprites);
+            StoreAsset(contentType, key, asset);
+        }
+
+        public static void StoreSkeletonData(AssetContentType contentType, string key, Texture2D[] textures,
             TextAsset atlasText, TextAsset skeletonJson, bool isAnimated)
         {
             var asset = new SkeletonAsset(textures, atlasText, skeletonJson, isAnimated);
@@ -70,6 +76,12 @@ namespace ExoLoader
 
             var asset = GetAsset(contentType, key);
             return (asset as SpriteAsset)?.Sprite;
+        }
+
+        public static Sprite[] GetSpriteAnimation(AssetContentType contentType, string key)
+        {
+            var asset = GetAsset(contentType, key);
+            return (asset as SpriteAnimationAsset)?.Sprites;
         }
 
         public static SkeletonAsset GetSkeletonData(AssetContentType contentType, string key)
@@ -200,6 +212,7 @@ namespace ExoLoader
         CharacterMainMenu,
         CharacterStory,
         CharacterModel,
+        CharacterSpriteModel,
         Background,
         BackgroundThumbnail,
         Card,
@@ -237,6 +250,31 @@ namespace ExoLoader
             {
                 UnityEngine.Object.DestroyImmediate(Sprite);
                 Sprite = null;
+            }
+        }
+    }
+
+    public class SpriteAnimationAsset : IModAsset
+    {
+        public Sprite[] Sprites { get; private set; }
+        public AssetType Type => AssetType.Sprite;
+        public bool IsLoaded => Sprites != null && Sprites.Length > 0;
+
+        public SpriteAnimationAsset(Sprite[] sprites)
+        {
+            Sprites = sprites;
+        }
+
+        public void Dispose()
+        {
+            if (Sprites != null)
+            {
+                foreach (var sprite in Sprites)
+                {
+                    if (sprite != null)
+                        UnityEngine.Object.DestroyImmediate(sprite);
+                }
+                Sprites = null;
             }
         }
     }
