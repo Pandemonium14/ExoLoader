@@ -82,9 +82,9 @@ public class ExoscriptAdditions
     [HarmonyPostfix]
     public static void CharaGetFactPatch(Chara __instance, ref string __result, CharaFact fact, bool force)
     {
-        // Memories set as mem_custom_<firstCharaId>_<secondCharaId>_relationship
         try
         {
+            // Custom dating memories set as mem_custom_<firstCharaId>_<secondCharaId>_relationship
             if (fact == CharaFact.date)
             {
                 string charaID = __instance.charaID;
@@ -169,6 +169,32 @@ public class ExoscriptAdditions
                     return;
                 }
             }
+
+            // Glow birthday date (so it does not display "Early Glow" and instead displays "Glow season")
+            if (fact == CharaFact.birthday)
+            {
+                if (!force && !Princess.HasGroundhog("fact_" + __instance.charaID + "_" + fact, evenIfDisabled: true))
+                {
+                    return;
+                }
+
+                if (__instance.charaID == "congruence")
+                {
+                    return;
+                }
+
+                if (__instance.birthMonthOfYear == 13)
+                {
+                    Season season = PrincessMonth.SeasonForMonth(__instance.birthMonthOfYear);
+                    string text = TextLocalized.Localize("month_season", season.seasonName);
+
+                    if (text != null && !text.IsNullOrEmptyOrWhitespace())
+                    {
+                        __result = text;
+                    }
+                }
+            }
+
             return;
         }
         catch (Exception ex)
