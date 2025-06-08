@@ -63,6 +63,31 @@ namespace ExoLoader
                 {
                     switch (folderName)
                     {
+                        case "Characters":
+                            {
+                                ModInstance.log("Parsing characters folder");
+                                // This works a bit differently, because "Characters" folder contains subfolders for each character
+                                foreach (string charaFolder in Directory.GetDirectories(folder))
+                                {
+                                    ModInstance.log("Parsing character folder " + CFileManager.TrimFolderName(charaFolder));
+                                    try
+                                    {
+                                        ParseCharacterData(charaFolder);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        if (ex is InvalidCastException)
+                                        {
+                                            DataDebugHelper.PrintDataError("Invalid cast when loading character " + Path.GetFileNameWithoutExtension(charaFolder), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
+                                        }
+                                        else
+                                        {
+                                            DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(charaFolder), ex.Message);
+                                        }
+                                    }
+                                }
+                                break;
+                            }
                         case "Cards":
                             {
                                 ModInstance.log("Parsing cards folder");
@@ -86,7 +111,6 @@ namespace ExoLoader
                                             {
                                                 DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
-                                            throw ex;
                                         }
                                     }
                                 }
@@ -137,7 +161,6 @@ namespace ExoLoader
                                             {
                                                 DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
-                                            throw ex;
                                         }
                                     }
                                 }
@@ -165,7 +188,6 @@ namespace ExoLoader
                                             {
                                                 DataDebugHelper.PrintDataError("Unexpected error when loading ending " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
-                                            throw ex;
                                         }
                                     }
                                 }
@@ -194,7 +216,6 @@ namespace ExoLoader
                                             {
                                                 DataDebugHelper.PrintDataError("Unexpected error when loading script extension " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
-                                            throw ex;
                                         }
                                     }
                                 }
@@ -222,7 +243,6 @@ namespace ExoLoader
                                             {
                                                 DataDebugHelper.PrintDataError("Unexpected error when loading collectible " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
-                                            throw ex;
                                         }
                                     }
                                 }
@@ -251,7 +271,6 @@ namespace ExoLoader
                                             {
                                                 DataDebugHelper.PrintDataError("Unexpected error when loading achievement " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
-                                            throw ex;
                                         }
                                     }
                                 }
@@ -386,6 +405,63 @@ namespace ExoLoader
             collectible.MakeCollectible();
         }
 
+        private static void ParseCharacterData(string folder)
+        {
+            ModInstance.instance.Log("Parsing folder " + CFileManager.TrimFolderName(folder));
+            CharaData data;
+
+            try
+            {
+                data = CFileManager.ParseCustomData(folder);
+            }
+            catch (Exception e)
+            {
+                if (e is InvalidCastException)
+                {
+                    DataDebugHelper.PrintDataError("Invalid cast when loading character " + Path.GetFileNameWithoutExtension(folder), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
+                }
+                else
+                {
+                    DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(folder), e.Message);
+                }
+                return;
+            }
+
+            ModInstance.log("Adding character: " + data.id);
+            if (data != null)
+            {
+                data.MakeChara();
+                CustomChara.customCharasById.Add(data.id, (CustomChara)Chara.FromID(data.id));
+            }
+
+            ModInstance.log(data.id + " added succesfully, adding images to the character sprite list");
+            string[] originalList = Northway.Utils.Singleton<AssetManager>.instance.charaSpriteNames;
+            List<string> newlist = originalList.ToList<string>();
+            string spritesPath = Path.Combine(folder, "Sprites");
+            int counter = 0;
+            foreach (string filePath in Directory.EnumerateFiles(spritesPath))
+            {
+                string file = Path.GetFileName(filePath);
+                //ModInstance.log("Checking " + file);
+                if (file.EndsWith(".png") && file.StartsWith(data.id))
+                {
+                    newlist.Add(file.Replace(".png", ""));
+                    List<string> l = Northway.Utils.Singleton<AssetManager>.instance.spritesByCharaID.GetSafe(data.id);
+                    if (l == null)
+                    {
+                        l = [];
+                        Northway.Utils.Singleton<AssetManager>.instance.spritesByCharaID.Add(data.id, l);
+                    }
+                    l.Add(file.Replace(".png", "").Replace("_normal", ""));
+                    CustomChara.newCharaSprites.Add(file.Replace(".png", ""));
+                    counter++;
+                }
+            }
+
+            Northway.Utils.Singleton<AssetManager>.instance.charaSpriteNames = newlist.ToArray();
+            ModInstance.log("Added " + counter + " image names to the list");
+        }
+
         private static void ParseCardData(string file)
         {
             string fullJson = File.ReadAllText(file);
@@ -402,7 +478,7 @@ namespace ExoLoader
                 ModInstance.instance.Log("Couldn't parse json for " + Path.GetFileName(file));
                 return;
             }
-            List<string> missingKeys = new List<string>() {"The following keys are mandatory for a card file but were missing:"};
+            List<string> missingKeys = new List<string>() { "The following keys are mandatory for a card file but were missing:" };
             foreach (string key in expectedCardEntries)
             {
                 if (!data.ContainsKey(key))

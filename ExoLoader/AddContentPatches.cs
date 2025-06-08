@@ -16,67 +16,7 @@ namespace ExoLoader
         {
             if (filename == "Exocolonist - charas")
             {
-                ModInstance.instance.Log("Checking CustomCharacter folders");
-                string[] charaFolders = CFileManager.GetAllCustomCharaFolders();
-                if (charaFolders != null && charaFolders.Length == 0)
-                {
-                    ModInstance.instance.Log("Found no folder");
-                    return;
-                }
-                foreach (string folder in charaFolders)
-                {
-                    ModInstance.instance.Log("Parsing folder " + CFileManager.TrimFolderName(folder));
-                    CharaData data = null;
-                    try
-                    {
-                        data = CFileManager.ParseCustomData(folder);
-                    }
-                    catch (Exception e)
-                    {
-                        if (e is InvalidCastException)
-                        {
-                            DataDebugHelper.PrintDataError("Invalid cast when loading character " + Path.GetFileNameWithoutExtension(folder), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
-                        }
-                        else
-                        {
-                            DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(folder), e.Message);
-                        }
-                        throw e;
-                    }
-                    ModInstance.log("Adding character: " + data.id);
-                    if (data != null)
-                    {
-                        data.MakeChara();
-                        CustomChara.customCharasById.Add(data.id, (CustomChara)Chara.FromID(data.id));
-                    }
-                    ModInstance.log(data.id + " added succesfully, adding images to the character sprite list");
-                    string[] originalList = Northway.Utils.Singleton<AssetManager>.instance.charaSpriteNames;
-                    List<string> newlist = originalList.ToList<string>();
-                    string spritesPath = Path.Combine(folder, "Sprites");
-                    int counter = 0;
-                    foreach (string filePath in Directory.EnumerateFiles(spritesPath))
-                    {
-                        string file = Path.GetFileName(filePath);
-                        //ModInstance.log("Checking " + file);
-                        if (file.EndsWith(".png") && file.StartsWith(data.id))
-                        {
-                            newlist.Add(file.Replace(".png", ""));
-                            List<string> l = Northway.Utils.Singleton<AssetManager>.instance.spritesByCharaID.GetSafe(data.id);
-                            if (l == null)
-                            {
-                                l = new List<string>();
-                                Northway.Utils.Singleton<AssetManager>.instance.spritesByCharaID.Add(data.id, l);
-                            }
-                            l.Add(file.Replace(".png", "").Replace("_normal", ""));
-                            CustomChara.newCharaSprites.Add(file.Replace(".png", ""));
-                            counter++;
-                        }
-                    }
-
-                    Northway.Utils.Singleton<AssetManager>.instance.charaSpriteNames = newlist.ToArray();
-                    ModInstance.log("Added " + counter + " image names to the list");
-
-                }
+                LoadCustomContent("Characters");
             }
             else if (filename == "ExocolonistCards - cards")
             {
