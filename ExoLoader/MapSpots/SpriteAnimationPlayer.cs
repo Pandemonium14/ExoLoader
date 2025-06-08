@@ -1,5 +1,7 @@
 using UnityEngine;
 
+namespace ExoLoader;
+
 public class SpriteAnimationPlayer : MonoBehaviour
 {
     public Sprite[] sprites;

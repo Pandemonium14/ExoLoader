@@ -271,30 +271,6 @@ namespace ExoLoader
                         originalMeshRenderer.enabled = false;
                     }
 
-                    if (originalMaterial != null)
-                    {
-                        Material spriteMaterial = new Material(originalMaterial.shader);
-                        spriteMaterial.mainTexture = spriteFrames[0].texture;
-                        if (originalMaterial.HasProperty("_Color"))
-                        {
-                            spriteMaterial.SetColor("_Color", originalMaterial.GetColor("_Color"));
-                        }
-
-                        string[] propertiesToCopy = { "_Cutoff", "_ZWrite", "_Cull", "_BlendOp", "_SrcBlend", "_DstBlend" };
-                        foreach (string prop in propertiesToCopy)
-                        {
-                            if (originalMaterial.HasProperty(prop))
-                            {
-                                if (originalMaterial.GetFloat(prop) is float floatVal)
-                                    spriteMaterial.SetFloat(prop, floatVal);
-                            }
-                        }
-
-                        spriteRenderer.material = spriteMaterial;
-
-                        ModInstance.log($"Applied spine material shader {originalMaterial.shader.name} to sprite renderer");
-                    }
-
                     SpriteAnimationPlayer animationPlayer = spriteAnimationObject.AddComponent<SpriteAnimationPlayer>();
                     animationPlayer.sprites = spriteFrames;
                     animationPlayer.frameRate = chara.data.spriteFrameRates[artStage - 1];
