@@ -87,10 +87,18 @@ namespace ExoLoader
                     Job job = Job.FromID(jobID);
                     if (job != null)
                     {
-                        job.skillChanges.Add(new SkillChange(CChara, 1));
+                        int postCharaIndex = job.skillChanges.FindIndex((skillChange) => (skillChange.skill == Skill.kudos) || (skillChange.skill == Skill.stress));
+
+                        if (postCharaIndex == -1)
+                        {
+                            job.skillChanges.Add(new SkillChange(CChara, 1));
+                        }
+                        else
+                        {
+                            job.skillChanges.Insert(postCharaIndex, new SkillChange(CChara, 1));
+                        }
                     }
                 }
-
             }
 
             // Chara.allCharas is the array used in CharasMenu to display the list of charas
@@ -99,7 +107,7 @@ namespace ExoLoader
             ReorderCharas();
         }
 
-        public static void ReorderCharas()
+        private static void ReorderCharas()
         {
             int firstNonFriendIndex = Chara.allCharas.FindIndex(chara => !chara.canLove);
             for (int index = 0; index < Chara.allCharas.Count; index++)

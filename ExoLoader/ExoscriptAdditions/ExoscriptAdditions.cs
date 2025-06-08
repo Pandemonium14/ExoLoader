@@ -171,14 +171,9 @@ public class ExoscriptAdditions
             }
 
             // Glow birthday date (so it does not display "Early Glow" and instead displays "Glow season")
-            if (fact == CharaFact.birthday)
+            if (fact == CharaFact.birthday && __instance is CustomChara)
             {
                 if (!force && !Princess.HasGroundhog("fact_" + __instance.charaID + "_" + fact, evenIfDisabled: true))
-                {
-                    return;
-                }
-
-                if (__instance.charaID == "congruence")
                 {
                     return;
                 }
