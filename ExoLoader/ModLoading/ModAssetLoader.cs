@@ -343,7 +343,7 @@ namespace ExoLoader
         {
             try
             {
-                ModInstance.log($"Loading background: {spriteName} from {background.file}");
+                ModInstance.log($"Loading background: {spriteName} from {CFileManager.TrimFolderName(background.file)}");
 
                 string spritePath = Path.Combine(background.file, spriteName + ".png");
                 SpriteLoadConfig config = new SpriteLoadConfig
@@ -373,7 +373,7 @@ namespace ExoLoader
         {
             try
             {
-                ModInstance.log($"Loading background: {spriteName} from {background.file}");
+                ModInstance.log($"Loading background thumbnail: {spriteName}_thumbnail from {CFileManager.TrimFolderName(background.file)}");
 
                 string spritePath = Path.Combine(background.file, spriteName + "_thumbnail.png");
                 SpriteLoadConfig config = new SpriteLoadConfig
@@ -428,7 +428,7 @@ namespace ExoLoader
                 string spriteName = "card_" + cardID;
                 string path = originFile.Replace(".json", ".png");
 
-                ModInstance.log($"Loading card: {cardID} from {path}");
+                ModInstance.log($"Loading card: {cardID} from {CFileManager.TrimFolderName(path)}");
 
                 Sprite sprite = ImageUtils.LoadSprite(path, new SpriteLoadConfig
                 {
@@ -484,7 +484,7 @@ namespace ExoLoader
                 if (!File.Exists(path))
                 {
                     ModInstance.log($"Achievement file not found: {path}");
-                    ModLoadingStatus.LogError($"Achievement file not found: {path}");
+                    ModLoadingStatus.LogError($"Achievement file not found: {CFileManager.TrimFolderName(path)}");
                     return;
                 }
                 

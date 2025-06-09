@@ -203,7 +203,7 @@ namespace ExoLoader
         {
             string[] baseLines = File.ReadAllLines(filePath);
             StreamWriter writer = new StreamWriter(Path.Combine(patchedStoriesFolder, additionalPrefix + "patched_" + Path.GetFileNameWithoutExtension(filePath) +".exo"), false);
-            ModInstance.log("Patching file " + filePath);
+            ModInstance.log("Patching file " + CFileManager.TrimFolderName(filePath));
             WritePatchedStoryFile(writer, baseLines);
 
             writer.Flush();
