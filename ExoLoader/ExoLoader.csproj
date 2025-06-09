@@ -39,6 +39,10 @@
       <HintPath>$(SolutionDir)lib\UnityEngine.UI.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>$(SolutionDir)lib\Unity.TextMeshPro.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
   <!-- All .cs files are automatically included by the SDK -->

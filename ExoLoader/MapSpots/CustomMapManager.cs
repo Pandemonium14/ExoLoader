@@ -110,8 +110,9 @@ namespace ExoLoader
                 return true;
             }
 
-            Vector3 currentPosition = currentTransform.localPosition;
-            Vector3 targetPos = new Vector3(targetPosition[0], targetPosition[1], targetPosition[2]);
+            // y coordinate is weird, so we only check x and z
+            Vector3 currentPosition = new Vector3(currentTransform.localPosition.x, 0, currentTransform.localPosition.z);
+            Vector3 targetPos = new Vector3(targetPosition[0], 0, targetPosition[2]);
 
             float tolerance = 0.01f;
             return Vector3.Distance(currentPosition, targetPos) > tolerance;

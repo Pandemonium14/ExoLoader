@@ -63,6 +63,31 @@ namespace ExoLoader
                 {
                     switch (folderName)
                     {
+                        case "Characters":
+                            {
+                                ModInstance.log("Parsing characters folder");
+                                // This works a bit differently, because "Characters" folder contains subfolders for each character
+                                foreach (string charaFolder in Directory.GetDirectories(folder))
+                                {
+                                    ModInstance.log("Parsing character folder " + CFileManager.TrimFolderName(charaFolder));
+                                    try
+                                    {
+                                        ParseCharacterData(charaFolder);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        if (ex is InvalidCastException)
+                                        {
+                                            DataDebugHelper.PrintDataError("Invalid cast when loading character " + Path.GetFileNameWithoutExtension(charaFolder), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
+                                        }
+                                        else
+                                        {
+                                            DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(charaFolder), ex.Message);
+                                        }
+                                    }
+                                }
+                                break;
+                            }
                         case "Cards":
                             {
                                 ModInstance.log("Parsing cards folder");
@@ -86,7 +111,6 @@ namespace ExoLoader
                                             {
                                                 DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
-                                            throw ex;
                                         }
                                     }
                                 }
@@ -118,28 +142,24 @@ namespace ExoLoader
                         case "Jobs":
                             {
                                 ModInstance.log("Parsing job folders");
-                                foreach (string jobFolder in CFileManager.GetAllCustomContentFolders("Jobs"))
+                                foreach (string file in Directory.GetFiles(folder))
                                 {
-                                    foreach (string file in Directory.GetFiles(jobFolder))
+                                    if (file.EndsWith(".json"))
                                     {
-                                        if (file.EndsWith(".json"))
+                                        ModInstance.log("Found job file " + Path.GetFileName(file) + ", parsing...");
+                                        try
                                         {
-                                            ModInstance.log("Found job file " + Path.GetFileName(file) + ", parsing...");
-                                            try
+                                            ParseJobData(file);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            if (ex is InvalidCastException)
                                             {
-                                                ParseJobData(file);
+                                                DataDebugHelper.PrintDataError("Invalid cast when loading job " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
                                             }
-                                            catch (Exception ex)
+                                            else
                                             {
-                                                if (ex is InvalidCastException)
-                                                {
-                                                    DataDebugHelper.PrintDataError("Invalid cast when loading job " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
-                                                }
-                                                else
-                                                {
-                                                    DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(file), ex.Message);
-                                                }
-                                                throw ex;
+                                                DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
                                         }
                                     }
@@ -149,28 +169,24 @@ namespace ExoLoader
                         case "Endings":
                             {
                                 ModInstance.log("Parsing ending folders");
-                                foreach (string jobFolder in CFileManager.GetAllCustomContentFolders("Endings"))
+                                foreach (string file in Directory.GetFiles(folder))
                                 {
-                                    foreach (string file in Directory.GetFiles(jobFolder))
+                                    if (file.EndsWith(".json"))
                                     {
-                                        if (file.EndsWith(".json"))
+                                        ModInstance.log("Found ending file " + Path.GetFileName(file) + ", parsing...");
+                                        try
                                         {
-                                            ModInstance.log("Found ending file " + Path.GetFileName(file) + ", parsing...");
-                                            try
+                                            ParseEndingData(file);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            if (ex is InvalidCastException)
                                             {
-                                                ParseEndingData(file);
+                                                DataDebugHelper.PrintDataError("Invalid cast when loading ending " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
                                             }
-                                            catch (Exception ex)
+                                            else
                                             {
-                                                if (ex is InvalidCastException)
-                                                {
-                                                    DataDebugHelper.PrintDataError("Invalid cast when loading ending " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
-                                                }
-                                                else
-                                                {
-                                                    DataDebugHelper.PrintDataError("Unexpected error when loading ending " + Path.GetFileNameWithoutExtension(file), ex.Message);
-                                                }
-                                                throw ex;
+                                                DataDebugHelper.PrintDataError("Unexpected error when loading ending " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
                                         }
                                     }
@@ -200,7 +216,6 @@ namespace ExoLoader
                                             {
                                                 DataDebugHelper.PrintDataError("Unexpected error when loading script extension " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
-                                            throw ex;
                                         }
                                     }
                                 }
@@ -209,29 +224,24 @@ namespace ExoLoader
 
                         case "Collectibles":
                             {
-                                ModInstance.log("Parsing collectibles folders");
-                                foreach (string jobFolder in CFileManager.GetAllCustomContentFolders("Collectibles"))
+                                foreach (string file in Directory.GetFiles(folder))
                                 {
-                                    foreach (string file in Directory.GetFiles(jobFolder))
+                                    if (file.EndsWith(".json"))
                                     {
-                                        if (file.EndsWith(".json"))
+                                        ModInstance.log("Found collectible file " + Path.GetFileName(file) + ", parsing...");
+                                        try
                                         {
-                                            ModInstance.log("Found collectible file " + Path.GetFileName(file) + ", parsing...");
-                                            try
+                                            ParseCollectibleData(file);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            if (ex is InvalidCastException)
                                             {
-                                                ParseCollectibleData(file);
+                                                DataDebugHelper.PrintDataError("Invalid cast when loading collectible " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
                                             }
-                                            catch (Exception ex)
+                                            else
                                             {
-                                                if (ex is InvalidCastException)
-                                                {
-                                                    DataDebugHelper.PrintDataError("Invalid cast when loading collectible " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
-                                                }
-                                                else
-                                                {
-                                                    DataDebugHelper.PrintDataError("Unexpected error when loading collectible " + Path.GetFileNameWithoutExtension(file), ex.Message);
-                                                }
-                                                throw ex;
+                                                DataDebugHelper.PrintDataError("Unexpected error when loading collectible " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
                                         }
                                     }
@@ -242,28 +252,24 @@ namespace ExoLoader
                         case "Achievements":
                             {
                                 ModInstance.log("Parsing achievements folders");
-                                foreach (string jobFolder in CFileManager.GetAllCustomContentFolders("Achievements"))
+                                foreach (string file in Directory.GetFiles(folder))
                                 {
-                                    foreach (string file in Directory.GetFiles(jobFolder))
+                                    if (file.EndsWith(".json"))
                                     {
-                                        if (file.EndsWith(".json"))
+                                        ModInstance.log("Found achievement file " + Path.GetFileName(file) + ", parsing...");
+                                        try
                                         {
-                                            ModInstance.log("Found achievement file " + Path.GetFileName(file) + ", parsing...");
-                                            try
+                                            ParseCheevoData(file);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            if (ex is InvalidCastException)
                                             {
-                                                ParseCheevoData(file);
+                                                DataDebugHelper.PrintDataError("Invalid cast when loading achievement " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
                                             }
-                                            catch (Exception ex)
+                                            else
                                             {
-                                                if (ex is InvalidCastException)
-                                                {
-                                                    DataDebugHelper.PrintDataError("Invalid cast when loading achievement " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
-                                                }
-                                                else
-                                                {
-                                                    DataDebugHelper.PrintDataError("Unexpected error when loading achievement " + Path.GetFileNameWithoutExtension(file), ex.Message);
-                                                }
-                                                throw ex;
+                                                DataDebugHelper.PrintDataError("Unexpected error when loading achievement " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
                                         }
                                     }
@@ -399,6 +405,63 @@ namespace ExoLoader
             collectible.MakeCollectible();
         }
 
+        private static void ParseCharacterData(string folder)
+        {
+            ModInstance.instance.Log("Parsing folder " + CFileManager.TrimFolderName(folder));
+            CharaData data;
+
+            try
+            {
+                data = CFileManager.ParseCustomData(folder);
+            }
+            catch (Exception e)
+            {
+                if (e is InvalidCastException)
+                {
+                    DataDebugHelper.PrintDataError("Invalid cast when loading character " + Path.GetFileNameWithoutExtension(folder), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
+                }
+                else
+                {
+                    DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(folder), e.Message);
+                }
+                return;
+            }
+
+            ModInstance.log("Adding character: " + data.id);
+            if (data != null)
+            {
+                data.MakeChara();
+                CustomChara.customCharasById.Add(data.id, (CustomChara)Chara.FromID(data.id));
+            }
+
+            ModInstance.log(data.id + " added succesfully, adding images to the character sprite list");
+            string[] originalList = Northway.Utils.Singleton<AssetManager>.instance.charaSpriteNames;
+            List<string> newlist = originalList.ToList<string>();
+            string spritesPath = Path.Combine(folder, "Sprites");
+            int counter = 0;
+            foreach (string filePath in Directory.EnumerateFiles(spritesPath))
+            {
+                string file = Path.GetFileName(filePath);
+                //ModInstance.log("Checking " + file);
+                if (file.EndsWith(".png") && file.StartsWith(data.id))
+                {
+                    newlist.Add(file.Replace(".png", ""));
+                    List<string> l = Northway.Utils.Singleton<AssetManager>.instance.spritesByCharaID.GetSafe(data.id);
+                    if (l == null)
+                    {
+                        l = [];
+                        Northway.Utils.Singleton<AssetManager>.instance.spritesByCharaID.Add(data.id, l);
+                    }
+                    l.Add(file.Replace(".png", "").Replace("_normal", ""));
+                    CustomChara.newCharaSprites.Add(file.Replace(".png", ""));
+                    counter++;
+                }
+            }
+
+            Northway.Utils.Singleton<AssetManager>.instance.charaSpriteNames = newlist.ToArray();
+            ModInstance.log("Added " + counter + " image names to the list");
+        }
+
         private static void ParseCardData(string file)
         {
             string fullJson = File.ReadAllText(file);
@@ -415,7 +478,7 @@ namespace ExoLoader
                 ModInstance.instance.Log("Couldn't parse json for " + Path.GetFileName(file));
                 return;
             }
-            List<string> missingKeys = new List<string>() {"The following keys are mandatory for a card file but were missing:"};
+            List<string> missingKeys = new List<string>() { "The following keys are mandatory for a card file but were missing:" };
             foreach (string key in expectedCardEntries)
             {
                 if (!data.ContainsKey(key))
@@ -725,61 +788,253 @@ namespace ExoLoader
                 ModInstance.instance.Log("Couldn't parse json for " + Path.GetFileName(file));
                 return;
             }
-            List<string> missingKeys = new List<string>() { "The following keys are mandatory for an ending file but were missing:" };
-            foreach (string key in expectedEndingEntries)
-            {
-                if (!data.ContainsKey(key))
-                {
-                    missingKeys.Add(key);
-                }
-            }
-            if (missingKeys.Count > 1)
-            {
-                DataDebugHelper.PrintDataError("Missing mandatory keys for card " + Path.GetFileNameWithoutExtension(file), missingKeys.ToArray());
-                return;
-            }
+
             string ID = (string)data["ID"];
-            string name = (string)data["Name"];
-            string preamble = (string)data["Preamble"];
-            Location location = data.ContainsKey("Location") ? Location.FromID((string)data["Location"]) : Location.none;
-            string chara = data.ContainsKey("Character") ? (string)data["Character"] : "";
-
-            string[] requiredMemories = data.ContainsKey("RequiredMemories") ? ((JArray)(data.GetValueSafe("RequiredMemories"))).ToObject<string[]>() : new string[0];
-
-            string[] requiredJobsStrings = data.ContainsKey("RequiredJobs") ? ((JArray)(data.GetValueSafe("RequiredJobs"))).ToObject<string[]>() : new string[0];
-            Job[] requiredJobs = new Job[requiredJobsStrings.Length];
-            for (int i = 0;  i < requiredJobsStrings.Length; i++)
-            {
-                requiredJobs[i] = Job.FromID(requiredJobsStrings[i]);
-            }
-
-            string[] extraJobsStrings = data.ContainsKey("OtherJobs") ? ((JArray)(data.GetValueSafe("OtherJobs"))).ToObject<string[]>() : new string[0];
-            Job[] extraJobs = new Job[extraJobsStrings.Length];
-            for (int i = 0; i < extraJobsStrings.Length; i++)
-            {
-                extraJobs[i] = Job.FromID(extraJobsStrings[i]);
-            }
-
-            string[] skillsStrings = data.ContainsKey("Skills") ? ((JArray)(data.GetValueSafe("Skills"))).ToObject<string[]>() : new string[0];
-            Skill[] skills = new Skill[skillsStrings.Length];
-            for (int i = 0; i < skillsStrings.Length; i++)
-            {
-                skills[i] = Skill.FromID(skillsStrings[i]);
-            }
 
             if (Ending.FromID(ID) != null)
             {
-                ModInstance.log("Ending with ID " + ID + " already exists, skipping creation");
-                DataDebugHelper.PrintDataError("Ending with ID " + ID + " already exists", "If you want to change the ending, please change the ID in the json file to something else. Editing existing endings is not supported at the moment.");
-                return;
+                Ending existingEnding = Ending.FromID(ID);
+
+                if (data.ContainsKey("Modifications"))
+                {
+                    ModInstance.log($"Modifying existing ending with ID {ID}");
+                    Dictionary<string, object> modifications = ((JObject)data["Modifications"]).ToObject<Dictionary<string, object>>();
+                    foreach (var modification in modifications)
+                    {
+                        switch (modification.Key)
+                        {
+                            case "Name":
+                                existingEnding.endingName = (string)modification.Value;
+                                break;
+                            case "Preamble":
+                                existingEnding.preamble = (string)modification.Value;
+                                break;
+                            case "Location":
+                                existingEnding.location = Location.FromID((string)modification.Value);
+                                break;
+                            case "Character":
+                                string charaId = (string)modification.Value;
+                                if (charaId != null && charaId != "")
+                                {
+                                    existingEnding.charaID = charaId;
+                                }
+                                else
+                                {
+                                    existingEnding.charaID = "";
+                                }
+                                break;
+                            case "RequiredMemories":
+                                if (modification.Value is JObject memoryModifications)
+                                {
+                                    List<string> memoriesList = existingEnding.memories != null ? [.. existingEnding.memories] : [];
+
+                                    if (memoryModifications.ContainsKey("Add"))
+                                    {
+                                        string[] addMemories = ((JArray)memoryModifications["Add"]).ToObject<string[]>();
+
+                                        for (int i = 0; i < addMemories.Length; i++)
+                                        {
+                                            if (!memoriesList.Contains(addMemories[i]))
+                                            {
+                                                ModInstance.log("Adding memory " + addMemories[i] + " to ending " + ID);
+                                                memoriesList.Add(addMemories[i]);
+                                            }
+                                        }
+                                    }
+
+                                    if (memoryModifications.ContainsKey("Remove"))
+                                    {
+                                        string[] removeMemories = ((JArray)memoryModifications["Remove"]).ToObject<string[]>();
+                                        for (int i = 0; i < removeMemories.Length; i++)
+                                        {
+                                            if (memoriesList.Contains(removeMemories[i]))
+                                            {
+                                                ModInstance.log("Removing memory " + removeMemories[i] + " from ending " + ID);
+                                                memoriesList.Remove(removeMemories[i]);
+                                            }
+                                        }
+                                    }
+
+                                    existingEnding.memories = [.. memoriesList];
+                                }
+                                break;
+                            case "RequiredJobs":
+                                if (modification.Value is JObject jobModifications)
+                                {
+                                    List<Job> jobsList = existingEnding.requiredJobs != null ? [.. existingEnding.requiredJobs] : [];
+
+                                    if (jobModifications.ContainsKey("Add"))
+                                    {
+                                        string[] addJobs = ((JArray)jobModifications["Add"]).ToObject<string[]>();
+
+
+                                        for (int i = 0; i < addJobs.Length; i++)
+                                        {
+                                            Job job = Job.FromID(addJobs[i]);
+                                            if (job != null && !jobsList.Contains(job))
+                                            {
+                                                ModInstance.log("Adding job " + addJobs[i] + " to ending " + ID);
+                                                jobsList.Add(job);
+                                            }
+                                        }
+                                    }
+
+                                    if (jobModifications.ContainsKey("Remove"))
+                                    {
+                                        string[] removeJobs = ((JArray)jobModifications["Remove"]).ToObject<string[]>();
+                                        for (int i = 0; i < removeJobs.Length; i++)
+                                        {
+                                            Job job = Job.FromID(removeJobs[i]);
+                                            if (job != null && jobsList.Contains(job))
+                                            {
+                                                ModInstance.log("Removing job " + removeJobs[i] + " from ending " + ID);
+                                                jobsList.Remove(job);
+                                            }
+                                        }
+                                    }
+
+                                    existingEnding.requiredJobs = [.. jobsList];
+                                }
+                                break;
+                            case "OtherJobs":
+                                if (modification.Value is JObject jobModifications2)
+                                {
+                                    List<Job> jobsList = existingEnding.otherJobs != null ? [.. existingEnding.otherJobs] : [];
+
+                                    if (jobModifications2.ContainsKey("Add"))
+                                    {
+                                        string[] addJobs = ((JArray)jobModifications2["Add"]).ToObject<string[]>();
+
+                                        for (int i = 0; i < addJobs.Length; i++)
+                                        {
+                                            Job job = Job.FromID(addJobs[i]);
+                                            if (job != null && !jobsList.Contains(job))
+                                            {
+                                                ModInstance.log("Adding extra job " + addJobs[i] + " to ending " + ID);
+                                                jobsList.Add(job);
+                                            }
+                                        }
+                                    }
+
+                                    if (jobModifications2.ContainsKey("Remove"))
+                                    {
+                                        string[] removeJobs = ((JArray)jobModifications2["Remove"]).ToObject<string[]>();
+                                        if (existingEnding.otherJobs == null)
+                                        {
+                                            break;
+                                        }
+
+                                        for (int i = 0; i < removeJobs.Length; i++)
+                                        {
+                                            Job job = Job.FromID(removeJobs[i]);
+                                            if (job != null && jobsList.Contains(job))
+                                            {
+                                                ModInstance.log("Removing extra job " + removeJobs[i] + " from ending " + ID);
+                                                jobsList.Remove(job);
+                                            }
+                                        }
+                                    }
+
+                                    existingEnding.otherJobs = [.. jobsList];
+                                }
+                                break;
+                            case "Skills":
+                                if (modification.Value is JObject skillModifications)
+                                {
+                                    List<Skill> skillsList = existingEnding.skills != null ? [.. existingEnding.skills] : [];
+
+                                    if (skillModifications.ContainsKey("Add"))
+                                    {
+                                        string[] addSkills = ((JArray)skillModifications["Add"]).ToObject<string[]>();
+
+                                        for (int i = 0; i < addSkills.Length; i++)
+                                        {
+                                            Skill skill = Skill.FromID(addSkills[i]);
+                                            if (skill != null && !skillsList.Contains(skill))
+                                            {
+                                                ModInstance.log("Adding skill " + addSkills[i] + " to ending " + ID);
+                                                skillsList.Add(skill);
+                                            }
+                                        }
+                                    }
+
+                                    if (skillModifications.ContainsKey("Remove"))
+                                    {
+                                        string[] removeSkills = ((JArray)skillModifications["Remove"]).ToObject<string[]>();
+                                        for (int i = 0; i < removeSkills.Length; i++)
+                                        {
+                                            Skill skill = Skill.FromID(removeSkills[i]);
+                                            if (skill != null && skillsList.Contains(skill))
+                                            {
+                                                ModInstance.log("Removing skill " + removeSkills[i] + " from ending " + ID);
+                                                skillsList.Remove(skill);
+                                            }
+                                        }
+                                    }
+
+                                    existingEnding.skills = [.. skillsList];
+                                }
+                                break;
+                        }
+                    }
+                }
+                else
+                {
+                    ModInstance.log($"Ending with ID {ID} already exists, skipping creation");
+                    DataDebugHelper.PrintDataError($"Ending with ID {ID} already exists", "Please make sure that the ID is unique for each ending.");
+                }
             }
+            else
+            {
+                List<string> missingKeys = new List<string>() { "The following keys are mandatory for an ending file but were missing:" };
+                foreach (string key in expectedEndingEntries)
+                {
+                    if (!data.ContainsKey(key))
+                    {
+                        missingKeys.Add(key);
+                    }
+                }
+                if (missingKeys.Count > 1)
+                {
+                    DataDebugHelper.PrintDataError("Missing mandatory keys for card " + Path.GetFileNameWithoutExtension(file), missingKeys.ToArray());
+                    return;
+                }
 
-            ModInstance.log("Creating ending with ID " + ID);
-            Ending ending = new Ending(ID, name, preamble, requiredMemories, requiredJobs, extraJobs, skills, chara, location);
+                string name = (string)data["Name"];
+                string preamble = (string)data["Preamble"];
+                Location location = data.ContainsKey("Location") ? Location.FromID((string)data["Location"]) : Location.none;
+                string chara = data.ContainsKey("Character") ? (string)data["Character"] : "";
 
-            CustomBackground.updateBackgroundNames("ending_" + ID.ToLower(), name);
+                string[] requiredMemories = data.ContainsKey("RequiredMemories") ? ((JArray)(data.GetValueSafe("RequiredMemories"))).ToObject<string[]>() : new string[0];
 
-            ModInstance.log("Parsed and created ending");
+                string[] requiredJobsStrings = data.ContainsKey("RequiredJobs") ? ((JArray)(data.GetValueSafe("RequiredJobs"))).ToObject<string[]>() : new string[0];
+                Job[] requiredJobs = new Job[requiredJobsStrings.Length];
+                for (int i = 0; i < requiredJobsStrings.Length; i++)
+                {
+                    requiredJobs[i] = Job.FromID(requiredJobsStrings[i]);
+                }
+
+                string[] extraJobsStrings = data.ContainsKey("OtherJobs") ? ((JArray)(data.GetValueSafe("OtherJobs"))).ToObject<string[]>() : new string[0];
+                Job[] extraJobs = new Job[extraJobsStrings.Length];
+                for (int i = 0; i < extraJobsStrings.Length; i++)
+                {
+                    extraJobs[i] = Job.FromID(extraJobsStrings[i]);
+                }
+
+                string[] skillsStrings = data.ContainsKey("Skills") ? ((JArray)(data.GetValueSafe("Skills"))).ToObject<string[]>() : new string[0];
+                Skill[] skills = new Skill[skillsStrings.Length];
+                for (int i = 0; i < skillsStrings.Length; i++)
+                {
+                    skills[i] = Skill.FromID(skillsStrings[i]);
+                }
+
+                ModInstance.log("Creating ending with ID " + ID);
+                Ending ending = new Ending(ID, name, preamble, requiredMemories, requiredJobs, extraJobs, skills, chara, location);
+
+                CustomBackground.updateBackgroundNames("ending_" + ID.ToLower(), name);
+
+                ModInstance.log("Parsed and created ending");
+            }
         }
 
         private static void ParseCheevoData(string file)

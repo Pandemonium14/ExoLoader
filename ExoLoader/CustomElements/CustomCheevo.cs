@@ -1,7 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
-using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace ExoLoader
 {
@@ -33,28 +30,6 @@ namespace ExoLoader
             customCheevosByID[customID] = this;
 
             Cheevo.allCheevos.Add(this);
-        }
-
-        public Sprite GetSprite()
-        {
-            if (string.IsNullOrEmpty(file))
-            {
-                ModInstance.log("Tried getting sprite for non-custom cheevo");
-                return null;
-            }
-
-            string path = file.Replace(".json", ".png");
-            if (!File.Exists(path))
-            {
-                ModInstance.log("Couldn't find image " + Path.GetFileName(path));
-                return null;
-            }
-
-            Texture2D texture = new Texture2D(2, 2);
-            byte[] bytes = File.ReadAllBytes(path);
-            ImageConversion.LoadImage(texture, bytes);
-            texture.Apply();
-            return Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0));
         }
     }
 }

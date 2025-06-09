@@ -119,7 +119,7 @@ namespace ExoLoader
                 }
                 catch (Exception ex2)
                 {
-                    Debug.LogError($"{filename} file and backup are corrupt! Resetting to defaults. " + ex2.Message);
+                    ModInstance.log($"{filename} file and backup are corrupt! Resetting to defaults. " + ex2.Message);
                     isLoaded = true;
                     Save();
                     return;
@@ -128,7 +128,7 @@ namespace ExoLoader
 
             if (saveFileVersion != currentVersion)
             {
-                Debug.Log($"{filename} version changed from " + saveFileVersion + " to " + currentVersion);
+                ModInstance.log($"{filename} version changed from " + saveFileVersion + " to " + currentVersion);
                 saveFileVersion = currentVersion;
             }
 

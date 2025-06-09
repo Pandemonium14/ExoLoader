@@ -10,75 +10,13 @@ namespace ExoLoader
     [HarmonyPatch]
     public class AddContentPatches
     {
-        private static bool logStoryReq;
-
         [HarmonyPatch(typeof(ParserData), "LoadData")]
         [HarmonyPostfix]
         public static void AddCharaPatch(string filename)
         {
             if (filename == "Exocolonist - charas")
             {
-                ModInstance.instance.Log("Checking CustomCharacter folders");
-                string[] charaFolders = CFileManager.GetAllCustomCharaFolders();
-                if (charaFolders != null && charaFolders.Length == 0)
-                {
-                    ModInstance.instance.Log("Found no folder");
-                    return;
-                }
-                foreach (string folder in charaFolders)
-                {
-                    ModInstance.instance.Log("Parsing folder " + CFileManager.TrimFolderName(folder));
-                    CharaData data = null;
-                    try
-                    {
-                        data = CFileManager.ParseCustomData(folder);
-                    }
-                    catch (Exception e)
-                    {
-                        if (e is InvalidCastException)
-                        {
-                            DataDebugHelper.PrintDataError("Invalid cast when loading character " + Path.GetFileNameWithoutExtension(folder), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
-                        }
-                        else
-                        {
-                            DataDebugHelper.PrintDataError("Unexpected error when loading " + Path.GetFileNameWithoutExtension(folder), e.Message);
-                        }
-                        throw e;
-                    }
-                    ModInstance.log("Adding character: " + data.id);
-                    if (data != null)
-                    {
-                        data.MakeChara();
-                        CustomChara.customCharasById.Add(data.id, (CustomChara)Chara.FromID(data.id));
-                    }
-                    ModInstance.log(data.id + " added succesfully, adding images to the character sprite list");
-                    string[] originalList = Northway.Utils.Singleton<AssetManager>.instance.charaSpriteNames;
-                    List<string> newlist = originalList.ToList<string>();
-                    string spritesPath = Path.Combine(folder, "Sprites");
-                    int counter = 0;
-                    foreach (string filePath in Directory.EnumerateFiles(spritesPath))
-                    {
-                        string file = Path.GetFileName(filePath);
-                        //ModInstance.log("Checking " + file);
-                        if (file.EndsWith(".png") && file.StartsWith(data.id))
-                        {
-                            newlist.Add(file.Replace(".png", ""));
-                            List<string> l = Northway.Utils.Singleton<AssetManager>.instance.spritesByCharaID.GetSafe(data.id);
-                            if (l == null)
-                            {
-                                l = new List<string>();
-                                Northway.Utils.Singleton<AssetManager>.instance.spritesByCharaID.Add(data.id, l);
-                            }
-                            l.Add(file.Replace(".png", "").Replace("_normal", ""));
-                            CustomChara.newCharaSprites.Add(file.Replace(".png", ""));
-                            counter++;
-                        }
-                    }
-
-                    Northway.Utils.Singleton<AssetManager>.instance.charaSpriteNames = newlist.ToArray();
-                    ModInstance.log("Added " + counter + " image names to the list");
-
-                }
+                LoadCustomContent("Characters");
             }
             else if (filename == "ExocolonistCards - cards")
             {
@@ -149,40 +87,41 @@ namespace ExoLoader
                     Job job = Job.FromID(jobID);
                     if (job != null)
                     {
-                        job.skillChanges.Add(new SkillChange(CChara, 1));
+                        int postCharaIndex = job.skillChanges.FindIndex((skillChange) => (skillChange.skill == Skill.kudos) || (skillChange.skill == Skill.stress));
+
+                        if (postCharaIndex == -1)
+                        {
+                            job.skillChanges.Add(new SkillChange(CChara, 1));
+                        }
+                        else
+                        {
+                            job.skillChanges.Insert(postCharaIndex, new SkillChange(CChara, 1));
+                        }
                     }
                 }
-
             }
 
             // Chara.allCharas is the array used in CharasMenu to display the list of charas
             // With this sorting, we maintain the order of original charas, but add custom charas with .canLove before original charas with .canLove = false
-            // This is done to maintain the order of charas in the menu, and to make it easier to find custom charas
-            ReorderCharasWithLinq();
+            // This is done to maintain the order of charas in the menu, and to make it easier to find custom befriendable charas
+            ReorderCharas();
         }
 
-        public static void ReorderCharasWithLinq()
+        private static void ReorderCharas()
         {
-            Chara.allCharas = Chara.allCharas
-                .OrderBy(GetCharaSortKey)
-                .ToList();
-        }
-
-        private static int GetCharaSortKey(Chara chara)
-        {
-            // Create sort keys to maintain desired order:
-            // 0: Chara with canLove = true
-            // 1: CustomChara with canLove = true
-            // 2: Chara with canLove = false
-            // 3: CustomChara with canLove = false
-
-            if (chara is CustomChara)
+            int firstNonFriendIndex = Chara.allCharas.FindIndex(chara => !chara.canLove);
+            for (int index = 0; index < Chara.allCharas.Count; index++)
             {
-                return chara.canLove ? 1 : 3;
-            }
-            else // Regular Chara
-            {
-                return chara.canLove ? 0 : 2;
+                if (Chara.allCharas[index] is CustomChara customChara && customChara.canLove)
+                {
+                    if (index < firstNonFriendIndex)
+                    {
+                        continue;
+                    }
+                    Chara.allCharas.Insert(firstNonFriendIndex, Chara.allCharas[index]);
+                    Chara.allCharas.RemoveAt(index + 1); // Remove the original chara after inserting
+                    firstNonFriendIndex++;
+                }
             }
         }
 
@@ -206,19 +145,35 @@ namespace ExoLoader
         [HarmonyPrefix]
         public static bool CheckIfCustomSprite(ref bool __result, string spriteName)
         {
-            __result = CustomChara.newCharaSprites.Contains(spriteName);
-            return !__result;
+
+            bool SpriteExists = ModAssetManager.StorySpriteExists(spriteName);
+            if (SpriteExists)
+            {
+                ModInstance.log("Custom sprite found: " + spriteName);
+                __result = true;
+                return false;
+            }
+
+            return true;
         }
 
         [HarmonyPatch(typeof(Chara), nameof(Chara.onMap), MethodType.Getter)]
         [HarmonyPrefix]
         public static bool OnMapGetterPatch(Chara __instance, ref bool __result)
         {
-            if (__instance is CustomChara)
+            if (__instance is CustomChara chara)
             {
-                __result = !((CustomChara)__instance).data.helioOnly || Princess.HasMemory("newship");
+                // FIXME: to be honest, people who add characters should properly set mem_map_charaID when their character is added
+                if (chara.isDead)
+                {
+                    __result = false;
+                    return false;
+                }
+
+                __result = !chara.data.helioOnly || Princess.HasMemory("newship");
                 return false;
-            } else
+            }
+            else
             {
                 return true;
             }
