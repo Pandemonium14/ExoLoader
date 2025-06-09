@@ -9,16 +9,24 @@ using UnityEngine;
 
 namespace ExoLoader
 {
-    [BepInEx.BepInPlugin("ExoLoaderInject", "ExoLoader", "1.0")]
+    [BepInEx.BepInPlugin("ExoLoaderInject", "ExoLoader", "1.5")]
     public class Injector : BaseUnityPlugin
     {
         public void Awake()
         {
-            Logger.LogInfo("Doing ExoLoader patches...");
-            var harmony = new Harmony("ExoLoader");
-            harmony.PatchAll();
-            Logger.LogInfo("ExoLoader patches done.");
-            ModInstance.instance = this;
+            try
+            {
+                Logger.LogInfo("Doing ExoLoader patches...");
+                var harmony = new Harmony("ExoLoader");
+                harmony.PatchAll();
+                Logger.LogInfo("ExoLoader patches done.");
+                ModInstance.instance = this;
+            }
+            catch (Exception e)
+            {
+                Logger.LogError($"ExoLoader failed to initialize: {e.Message}\n{e.StackTrace}");
+                ModLoadingStatus.LogError($"ExoLoader failed to initialize: {e.Message}");
+            }
         }
 
         public void Log(string message)

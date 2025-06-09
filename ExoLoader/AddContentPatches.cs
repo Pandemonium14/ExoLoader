@@ -14,45 +14,52 @@ namespace ExoLoader
         [HarmonyPostfix]
         public static void AddCharaPatch(string filename)
         {
-            if (filename == "Exocolonist - charas")
+            try
             {
-                LoadCustomContent("Characters");
-            }
-            else if (filename == "ExocolonistCards - cards")
-            {
-                ModInstance.log("calling LoadCustomContent for Cards");
-                LoadCustomContent("Cards");
-            }
-            else if (filename == "Exocolonist - variables")
-            {
-                ModInstance.log("Loading preliminary content");
+                if (filename == "Exocolonist - charas")
+                {
+                    LoadCustomContent("Characters");
+                }
+                else if (filename == "ExocolonistCards - cards")
+                {
+                    ModInstance.log("calling LoadCustomContent for Cards");
+                    LoadCustomContent("Cards");
+                }
+                else if (filename == "Exocolonist - variables")
+                {
+                    ModInstance.log("Loading preliminary content");
 
-                ModInstance.log("Loading story patches");
-                StoryPatchManager.PopulatePatchList();
+                    ModInstance.log("Loading story patches");
+                    StoryPatchManager.PopulatePatchList();
 
-                ModInstance.log("Patching story files");
-                StoryPatchManager.PatchAllStories();
+                    ModInstance.log("Patching story files");
+                    StoryPatchManager.PatchAllStories();
 
-                ModInstance.log("Loading custom backgrounds");
-                LoadCustomContent("Backgrounds");
+                    ModInstance.log("Loading custom backgrounds");
+                    LoadCustomContent("Backgrounds");
 
+                }
+                else if (filename == "Exocolonist - jobs")
+                {
+                    LoadCustomContent("Jobs");
+                }
+                else if (filename == "Exocolonist - endings")
+                {
+                    LoadCustomContent("Endings");
+                }
+                else if (filename == "ExocolonistCards - collectibles")
+                {
+                    LoadCustomContent("Collectibles");
+                }
+                else if (filename == "Exocolonist - cheevos")
+                {
+                    ModInstance.log("Loading custom achievements");
+                    LoadCustomContent("Achievements");
+                }
             }
-            else if (filename == "Exocolonist - jobs")
+            catch (Exception e)
             {
-                LoadCustomContent("Jobs");
-            }
-            else if (filename == "Exocolonist - endings")
-            {
-                LoadCustomContent("Endings");
-            }
-            else if (filename == "ExocolonistCards - collectibles")
-            {
-                LoadCustomContent("Collectibles");
-            }
-            else if (filename == "Exocolonist - cheevos")
-            {
-                ModInstance.log("Loading custom achievements");
-                LoadCustomContent("Achievements");
+                ModLoadingStatus.LogError($"Error while loading custom content to {filename}: {e.Message}");
             }
         }
 
@@ -63,48 +70,55 @@ namespace ExoLoader
             FinalizeCharacters();
             LoadCustomContent("ScriptExtensions");
             // Add locale keys for all custom backgrounds
-            CustomBackground.addLocales();
+            CustomBackground.AddLocales();
         }
 
         public static void FinalizeCharacters() //Loads likes, dislikes
         {
-            foreach (CustomChara CChara in CustomChara.customCharasById.Values)
+            try
             {
-                foreach (string like in CChara.data.likes)
+                foreach (CustomChara CChara in CustomChara.customCharasById.Values)
                 {
-                    CardData cd = CardData.FromID(like);
-                    CChara.likedCards.AddSafe(cd);
-                }
-
-                foreach (string dislike in CChara.data.dislikes)
-                {
-                    CardData cd = CardData.FromID(dislike);
-                    CChara.dislikedCards.AddSafe(cd);
-                }
-
-                foreach (string jobID in CChara.data.jobs)
-                {
-                    Job job = Job.FromID(jobID);
-                    if (job != null)
+                    foreach (string like in CChara.data.likes)
                     {
-                        int postCharaIndex = job.skillChanges.FindIndex((skillChange) => (skillChange.skill == Skill.kudos) || (skillChange.skill == Skill.stress));
+                        CardData cd = CardData.FromID(like);
+                        CChara.likedCards.AddSafe(cd);
+                    }
 
-                        if (postCharaIndex == -1)
+                    foreach (string dislike in CChara.data.dislikes)
+                    {
+                        CardData cd = CardData.FromID(dislike);
+                        CChara.dislikedCards.AddSafe(cd);
+                    }
+
+                    foreach (string jobID in CChara.data.jobs)
+                    {
+                        Job job = Job.FromID(jobID);
+                        if (job != null)
                         {
-                            job.skillChanges.Add(new SkillChange(CChara, 1));
-                        }
-                        else
-                        {
-                            job.skillChanges.Insert(postCharaIndex, new SkillChange(CChara, 1));
+                            int postCharaIndex = job.skillChanges.FindIndex((skillChange) => (skillChange.skill == Skill.kudos) || (skillChange.skill == Skill.stress));
+
+                            if (postCharaIndex == -1)
+                            {
+                                job.skillChanges.Add(new SkillChange(CChara, 1));
+                            }
+                            else
+                            {
+                                job.skillChanges.Insert(postCharaIndex, new SkillChange(CChara, 1));
+                            }
                         }
                     }
                 }
-            }
 
-            // Chara.allCharas is the array used in CharasMenu to display the list of charas
-            // With this sorting, we maintain the order of original charas, but add custom charas with .canLove before original charas with .canLove = false
-            // This is done to maintain the order of charas in the menu, and to make it easier to find custom befriendable charas
-            ReorderCharas();
+                // Chara.allCharas is the array used in CharasMenu to display the list of charas
+                // With this sorting, we maintain the order of original charas, but add custom charas with .canLove before original charas with .canLove = false
+                // This is done to maintain the order of charas in the menu, and to make it easier to find custom befriendable charas
+                ReorderCharas();
+            }
+            catch (Exception e)
+            {
+                ModLoadingStatus.LogError($"Error while finalizing characters: {e.Message}");
+            }
         }
 
         private static void ReorderCharas()
@@ -127,17 +141,24 @@ namespace ExoLoader
 
         public static void LoadCustomContent(string contentType)
         {
-            ModInstance.instance.Log("Checking CustomContent folders");
-            string[] contentFolders = CFileManager.GetAllCustomContentFolders();
-            if (contentFolders != null && contentFolders.Length == 0)
+            try
             {
-                ModInstance.instance.Log("Found no folder");
-                return;
+                ModInstance.instance.Log("Checking CustomContent folders");
+                string[] contentFolders = CFileManager.GetAllCustomContentFolders();
+                if (contentFolders != null && contentFolders.Length == 0)
+                {
+                    ModInstance.instance.Log("Found no folder");
+                    return;
+                }
+                foreach (string folder in contentFolders)
+                {
+                    ModInstance.log("Parsing " + contentType + " content folder: " + CFileManager.TrimFolderName(folder));
+                    CustomContentParser.ParseContentFolder(folder, contentType);
+                }
             }
-            foreach (string folder in contentFolders)
+            catch (Exception e)
             {
-                ModInstance.log("Parsing " + contentType + " content folder: " + CFileManager.TrimFolderName(folder));
-                CustomContentParser.ParseContentFolder(folder, contentType);
+                ModLoadingStatus.LogError($"Error while loading custom content of type {contentType}: {e.Message}");
             }
         }
 

@@ -57,15 +57,22 @@ namespace ExoLoader
             }
         }
 
-        public static void addLocales()
+        public static void AddLocales()
         {
-            // Go through all backgrounds and add their localized names
-            foreach (var background in allBackgrounds.Values)
+            try
             {
-                string galleryBgName = "gallery_bg_" + background.id.ToLower();
+                // Go through all backgrounds and add their localized names
+                foreach (var background in allBackgrounds.Values)
+                {
+                    string galleryBgName = "gallery_bg_" + background.id.ToLower();
 
-                TextLocalized tl = new TextLocalized(galleryBgName);
-                tl.AddLocale(Locale.EN, background.name);
+                    TextLocalized tl = new TextLocalized(galleryBgName);
+                    tl.AddLocale(Locale.EN, background.name);
+                }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log($"Error while adding locales for custom backgrounds: {e.Message}");
             }
         }
     }

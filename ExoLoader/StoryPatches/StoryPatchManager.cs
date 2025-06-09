@@ -38,53 +38,62 @@ namespace ExoLoader
             int counter = 0;
             foreach (string folder in GetAllPatchFolders())
             {
-                
+
                 foreach (string file in Directory.GetFiles(folder))
                 {
-                    ModInstance.log("Parsing patches in " + Path.GetFileName(file));
-                    bool wasPatch = false;
-
-                    string[] lines = File.ReadAllLines(file);
-                    ModInstance.log("Successfully read lines");
-                    int index = 0;
-                    while (index < lines.Length)
+                    try
                     {
-                        if (lines[index].Trim().StartsWith(patchStartMarker)) {
-                            ModInstance.log("Found patch starting line : " + lines[index]);
-                            StoryPatch patch = null;
-                            try
+                        ModInstance.log("Parsing patches in " + Path.GetFileName(file));
+                        bool wasPatch = false;
+
+                        string[] lines = File.ReadAllLines(file);
+                        ModInstance.log("Successfully read lines");
+                        int index = 0;
+                        while (index < lines.Length)
+                        {
+                            if (lines[index].Trim().StartsWith(patchStartMarker))
                             {
-                                patch = StoryPatch.ReadPatch(lines, index);
-                                ModInstance.log("Patch read");
-                            } catch (Exception e)
-                            {
-                                ModInstance.log("Error reading patch with header " + lines[index]);
-                                ModInstance.log(e.Message);
-                                index ++;
-                                continue;
+                                ModInstance.log("Found patch starting line : " + lines[index]);
+                                StoryPatch patch = null;
+                                try
+                                {
+                                    patch = StoryPatch.ReadPatch(lines, index);
+                                    ModInstance.log("Patch read");
+                                }
+                                catch (Exception e)
+                                {
+                                    ModInstance.log("Error reading patch with header " + lines[index]);
+                                    ModInstance.log(e.Message);
+                                    index++;
+                                    continue;
+                                }
+                                if (eventsToPatches.ContainsKey(patch.eventID))
+                                {
+                                    eventsToPatches[patch.eventID].Add(patch);
+                                    counter++;
+                                }
+                                else
+                                {
+                                    List<StoryPatch> list = new List<StoryPatch>() { patch };
+                                    eventsToPatches.Add(patch.eventID, list);
+                                    ModInstance.log("event '" + patch.eventID + "' now has patches to apply");
+                                    counter++;
+                                }
+                                wasPatch = true;
+                                index = patch.patchEnd;
                             }
-                            if (eventsToPatches.ContainsKey(patch.eventID))
-                            {
-                                eventsToPatches[patch.eventID].Add(patch);
-                                counter++;
-                            } else
-                            {
-                                List<StoryPatch> list = new List<StoryPatch>() { patch };
-                                eventsToPatches.Add(patch.eventID, list);
-                                ModInstance.log("event '" + patch.eventID + "' now has patches to apply");
-                                counter++;
-                            }
-                            wasPatch = true;
-                            index = patch.patchEnd;
+                            index++;
                         }
-                        index++;
-                    }
 
-                    if (wasPatch)
-                    {
-                        patchFilesToDates.Add(file, File.GetLastWriteTime(file));
+                        if (wasPatch)
+                        {
+                            patchFilesToDates.Add(file, File.GetLastWriteTime(file));
+                        }
                     }
-                    
+                    catch (Exception e)
+                    {
+                        ModLoadingStatus.LogError("Error while parsing patch file " + Path.GetFileName(file) + ": " + e.Message);
+                    }
                 }
             }
             ModInstance.log("Loaded " + counter + " patches in total");
@@ -254,7 +263,14 @@ namespace ExoLoader
                 {
                     if (Path.GetExtension(storyFile) == ".exo")
                     {
-                        PatchStoryFile(storyFile, "_");
+                        try
+                        {
+                            PatchStoryFile(storyFile, "_");
+                        }
+                        catch (Exception e)
+                        {
+                            ModLoadingStatus.LogError("Error while patching story file " + Path.GetFileName(storyFile) + ": " + e.Message);
+                        }
                     }
                 }
                 foreach (string folder in CFileManager.GetAllCustomContentFolders("Stories"))
@@ -263,11 +279,19 @@ namespace ExoLoader
                     {
                         if (Path.GetExtension(storyFile) == ".exo")
                         {
-                            PatchStoryFile(storyFile);
+                            try
+                            {
+                                PatchStoryFile(storyFile);
+                            }
+                            catch (Exception e)
+                            {
+                                ModLoadingStatus.LogError("Error while patching custom story file " + Path.GetFileName(storyFile) + ": " + e.Message);
+                            }
                         }
                     }
                 }
-            } else
+            }
+            else
             {
                 ModInstance.log("No modifiaction found, skipping making patched files");
             }
