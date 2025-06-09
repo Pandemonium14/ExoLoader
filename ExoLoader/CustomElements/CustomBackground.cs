@@ -36,7 +36,7 @@ namespace ExoLoader
             };
 
             allBackgrounds.Add(id, background);
-            ModInstance.log($"Added custom background with id {id}, name {background.name}, file {background.file}");
+            ModInstance.log($"Added custom background with id {id}, name {background.name}, file {CFileManager.TrimFolderName(background.file)}");
         }
 
         public static void updateBackgroundNames(string key, string name)

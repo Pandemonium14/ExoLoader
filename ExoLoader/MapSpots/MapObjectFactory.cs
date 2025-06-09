@@ -267,7 +267,7 @@ namespace ExoLoader
                     if (originalMeshRenderer != null)
                     {
                         spriteRenderer.sortingLayerID = originalSortingLayer;
-                        spriteRenderer.sortingOrder = -200; // FIXME: this may need a change
+                        spriteRenderer.sortingOrder = originalSortingOrder;
                         originalMeshRenderer.enabled = false;
                     }
 
