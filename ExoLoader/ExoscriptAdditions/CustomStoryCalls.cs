@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 
 namespace ExoLoader;
 
@@ -56,5 +57,35 @@ class CustomStoryCalls : StoryCalls
             return false;
         }
         return hasending(endingStringID);
+    }
+
+    public static int randomnumber(int min, int max)
+    {
+        if (min >= max)
+        {
+            (max, min) = (min, max);
+        }
+
+        return new Random().Next(min, max);
+    }
+
+    public static string randomitem(string itemIdsString)
+    {
+        string[] itemIds = [.. itemIdsString.Split([';'], StringSplitOptions.RemoveEmptyEntries).ToArray().Select(id => id.Trim())];
+        if (itemIds == null || itemIds.Length == 0)
+        {
+            ModInstance.log("No items provided for random selection.");
+            return string.Empty;
+        }
+
+        int index = new Random().Next(itemIds.Length);
+        return itemIds[index];
+    }
+
+    public static bool charaexist(string charaId)
+    {
+        Chara chara = Chara.FromID(charaId);
+
+        return chara != null;
     }
 }

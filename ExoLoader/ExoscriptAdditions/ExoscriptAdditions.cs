@@ -25,7 +25,6 @@ public class ExoscriptAdditions
                 MethodInfo method = typeof(CustomStoryCalls).GetMethod(methodName, array) ?? typeof(CustomStoryCalls).GetMethod(methodName);
                 if (method != null)
                 {
-                    ModInstance.log($"Found custom method '{methodName}'");
 #pragma warning disable Harmony003 // Harmony non-ref patch parameters modified
                     __result = new StoryCall
                     {
