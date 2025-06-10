@@ -32,7 +32,7 @@ namespace ExoLoader
 
         public void MakeCard()
         {
-            ModInstance.log("----> Adding card to dictionary, id = " +  id + ", file = " + file);
+            ModInstance.log("----> Adding card to dictionary, id = " +  id + ", file = " + CFileManager.TrimFolderName(file));
             idToFile.Add(id, file);
             new CardData(id, name, type, suit, level, value)
             {
