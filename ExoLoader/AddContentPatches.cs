@@ -207,7 +207,39 @@ namespace ExoLoader
             __result = Path.Combine(CFileManager.commonFolderPath, "PatchedStories");
             return false;
         }
-            
- 
+
+        // This patch is in case when a story requirement is set to a character that does not exist, it means the story will be triggered randomly with dark screen
+        // To avoid this, we will replace the character requirement with a 'none' location, meaning this story will not be triggered unless called from somewhere else
+        // This makes it possible for one mod to add story to a character from another mod, but the story will only be active when that character is present in the game
+        [HarmonyPatch(typeof(ParserStoryReq), "ParseReqInner")]
+        [HarmonyPrefix]
+        public static bool ParserStoryReqParseReqInnerPrefix(StoryReq req, ref string line, Story story, Choice choice = null)
+        {
+            try
+            {
+                if (line != null && line.StartsWith("chara = "))
+                {
+                    // line can be chara = high_charaID, chara = _high_charaID, chara = charaID (or low), we need to get actual charaID
+                    // So separate by both = and _ and get the last part
+                    string[] parts = line.Split(['=', '_'], StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length > 0)
+                    {
+                        string charaID = parts[parts.Length - 1].Trim(); // Get the last part and trim whitespace
+                        Chara chara = Chara.FromID(charaID);
+                        if (chara == null)
+                        {
+                            ModInstance.log($"{story?.storyID ?? "null"}: ParserStoryReqParseReqInnerPrefix: Chara.FromID returned null for {charaID}");
+                            line = "location == none"; // replace invalid chara with a 'none' location, meaning this story will not be triggered unless called from somewhere else
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                ModInstance.log($"Error in ParserStoryReqParseReqInnerPrefix: {ex.Message}\n{ex.StackTrace}");
+            }
+
+            return true;
+        }
     }
 }
