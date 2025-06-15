@@ -7,14 +7,6 @@ namespace ExoLoader
     [HarmonyPatch]
     public class CustomCheevoPatches
     {
-        // Load exoloader save data when loading the Groundhogs
-        [HarmonyPatch(typeof(Groundhogs), "Load")]
-        [HarmonyPostfix]
-        public static void GroundhogsLoadPostfix()
-        {
-            ExoLoaderSave.instance.Load();
-        }
-
         // Some endings can automatically award achievements
         [HarmonyPatch(typeof(Ending), "AwardEnding")]
         [HarmonyPostfix]

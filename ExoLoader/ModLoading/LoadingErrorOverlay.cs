@@ -11,7 +11,8 @@ public class LoadingErrorOverlay : MonoBehaviour
     void Start()
     {
         List<string> errors = ModLoadingStatus.GetErrors();
-        if (errors != null && errors.Count > 0)
+        bool showErrorOverlay = ExoLoaderSave.GetSetting("showErrorOverlay", true);
+        if (showErrorOverlay && errors != null && errors.Count > 0)
         {
             errorMessage = "Mod loading encountered errors:\n\n";
             foreach (string error in errors)
@@ -47,6 +48,11 @@ public class LoadingErrorOverlay : MonoBehaviour
         if (GUILayout.Button("Copy to Clipboard"))
         {
             GUIUtility.systemCopyBuffer = errorMessage;
+        }
+        if (GUILayout.Button("Do not show again"))
+        {
+            ExoLoaderSave.UpdateSettings("showErrorOverlay", false);
+            showOverlay = false;
         }
         if (GUILayout.Button("Close"))
         {

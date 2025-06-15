@@ -13,8 +13,6 @@ namespace ExoLoader
         [HarmonyPrefix]
         public static bool GetCustomStorySprite(Chara __instance, ref Sprite __result, string expression, int overrideArtStage)
         {
-            ModInstance.log($"Loading custom sprite for {__instance.nickname} with expression {expression} and override art stage {overrideArtStage}");
-
             try
             {
                 if (__instance is CustomChara ch)
@@ -113,7 +111,7 @@ namespace ExoLoader
             Chara chara = Chara.FromCharaImageID(spriteName);
             if (chara == null || chara is not CustomChara)
             {
-                return true; ;
+                return true;
             }
 
             string realSpriteName = MakeRealSpriteName(spriteName, (CustomChara)chara);

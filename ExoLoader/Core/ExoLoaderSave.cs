@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace ExoLoader
@@ -14,6 +15,10 @@ namespace ExoLoader
         public int saveFileVersion = 1;
 
         public List<string> cheevos = [];
+        public Dictionary<string, bool> settings = new()
+        {
+            { "showErrorOverlay", true }
+        };
 
         public static ExoLoaderSave instance
         {
@@ -27,6 +32,30 @@ namespace ExoLoader
             {
                 _instance = value;
             }
+        }
+
+        public static void UpdateSettings(string key, bool value)
+        {
+            if (instance.settings.ContainsKey(key))
+            {
+                instance.settings[key] = value;
+            }
+            else
+            {
+                instance.settings.Add(key, value);
+            }
+
+            Save();
+        }
+
+        public static bool GetSetting(string key, bool defaultValue = false)
+        {
+            if (instance.settings.TryGetValue(key, out bool value))
+            {
+                return value;
+            }
+
+            return defaultValue;
         }
 
         public static bool HasCheevo(string id)
@@ -91,7 +120,7 @@ namespace ExoLoader
 
             try
             {
-                JsonUtility.FromJsonOverwrite(text, this);
+                JsonConvert.PopulateObject(text, this);
             }
             catch (Exception ex)
             {
@@ -115,7 +144,7 @@ namespace ExoLoader
 
                 try
                 {
-                    JsonUtility.FromJsonOverwrite(text, this);
+                    JsonConvert.PopulateObject(text, this);
                 }
                 catch (Exception ex2)
                 {
@@ -141,7 +170,7 @@ namespace ExoLoader
 
         private void SaveThread(string path)
         {
-            FileManager.SaveFile(JsonUtility.ToJson(this, prettyPrint: true), filename, path);
+            FileManager.SaveFile(JsonConvert.SerializeObject(this), filename, path);
         }
 
         public static void Save(bool threaded = true)
@@ -183,6 +212,7 @@ namespace ExoLoader
             ExoLoaderSave save = (ExoLoaderSave)MemberwiseClone();
 
             save.cheevos = [.. cheevos];
+            save.settings = new Dictionary<string, bool>(settings);
 
             return save;
         }
