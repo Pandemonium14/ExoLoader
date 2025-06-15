@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace ExoLoader
 {
-    [BepInEx.BepInPlugin("ExoLoaderInject", "ExoLoader", "1.5")]
+    [BepInEx.BepInPlugin("ExoLoaderInject", "ExoLoader", "1.5.1")]
     public class Injector : BaseUnityPlugin
     {
         public void Awake()
