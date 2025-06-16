@@ -19,6 +19,7 @@ namespace ExoLoader
                 if (filename == "Exocolonist - charas")
                 {
                     LoadCustomContent("Characters");
+                    LoadCustomContent("StorySprites");
                 }
                 else if (filename == "ExocolonistCards - cards")
                 {
@@ -229,7 +230,7 @@ namespace ExoLoader
                         if (chara == null)
                         {
                             ModInstance.log($"{story?.storyID ?? "null"}: ParserStoryReqParseReqInnerPrefix: Chara.FromID returned null for {charaID}");
-                            line = "location == none"; // replace invalid chara with a 'none' location, meaning this story will not be triggered unless called from somewhere else
+                            line = "location = none"; // replace invalid chara with a 'none' location, meaning this story will not be triggered unless called from somewhere else
                         }
                     }
                 }

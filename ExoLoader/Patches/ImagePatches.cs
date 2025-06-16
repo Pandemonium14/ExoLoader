@@ -21,7 +21,7 @@ namespace ExoLoader
                     int artStage = overrideArtStage > 0 ? overrideArtStage : Princess.artStage;
                     string spriteName = __instance.charaID + artStage + "_" + expression;
                     ModInstance.log($"Using art stage {artStage} for custom sprite: {spriteName}");
-                    Sprite sprite = ModAssetManager.GetSprite(AssetContentType.CharacterStory, spriteName);
+                    Sprite sprite = ModAssetManager.GetStorySprite(spriteName);
 
                     if (sprite != null)
                     {
@@ -33,7 +33,7 @@ namespace ExoLoader
                     {
                         // Maybe adult sprite, in that case no artStage
                         spriteName = __instance.charaID + "_" + expression;
-                        sprite = ModAssetManager.GetSprite(AssetContentType.CharacterStory, spriteName);
+                        sprite = ModAssetManager.GetStorySprite(spriteName);
 
                         if (sprite != null)
                         {
@@ -63,39 +63,23 @@ namespace ExoLoader
         {
             if (spriteName == null)
             {
-                ModInstance.log("Trying to load a story sprite with null ID string (from CharaImage)");
-            }
-            Chara ch = Chara.FromCharaImageID(spriteName);
-            if (ch is not CustomChara)
-            {
                 return true;
             }
-            else
-            {
-                ModInstance.log("CharaImage is loading a custom chara sprite, getting image " + spriteName + "...");
-                try
-                {
-                    string realSpriteName = MakeRealSpriteName(spriteName, (CustomChara)ch);
-                    ModInstance.log($"Using real sprite name: {realSpriteName}");
-                    Sprite sprite = ModAssetManager.GetSprite(AssetContentType.CharacterStory, realSpriteName);
 
-                    if (sprite != null)
-                    {
-                        ModInstance.log($"Loaded chara sprite: {realSpriteName}, {sprite.name}");
-                        __result = sprite;
-                        return false;
-                    }
-                    else
-                    {
-                        ModInstance.log($"No custom sprite found for {realSpriteName}");
-                    }
-                }
-                catch (Exception e)
+            try
+            {
+                Sprite sprite = GetSpriteByName(spriteName);
+
+                if (sprite != null)
                 {
-                    ModInstance.log("Couldn't get image");
-                    ModInstance.log(e.ToString());
-                    return true;
+                    ModInstance.log($"Loaded CharaImage sprite: {spriteName}");
+                    __result = sprite;
+                    return false;
                 }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log($"Error loading CharaImage sprite with id {spriteName}: {e}");
             }
             
             return true;
@@ -108,30 +92,45 @@ namespace ExoLoader
         [HarmonyPrefix]
         public static bool LoadCustomCharaSprite(ref Sprite __result, string spriteName)
         {
-            Chara chara = Chara.FromCharaImageID(spriteName);
-            if (chara == null || chara is not CustomChara)
+            if (spriteName == null)
             {
                 return true;
             }
 
-            string realSpriteName = MakeRealSpriteName(spriteName, (CustomChara)chara);
-            Sprite sprite = ModAssetManager.GetSprite(AssetContentType.CharacterStory, realSpriteName);
+            try
+            {
+                Sprite sprite = GetSpriteByName(spriteName);
 
-            if (sprite != null)
-            {
-                __result = sprite;
-                ModInstance.log($"Loaded custom sprite: {realSpriteName}");
-                return false;
+                if (sprite != null)
+                {
+                    __result = sprite;
+                    ModInstance.log($"Loaded AssetManager sprite: {spriteName}");
+                    return false;
+                }
             }
-            else
+            catch (Exception e)
             {
-                ModInstance.log($"No custom sprite found for {realSpriteName}");
+                ModInstance.log($"Error loading AssetManager sprite with id {spriteName}: {e}");
             }
 
             return true;
         }
 
-        private static string MakeRealSpriteName(string input, CustomChara ch)
+        private static Sprite GetSpriteByName(string spriteName)
+        {
+            Chara chara = Chara.FromCharaImageID(spriteName);
+
+            if (chara != null)
+            {
+                ModInstance.log($"Get sprite by name: {MakeRealSpriteName(spriteName)} or {spriteName}");
+                return ModAssetManager.GetStorySprite(MakeRealSpriteName(spriteName)) ??
+                       ModAssetManager.GetStorySprite(spriteName);
+            }
+
+            return ModAssetManager.GetStorySprite(spriteName);
+        }
+
+        private static string MakeRealSpriteName(string input)
         {
             string[] split = input.Split('_');
             string first = split[0];
@@ -140,13 +139,17 @@ namespace ExoLoader
             {
                 second = split[1];
             }
-            if (!first.EndsWith("1") && !first.EndsWith("2") && !first.EndsWith("3") && ch.data.ages)
+
+            second ??= "normal";
+
+            if (ModAssetManager.StorySpriteExists(first + "_" + second))
+            {
+                return first + "_" + second;
+            }
+
+            if (!first.EndsWith("1") && !first.EndsWith("2") && !first.EndsWith("3"))
             {
                 first += Princess.artStage.ToString();
-            }
-            if (second == null)
-            {
-                second = "normal";
             }
 
             return first + "_" + second;

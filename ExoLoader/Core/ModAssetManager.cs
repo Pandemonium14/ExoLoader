@@ -47,6 +47,10 @@ namespace ExoLoader
                     }
                 }
             }
+            else if (contentType == AssetContentType.StorySprite)
+            {
+                _existingStorySprites.Add(key);
+            }
         }
 
         public static void StoreSpriteAnimation(AssetContentType contentType, string key, Sprite[] sprites)
@@ -75,6 +79,21 @@ namespace ExoLoader
                 return sprite;
 
             var asset = GetAsset(contentType, key);
+            return (asset as SpriteAsset)?.Sprite;
+        }
+
+        public static Sprite GetStorySprite(string key)
+        {
+            // It's either CharacterStory or StorySprite
+            if (_spriteCache.TryGetValue(key, out Sprite sprite))
+                return sprite;
+
+            // If not found in cache, check if it's a character story sprite
+            var asset = GetAsset(AssetContentType.CharacterStory, key);
+            if (asset == null)
+            {
+                asset = GetAsset(AssetContentType.StorySprite, key);
+            }
             return (asset as SpriteAsset)?.Sprite;
         }
 
@@ -208,15 +227,16 @@ namespace ExoLoader
 
     public enum AssetContentType
     {
-        CharacterPortrait,
-        CharacterMainMenu,
-        CharacterStory,
-        CharacterModel,
-        CharacterSpriteModel,
+        Achievement,
         Background,
         BackgroundThumbnail,
         Card,
-        Achievement
+        CharacterMainMenu,
+        CharacterModel,
+        CharacterPortrait,
+        CharacterSpriteModel,
+        CharacterStory,
+        StorySprite
     }
 
     public interface IModAsset : IDisposable
