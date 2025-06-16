@@ -412,7 +412,7 @@ namespace ExoLoader
 
             try
             {
-                data = CFileManager.ParseCustomData(folder);
+                data = CFileManager.ParseCustomCharacterData(folder);
             }
             catch (Exception e)
             {
