@@ -31,7 +31,15 @@ namespace ExoLoader
             {
                 foreach (var memory in overrideData.requiredMemories)
                 {
-                    if (!Princess.HasMemory(memory))
+                    // memory can start with "!" to indicate it should not be present
+                    if (memory.StartsWith("!"))
+                    {
+                        if (Princess.HasMemory(memory.Substring(1)))
+                        {
+                            return false;
+                        }
+                    }
+                    else if (!Princess.HasMemory(memory))
                     {
                         return false;
                     }
