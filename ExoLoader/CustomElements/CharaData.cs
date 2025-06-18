@@ -14,6 +14,34 @@ namespace ExoLoader
         public float[] position;
     }
 
+    public enum CharaDataOverrideField
+    {
+        none,
+        name,
+        nickname,
+        basicInfo,
+        moreInfo,
+        pronouns,
+        dialogueColor,
+        augment,
+        defaultBg
+    }
+
+    public class CharaDataOverride
+    {
+        public CharaDataOverrideField field;
+        public string value;
+        public int startDate; // month of the game in integer format
+        public string[] requiredMemories;
+        public CharaDataOverride(CharaDataOverrideField field, string value, int? startDate = null, string[] requiredMemories = null)
+        {
+            this.field = field;
+            this.value = value;
+            this.startDate = startDate ?? 0;
+            this.requiredMemories = requiredMemories;
+        }
+    }
+
     public class CharaData
     {
         public string id;
@@ -43,6 +71,8 @@ namespace ExoLoader
         public string[] dislikes;
         public string skeleton;
         public string[] jobs;
+
+        public Dictionary<CharaDataOverrideField, CharaDataOverride[]> overrides = [];
 
         public float[] stratoMapSpot;
         public Dictionary<string, float[]> stratoMapSpots;

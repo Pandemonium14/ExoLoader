@@ -8,7 +8,6 @@ using UnityEngine;
 
 namespace ExoLoader
 {
-    // We may support adding custom background names in the future (for the gallery)
     public class CustomBackground
     {
         public static Dictionary<string, CustomBackground> allBackgrounds = [];

@@ -139,6 +139,41 @@ namespace ExoLoader
                                 Singleton<AssetManager>.instance.backgroundAndEndingNames = cBgs.ToArray();
                                 break;
                             }
+                        case "StorySprites":
+                            {
+                                ModInstance.log("Adding custom story sprites");
+                                string[] originalList = Northway.Utils.Singleton<AssetManager>.instance.charaSpriteNames;
+                                List<string> newlist = [.. originalList];
+                                int counter = 0;
+
+                                foreach (string filePath in Directory.EnumerateFiles(folder))
+                                {
+                                    string file = Path.GetFileName(filePath);
+                                    if (file.EndsWith(".png"))
+                                    {
+                                        string[] nameParts = file.Replace(".png", "").Split('_');
+                                        if (int.TryParse(nameParts.Last(), out int _))
+                                        {
+                                            nameParts = nameParts.Take(nameParts.Length - 1).ToArray();
+                                        }
+                                        string fileName = string.Join("_", nameParts);
+                                        ModInstance.log("Found story sprite " + fileName + ", adding to the list");
+                                        newlist.Add(fileName);
+                                        counter++;
+
+                                        if (fileName.Contains("0") || fileName.Contains("1") || fileName.Contains("2") || fileName.Contains("3"))
+                                        {
+                                            string spriteName = fileName.Replace("0", "").Replace("1", "").Replace("2", "").Replace("3", "");
+                                            newlist.Add(spriteName);
+                                        }
+                                    }
+                                    ModAssetLoader.AddStorySpriteToLoad(filePath);
+                                }
+
+                                Northway.Utils.Singleton<AssetManager>.instance.charaSpriteNames = [.. newlist];
+                                ModInstance.log("Added " + counter + " image names to the list");
+                                break;
+                            }
                         case "Jobs":
                             {
                                 ModInstance.log("Parsing job folders");
@@ -412,7 +447,7 @@ namespace ExoLoader
 
             try
             {
-                data = CFileManager.ParseCustomData(folder);
+                data = CFileManager.ParseCustomCharacterData(folder);
             }
             catch (Exception e)
             {

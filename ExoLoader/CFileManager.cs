@@ -54,7 +54,7 @@ namespace ExoLoader
             "FILLBAR3ADULT"
         };
 
-        public static CharaData ParseCustomData(string folderName)
+        public static CharaData ParseCustomCharacterData(string folderName)
         {
             string fullJson = File.ReadAllText(Path.Combine(folderName, "data.json"));
             ModInstance.log("Read text");
@@ -388,6 +388,81 @@ namespace ExoLoader
                 {
                     ModInstance.log("Error parsing main menu entry for " + TrimFolderName(folderName) + ": " + e.Message);
                     data.mainMenu = null;
+                }
+            }
+
+            // DataOverride field is an array of objects with mandatory "Field" and "Value" entries and optional "StartDate" (can be parsed by Season.GetMonthOfGame from string to int) and "RequiredMemories" that's an array of strings
+            if (parsedJson.TryGetValue("DataOverride", out object overridesObj))
+            {
+                ModInstance.log("Reading overrides for " + TrimFolderName(folderName));
+                JArray overridesArray = (JArray)overridesObj;
+                foreach (JObject overrideObj in overridesArray.Cast<JObject>())
+                {
+                    if (overrideObj.TryGetValue("Field", out JToken fieldToken) && overrideObj.TryGetValue("Value", out JToken valueToken))
+                    {
+                        CharaDataOverrideField field = CharaDataOverrideField.none;
+
+                        switch ((string)fieldToken)
+                        {
+                            case "NAME":
+                                field = CharaDataOverrideField.name;
+                                break;
+                            case "NICKNAME":
+                                field = CharaDataOverrideField.nickname;
+                                break;
+                            case "BASICS":
+                                field = CharaDataOverrideField.basicInfo;
+                                break;
+                            case "MORE":
+                                field = CharaDataOverrideField.moreInfo;
+                                break;
+                            case "PRONOUNS":
+                                field = CharaDataOverrideField.pronouns;
+                                break;
+                            case "DIALOGUECOLOR":
+                                field = CharaDataOverrideField.dialogueColor;
+                                break;
+                            case "ENHANCEMENT":
+                                field = CharaDataOverrideField.augment;
+                                break;
+                            case "DEFAULTBG":
+                                field = CharaDataOverrideField.defaultBg;
+                                break;
+                            default:
+                                ModInstance.log("Unknown override field in " + TrimFolderName(folderName) + ": " + fieldToken.ToString());
+                                ModLoadingStatus.LogError("Unknown override field in " + TrimFolderName(folderName) + ": " + fieldToken.ToString());
+                                continue; // Skip this override if the field is unknown
+                        }
+
+                        string value = valueToken.ToString();
+
+                        int? startDate = null;
+                        if (overrideObj.TryGetValue("StartDate", out JToken startDateToken))
+                        {
+                            startDate = Season.GetMonthOfGame(startDateToken.ToString());
+                        }
+
+                        string[] requiredMemories = null;
+                        if (overrideObj.TryGetValue("RequiredMemories", out JToken requiredMemoriesToken))
+                        {
+                            requiredMemories = requiredMemoriesToken.ToObject<string[]>();
+                        }
+
+                        CharaDataOverride dataOverride = new CharaDataOverride(field, value, startDate, requiredMemories);
+                        if (!data.overrides.ContainsKey(field))
+                        {
+                            data.overrides[field] = [dataOverride];
+                        }
+                        else
+                        {
+                            data.overrides[field] = [.. data.overrides[field], dataOverride];
+                        }
+                    }
+                    else
+                    {
+                        ModInstance.log("Invalid override entry in " + TrimFolderName(folderName) + ": " + overrideObj.ToString());
+                        ModLoadingStatus.LogError("Invalid override entry in " + TrimFolderName(folderName) + ": " + overrideObj.ToString());
+                    }
                 }
             }
 

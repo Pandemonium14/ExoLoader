@@ -48,7 +48,7 @@ namespace ExoLoader
                 currentAboveButton = button;
             }
         }
-        
+
         public static Dictionary<string, string> settingNames = new()
         {
             { "showErrorOverlay", "Show Errors on Load" }

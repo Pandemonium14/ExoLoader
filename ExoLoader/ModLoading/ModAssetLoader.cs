@@ -12,6 +12,7 @@ namespace ExoLoader
 
         private static TextAsset staticSkeletonData;
         private static TextAsset staticSkeletonAtlas;
+        private static string[] customStorySpritesToLoad = [];
 
         public static NWText loadingText;
 
@@ -44,6 +45,7 @@ namespace ExoLoader
             yield return null;
 
             LoadBackgrounds();
+            LoadStorySprites();
 
             LoadingProgress.Instance?.UpdateProgress(0.8f, "Loading achievements...");
             yield return null;
@@ -487,7 +489,7 @@ namespace ExoLoader
                     ModLoadingStatus.LogError($"Achievement file not found: {CFileManager.TrimFolderName(path)}");
                     return;
                 }
-                
+
                 SpriteLoadConfig config = new SpriteLoadConfig
                 {
                     SpriteName = cheevo.customID
@@ -508,6 +510,87 @@ namespace ExoLoader
                 ModInstance.log($"Error loading achievement {cheevo.customID}: {e.Message}");
                 ModLoadingStatus.LogError($"Error loading achievement {cheevo.customID}: {e.Message}");
             }
+        }
+
+        #endregion
+
+        #region Story Sprites
+
+        public static void AddStorySpriteToLoad(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
+            {
+                ModInstance.log($"Invalid file path for story sprite: {filePath}");
+                return;
+            }
+
+            string fileName = Path.GetFileNameWithoutExtension(filePath);
+            if (!customStorySpritesToLoad.Contains(fileName))
+            {
+                customStorySpritesToLoad = [.. customStorySpritesToLoad, filePath];
+                ModInstance.log($"Added story sprite to load: {CFileManager.TrimFolderName(filePath)}");
+            }
+        }
+
+        public static void LoadStorySprites()
+        {
+            if (customStorySpritesToLoad.Length == 0)
+            {
+                ModInstance.log("No custom story sprites to load.");
+                return;
+            }
+
+            ModInstance.log($"Loading {customStorySpritesToLoad.Length} custom story sprites...");
+
+            foreach (string spritePath in customStorySpritesToLoad)
+            {
+                try
+                {
+                    if (!File.Exists(spritePath))
+                    {
+                        ModInstance.log($"Story sprite file not found: {CFileManager.TrimFolderName(spritePath)}");
+                        ModLoadingStatus.LogError($"Story sprite file not found: {CFileManager.TrimFolderName(spritePath)}");
+                        continue;
+                    }
+
+                    string spriteName = Path.GetFileNameWithoutExtension(spritePath);
+                    string[] nameParts = spriteName.Split('_');
+
+                    // If the last part can be parsed as integer - it's target height in units
+                    string actualSpriteName = spriteName;
+                    int targetHeightInUnits = 16;
+                    if (nameParts.Length > 1 && int.TryParse(nameParts.Last(), out int parsedHeight))
+                    {
+                        actualSpriteName = string.Join("_", nameParts.Take(nameParts.Length - 1));
+                        targetHeightInUnits = parsedHeight;
+                    }
+
+                    ModInstance.log($"Loading story sprite: {actualSpriteName} from {CFileManager.TrimFolderName(spritePath)} with target height {targetHeightInUnits}");
+
+                    SpriteLoadConfig config = new SpriteLoadConfig
+                    {
+                        SpriteName = actualSpriteName,
+                        TargetHeightInUnits = targetHeightInUnits
+                    };
+                    Sprite sprite = ImageUtils.LoadSprite(spritePath, config);
+                    if (sprite != null)
+                    {
+                        ModAssetManager.StoreSprite(AssetContentType.StorySprite, actualSpriteName, sprite);
+                        ModInstance.log($"Loaded story sprite: {actualSpriteName}");
+                    }
+                    else
+                    {
+                        throw new Exception($"Could not load the sprite for story sprite {actualSpriteName}: {spritePath}");
+                    }
+                }
+                catch (Exception e)
+                {
+                    ModInstance.log($"Error loading story sprite {CFileManager.TrimFolderName(spritePath)}: {e.Message}");
+                    ModLoadingStatus.LogError($"Error loading story sprite {CFileManager.TrimFolderName(spritePath)}: {e.Message}");
+                }
+            }
+
+            customStorySpritesToLoad = []; // Clear after loading
         }
 
         #endregion
