@@ -20,8 +20,6 @@ namespace ExoLoader
                     return;
                 }
 
-                ModInstance.log("Making map object for " + chara.charaID + " in scene " + scene);
-
                 if (mapObjects.ContainsKey(chara.charaID))
                 {
                     HandleExistingMapObject(chara, scene);
@@ -48,28 +46,19 @@ namespace ExoLoader
 
             if (existingObject != null)
             {
-                ModInstance.log($"Found existing map object for {chara.charaID} in scene {scene}");
-
                 if (ShouldRemoveFromScene(chara, scene))
                 {
-                    ModInstance.log($"Removing {chara.charaID} from scene {scene}");
                     RemoveMapObject(chara.charaID);
                     return;
                 }
 
                 if (ShouldMoveMapObject(existingObject, chara, scene))
                 {
-                    ModInstance.log($"Moving map object for {chara.charaID} to new position");
                     MoveMapObject(existingObject, chara, scene);
-                }
-                else
-                {
-                    ModInstance.log($"Map object for {chara.charaID} is already in correct position");
                 }
             }
             else
             {
-                ModInstance.log($"Existing map object for {chara.charaID} is null, creating a new one");
                 CreateNewMapObject(chara, Princess.season.seasonID, Princess.monthOfSeason, scene);
             }
         }
@@ -121,7 +110,6 @@ namespace ExoLoader
         private static bool ShouldRemoveFromScene(CustomChara chara, string scene)
         {
             float[] position = chara.GetMapSpot(scene, Princess.season.seasonID);
-            ModInstance.log($"Checking if {chara.charaID} should be removed from scene {scene}: position = {position} {position == null}");
             return position == null;
         }
 
