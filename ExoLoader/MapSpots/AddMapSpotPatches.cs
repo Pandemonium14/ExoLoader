@@ -47,39 +47,39 @@ namespace ExoLoader
         [HarmonyPrefix]
         public static void LoggingPatch(Story newStory, MapSpot __instance)
         {
-            if (!CustomChara.customCharasById.ContainsKey(__instance.charaID))
-            {
-                return;
-            }
-            if (newStory == null)
-            {
-                ModInstance.log("Called SetOrPickCharaStory on MapSpot with charaID " + __instance.charaID + " for Picking");
-            } else
-            {
-                ModInstance.log("Called SetOrPickCharaStory on MapSpot with charaID " + __instance.charaID + " for Setting");
-            }
-            if (CustomChara.customCharasById.ContainsKey(__instance.charaID))
-            {
-                CustomChara.customCharasById[__instance.charaID].DictionaryTests();
-            }
+            // if (!CustomChara.customCharasById.ContainsKey(__instance.charaID))
+            // {
+            //     return;
+            // }
+            // if (newStory == null)
+            // {
+            //     ModInstance.log("Called SetOrPickCharaStory on MapSpot with charaID " + __instance.charaID + " for Picking");
+            // } else
+            // {
+            //     ModInstance.log("Called SetOrPickCharaStory on MapSpot with charaID " + __instance.charaID + " for Setting");
+            // }
+            // if (CustomChara.customCharasById.ContainsKey(__instance.charaID))
+            // {
+            //     CustomChara.customCharasById[__instance.charaID].DictionaryTests();
+            // }
         }
 
         [HarmonyPatch(typeof(MapSpot), nameof(MapSpot.Trigger))]
         [HarmonyPrefix]
         public static void LoggingPatchAgain(MapSpot __instance)
         {
-            if (__instance.type == MapSpotType.location)
-            {
-                ModInstance.log("Triggered location " + __instance.locationID + " map spot");
-            }
-            if (__instance.story == null)
-            {
-                ModInstance.log("Triggered MapSpot with charaID " + __instance.charaID + " but story is null");
-            }
-            else
-            {
-                ModInstance.log("Triggered MapSpot with charaID " + __instance.charaID + " with story " + __instance.storyName.ToString());
-            }
+            // if (__instance.type == MapSpotType.location)
+            // {
+            //     ModInstance.log("Triggered location " + __instance.locationID + " map spot");
+            // }
+            // if (__instance.story == null)
+            // {
+            //     ModInstance.log("Triggered MapSpot with charaID " + __instance.charaID + " but story is null");
+            // }
+            // else
+            // {
+            //     ModInstance.log("Triggered MapSpot with charaID " + __instance.charaID + " with story " + __instance.storyName.ToString());
+            // }
         }
 
  

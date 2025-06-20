@@ -122,7 +122,6 @@ namespace ExoLoader
 
             if (chara != null)
             {
-                ModInstance.log($"Get sprite by name: {MakeRealSpriteName(spriteName)} or {spriteName}");
                 return ModAssetManager.GetStorySprite(MakeRealSpriteName(spriteName)) ??
                        ModAssetManager.GetStorySprite(spriteName);
             }
