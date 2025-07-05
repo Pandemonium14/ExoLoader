@@ -8,7 +8,16 @@ namespace ExoLoader
     [HarmonyPatch]
     public class CorePatches
     {
-        // Load exoloader save data when loading the Groundhogs
+        public static Dictionary<string, string> settingNames = new()
+        {
+            { "showErrorOverlay", "Show Errors on Load" }
+        };
+
+        public static Dictionary<string, string> settingDescriptions = new()
+        {
+            { "showErrorOverlay", "Show an overlay with error messages when the game loads. Useful for debugging." }
+        };
+
         [HarmonyPatch(typeof(Groundhogs), "Load")]
         [HarmonyPostfix]
         public static void GroundhogsLoadPostfix()
@@ -16,7 +25,6 @@ namespace ExoLoader
             ExoLoaderSave.instance.Load();
         }
 
-        // Inject our own setting button
         [HarmonyPatch(typeof(SettingsMenu), "CreateButton")]
         [HarmonyPostfix]
         public static void SettingsMenuCreateButtonPostfix(SettingsMenu __instance, Selectable __result, string settingName, Selectable aboveButton)
@@ -28,6 +36,20 @@ namespace ExoLoader
 
             Selectable currentAboveButton = __result;
 
+            NWButton spacerButton = CreateSeparator(__instance);
+            if (spacerButton != null)
+            {
+                ConnectNavigation(currentAboveButton, spacerButton);
+                currentAboveButton = spacerButton;
+            }
+
+            NWButton headerButton = CreateModHeader(__instance);
+            if (headerButton != null)
+            {
+                ConnectNavigation(currentAboveButton, headerButton);
+                currentAboveButton = headerButton;
+            }
+
             foreach (var setting in ExoLoaderSave.instance.settings)
             {
                 string key = setting.Key;
@@ -35,6 +57,13 @@ namespace ExoLoader
 
                 string text = GetButtonText(key);
                 NWButton button = __instance.AddButton(text, null);
+
+                string tooltip = GetButtonDescription(key);
+                if (tooltip != null)
+                {
+                    button.tooltipText = tooltip;
+                }
+
                 Action listener2 = delegate
                 {
                     SetSetting(key, !value, button);
@@ -49,10 +78,64 @@ namespace ExoLoader
             }
         }
 
-        public static Dictionary<string, string> settingNames = new()
+        private static NWButton CreateSeparator(SettingsMenu settingsMenu)
         {
-            { "showErrorOverlay", "Show Errors on Load" }
-        };
+            try
+            {
+                NWButton separatorButton = settingsMenu.AddButton("", null);
+                separatorButton.interactable = false;
+
+                var buttonImage = separatorButton.GetComponent<UnityEngine.UI.Image>();
+                if (buttonImage != null)
+                {
+                    buttonImage.color = new UnityEngine.Color(0, 0, 0, 0);
+                }
+
+                var textComponent = separatorButton.GetComponent<Text>();
+                if (textComponent != null)
+                {
+                    textComponent.text = "";
+                    textComponent.color = new UnityEngine.Color(0, 0, 0, 0);
+                }
+
+                var rectTransform = separatorButton.GetComponent<UnityEngine.RectTransform>();
+                if (rectTransform != null)
+                {
+                    rectTransform.sizeDelta = new UnityEngine.Vector2(rectTransform.sizeDelta.x, rectTransform.sizeDelta.y * 1.5f);
+                }
+
+                return separatorButton;
+            }
+            catch (Exception ex)
+            {
+                ModInstance.log($"Failed to create separator: {ex.Message}");
+                return null;
+            }
+        }
+
+        private static NWButton CreateModHeader(SettingsMenu settingsMenu)
+        {
+            try
+            {
+                NWButton headerButton = settingsMenu.AddButton("ExoLoader", null);
+
+                headerButton.interactable = false;
+
+                if (headerButton.GetComponent<Text>() != null)
+                {
+                    var textComponent = headerButton.GetComponent<Text>();
+                    textComponent.fontStyle = UnityEngine.FontStyle.Bold;
+                    textComponent.color = new UnityEngine.Color(1f, 0.8f, 0.2f, 1f);
+                }
+
+                return headerButton;
+            }
+            catch (Exception ex)
+            {
+                ModInstance.log($"Failed to create mod header: {ex.Message}");
+                return null;
+            }
+        }
 
         private static string GetButtonText(string settingName)
         {
@@ -63,10 +146,25 @@ namespace ExoLoader
 
             if (settingNames.TryGetValue(settingName, out string name))
             {
-                return "[ExoLoader] " + name + " " + (ExoLoaderSave.GetSetting(settingName) ? TextLocalized.Localize("button_on") : TextLocalized.Localize("button_off"));
+                return name + " " + (ExoLoaderSave.GetSetting(settingName) ? TextLocalized.Localize("button_on") : TextLocalized.Localize("button_off"));
             }
 
             return settingName + " " + (ExoLoaderSave.GetSetting(settingName) ? TextLocalized.Localize("button_on") : TextLocalized.Localize("button_off"));
+        }
+
+        private static string GetButtonDescription(string settingName)
+        {
+            if (ExoLoaderSave.instance == null)
+            {
+                return null;
+            }
+
+            if (settingDescriptions.TryGetValue(settingName, out string description))
+            {
+                return description;
+            }
+
+            return null;
         }
 
         private static void ConnectNavigation(Selectable top, Selectable bottom)
@@ -116,6 +214,7 @@ namespace ExoLoader
             }
 
             buttonToUpdate.text = GetButtonText(settingName);
+
             if (value is bool)
             {
                 Action listener = delegate
