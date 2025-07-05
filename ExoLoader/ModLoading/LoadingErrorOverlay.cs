@@ -11,7 +11,7 @@ public class LoadingErrorOverlay : MonoBehaviour
     void Start()
     {
         List<string> errors = ModLoadingStatus.GetErrors();
-        bool showErrorOverlay = ExoLoaderSave.GetSetting("showErrorOverlay", true);
+        bool showErrorOverlay = ExoLoaderSave.GetSetting("showErrorOverlay", false);
         if (showErrorOverlay && errors != null && errors.Count > 0)
         {
             errorMessage = "Mod loading encountered errors:\n\n";

@@ -8,7 +8,7 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <BepInExPluginGuid>ExoLoaderInject</BepInExPluginGuid>
     <BepInExPluginName>ExoLoader</BepInExPluginName>
-    <BepInExPluginVersion>1.6</BepInExPluginVersion>
+    <BepInExPluginVersion>1.6.1</BepInExPluginVersion>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <RestoreAdditionalProjectSources>
       https://api.nuget.org/v3/index.json;

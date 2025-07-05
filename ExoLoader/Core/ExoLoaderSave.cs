@@ -17,7 +17,7 @@ namespace ExoLoader
         public List<string> cheevos = [];
         public Dictionary<string, bool> settings = new()
         {
-            { "showErrorOverlay", true }
+            { "showErrorOverlay", false }
         };
 
         public static ExoLoaderSave instance
