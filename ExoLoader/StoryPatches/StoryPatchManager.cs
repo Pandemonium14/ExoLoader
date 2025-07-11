@@ -64,6 +64,7 @@ namespace ExoLoader
                                 {
                                     ModInstance.log("Error reading patch with header " + lines[index]);
                                     ModInstance.log(e.Message);
+                                    ModLoadingStatus.LogError("Error while reading patch with header " + lines[index] + ": " + e.Message);
                                     index++;
                                     continue;
                                 }
@@ -134,7 +135,7 @@ namespace ExoLoader
                 }
                 return;
             }
-            ModInstance.log("Event" + eventID + " has " + patches.Count +" patches to apply");
+            ModInstance.log("Event " + eventID + " has " + patches.Count +" patches to apply");
             while (pointer.GetCurrent() < baseLines.Length && !IsStartOfEvent(baseLines[pointer.GetCurrent()]))
             {
                 StoryPatch toApply = TestKeys(baseLines[pointer.GetCurrent()].Trim(), patches);

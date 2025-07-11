@@ -28,7 +28,7 @@ namespace ExoLoader
         public static StoryPatch ReadPatch(string[] lines, int index)
         {
             StoryPatch patch = new StoryPatch();
-            string[] patchInfo = lines[index].Split('|', '@');
+            string[] patchInfo = SplitWithEscapes(lines[index], '|', '@');
 
             patch.patchType = patchInfo[1].ParseEnum<StoryPatchType>();
             patch.eventID = patchInfo[2];
@@ -40,12 +40,12 @@ namespace ExoLoader
             if (patch.patchType == StoryPatchType.replace)
             {
                 patch.key2 = patchInfo[4];
-                ModInstance.log("This patch has ke2 equal to " +  patch.key2);
+                ModInstance.log("This patch has ke2 equal to " + patch.key2);
                 patch.keyIndex = int.Parse(patchInfo[5]);
                 patch.keyIndex2 = int.Parse(patchInfo[6]);
             }
             index += 2;
-            patch.contentLines = new List<string>();
+            patch.contentLines = [];
             while (lines[index].Trim(' ') != "}")
             {
                 patch.contentLines.Add(lines[index]);
@@ -53,6 +53,36 @@ namespace ExoLoader
             }
             patch.patchEnd = index;
             return patch;
+        }
+
+        private static string[] SplitWithEscapes(string input, params char[] separators)
+        {
+            List<string> parts = [];
+            StringBuilder currentPart = new();
+
+            for (int i = 0; i < input.Length; i++)
+            {
+                char c = input[i];
+
+                if (c == '\\' && i + 1 < input.Length && Array.IndexOf(separators, input[i + 1]) >= 0)
+                {
+                    currentPart.Append(input[i + 1]);
+                    i++;
+                }
+                else if (Array.IndexOf(separators, c) >= 0)
+                {
+                    parts.Add(currentPart.ToString());
+                    currentPart.Clear();
+                }
+                else
+                {
+                    currentPart.Append(c);
+                }
+            }
+
+            parts.Add(currentPart.ToString());
+
+            return [.. parts];
         }
 
         public bool CheckForKey(string line)
