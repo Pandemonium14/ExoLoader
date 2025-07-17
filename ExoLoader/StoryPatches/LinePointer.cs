@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace ExoLoader
+﻿namespace ExoLoader
 {
     public class LinePointer
     {
@@ -21,18 +15,32 @@ namespace ExoLoader
             return currentPos;
         }
 
-        public bool SkipUntilAfterMatch(string[] lines, string match)
+        public bool SkipUntilAfterMatch(string[] lines, string match, int targetIndex)
         {
-            for (int i = currentPos;  i < lines.Length; i++)
+            int foundCount = 0;
+            for (int i = currentPos; i < lines.Length; i++)
             {
                 if (lines[i].Trim().StartsWith(match))
                 {
-                    currentPos = i+1;
-                    return true;
+                    if (foundCount == targetIndex)
+                    {
+                        currentPos = i + 1;
+                        return true;
+                    }
+                    foundCount++;
                 }
             }
-            ModInstance.log("SkipUntilMatch never stopped");
+            ModInstance.log("SkipUntilMatchWithIndex never found index " + targetIndex + " for match '" + match + "'");
             return false;
+        }
+
+        public LinePointer Clone()
+        {
+            LinePointer clone = new()
+            {
+                currentPos = this.currentPos
+            };
+            return clone;
         }
     }
 }
