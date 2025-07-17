@@ -47,7 +47,7 @@ namespace ExoLoader
                         bool wasPatch = false;
 
                         string[] lines = File.ReadAllLines(file);
-                        ModInstance.log("Successfully read lines");
+
                         int index = 0;
                         while (index < lines.Length)
                         {
@@ -58,12 +58,12 @@ namespace ExoLoader
                                 try
                                 {
                                     patch = StoryPatch.ReadPatch(lines, index);
-                                    ModInstance.log("Patch read");
                                 }
                                 catch (Exception e)
                                 {
                                     ModInstance.log("Error reading patch with header " + lines[index]);
                                     ModInstance.log(e.Message);
+                                    ModLoadingStatus.LogError("Error while reading patch with header " + lines[index] + ": " + e.Message);
                                     index++;
                                     continue;
                                 }
@@ -76,7 +76,6 @@ namespace ExoLoader
                                 {
                                     List<StoryPatch> list = new List<StoryPatch>() { patch };
                                     eventsToPatches.Add(patch.eventID, list);
-                                    ModInstance.log("event '" + patch.eventID + "' now has patches to apply");
                                     counter++;
                                 }
                                 wasPatch = true;
@@ -112,7 +111,8 @@ namespace ExoLoader
                     if (p.indexCounter == p.keyIndex)
                     {
                         return p;
-                    } else
+                    }
+                    else
                     {
                         p.indexCounter++;
                     }
@@ -134,7 +134,7 @@ namespace ExoLoader
                 }
                 return;
             }
-            ModInstance.log("Event" + eventID + " has " + patches.Count +" patches to apply");
+            ModInstance.log("Event " + eventID + " has " + patches.Count + " patches to apply");
             while (pointer.GetCurrent() < baseLines.Length && !IsStartOfEvent(baseLines[pointer.GetCurrent()]))
             {
                 StoryPatch toApply = TestKeys(baseLines[pointer.GetCurrent()].Trim(), patches);
@@ -166,13 +166,24 @@ namespace ExoLoader
                     if (toApply.key2 == "")
                     {
                         pointer.Next();
-                    } else
-                    {
-                        pointer.SkipUntilAfterMatch(baseLines, toApply.key2);
                     }
-                    continue;                
+                    else
+                    {
+                        pointer.SkipUntilAfterMatch(baseLines, toApply.key2, toApply.keyIndex2);
+                    }
+                    continue;
                 }
 
+            }
+
+            // Log any patches that weren't applied
+            foreach (StoryPatch patch in patches.ToList())
+            {
+                if (!patch.wasWritten)
+                {
+                    ModInstance.log("Warning: Patch with key '" + patch.key + "' in event '" + eventID + "' was not applied");
+                    ModLoadingStatus.LogError("Patch with key '" + patch.key + "' in event '" + eventID + "' was not applied");
+                }
             }
         }
 
