@@ -207,12 +207,9 @@ namespace ExoLoader
             {
                 string helioOnly = (string)parsedJson["HelioOnly"];
                 data.helioOnly = helioOnly == "TRUE";
-                //ModInstance.log("HelioOnly read");
 
                 if (!data.helioOnly)
                 {
-                    // There are two notations for map spots PreHelioMapSpot as array of 3 floats, or PreHelioMapSpots as an object with keys of seasonID and values of arrays of 3 floats
-                    // PreHelioMapSpot type is old, so if there is a new notation in the file, we use it, otherwise we check for the old one
                     if (parsedJson.ContainsKey("PreHelioMapSpots"))
                     {
                         ModInstance.log("Reading Pre-helio map spots as a dictionary");
@@ -234,7 +231,11 @@ namespace ExoLoader
                     {
                         ModInstance.log("Reading Pre-helio map spots as an array");
 
-                        string[] stringMapSpot = ((JArray)(parsedJson.GetValueSafe("PreHelioMapSpot"))).ToObject<string[]>();
+                        string[] stringMapSpot = ((JArray)parsedJson.GetValueSafe("PreHelioMapSpot")).ToObject<string[]>();
+                        if (stringMapSpot == null)
+                        {
+                            stringMapSpot = ((JArray)parsedJson.GetValueSafe("StratoMapSpot")).ToObject<string[]>();
+                        }
                         if (stringMapSpot == null || stringMapSpot.Length != 3)
                         {
                             DataDebugHelper.PrintDataError("Pre-helio coordinates missing or broken for " + Path.GetFileName(folderName));
@@ -276,7 +277,11 @@ namespace ExoLoader
                 else
                 {
                     ModInstance.log("Reading Post-helio map spots as an array");
-                    string[] stringMapSpotHelio = ((JArray)(parsedJson.GetValueSafe("PostHelioMapSpot"))).ToObject<string[]>();
+                    string[] stringMapSpotHelio = ((JArray)parsedJson.GetValueSafe("PostHelioMapSpot")).ToObject<string[]>();
+                    if (stringMapSpotHelio == null)
+                    {
+                        stringMapSpotHelio = ((JArray)parsedJson.GetValueSafe("HelioMapSpot")).ToObject<string[]>();
+                    }
                     if (stringMapSpotHelio == null || stringMapSpotHelio.Length == 0)
                     {
                         DataDebugHelper.PrintDataError("Post-helio coordinates missing or broken for " + Path.GetFileName(folderName));
@@ -298,7 +303,7 @@ namespace ExoLoader
                 }
             }
 
-            string[] likes = ((JArray)(parsedJson.GetValueSafe("Likes"))).ToObject<string[]>();
+            string[] likes = ((JArray)parsedJson.GetValueSafe("Likes")).ToObject<string[]>();
             if (likes == null)
             {
                 DataDebugHelper.PrintDataError("Likes entry for " + Path.GetFileName(folderName) + "broken");
@@ -306,7 +311,7 @@ namespace ExoLoader
             }
             data.likes = likes;
 
-            string[] dislikes = ((JArray)(parsedJson.GetValueSafe("Dislikes"))).ToObject<string[]>();
+            string[] dislikes = ((JArray)parsedJson.GetValueSafe("Dislikes")).ToObject<string[]>();
             if (dislikes == null)
             {
                 DataDebugHelper.PrintDataError("Dislikes entry for " + Path.GetFileName(folderName) + "broken");
@@ -324,7 +329,7 @@ namespace ExoLoader
                 data.spriteSize = int.Parse(spriteSizeString);
             }
 
-            JArray spriteSizesRaw = ((JArray)(parsedJson.GetValueSafe("SpriteSizesByAge")));
+            JArray spriteSizesRaw = (JArray)parsedJson.GetValueSafe("SpriteSizesByAge");
             if (spriteSizesRaw != null)
             {
                 ModInstance.log("This character will use sprite sizes by age");
