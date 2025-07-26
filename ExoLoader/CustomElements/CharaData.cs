@@ -74,7 +74,7 @@ namespace ExoLoader
         public bool helioOnly;
         public string[] likes;
         public string[] dislikes;
-        public string skeleton;
+        public string[] skeleton;
         public string[] jobs;
 
         public Dictionary<CharaDataOverrideField, CharaDataOverride[]> overrides = [];

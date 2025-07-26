@@ -46,7 +46,7 @@ namespace ExoLoader
                     return data.helioMapSpot;
                 }
             }
-            else if (scene.Equals("destroyed"))
+            else if (scene.Equals("destroyed") || scene.Equals("stratodestroyed"))
             {
                 return data.destroyedMapSpot;
             }

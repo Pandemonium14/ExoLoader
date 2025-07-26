@@ -14,38 +14,71 @@ namespace ExoLoader
             GameObject o = GameObject.Find("Seasonal");
             Transform seasonalTransform = o.transform;
             Transform seasonTransform = seasonalTransform.Find(season);
-            ModInstance.log("Got Season tranform");
 
             if (seasonTransform == null)
             {
-                ModInstance.log("Season transform is null!");
+                GameObject childObject = o.transform.GetComponentsInChildren<Transform>().FirstOrDefault(c => c.gameObject.name == "chara_" + charaId)?.gameObject;
+                if (childObject != null)
+                {
+                    return childObject;
+                }
                 return null;
             }
 
             Transform inner = seasonTransform.Find("inner");
             if (inner != null)
             {
-                Transform direct = inner.Find("chara_" + charaId);
-                if (direct != null) return direct.gameObject;
+                GameObject childObject = inner.GetComponentsInChildren<Transform>().FirstOrDefault(c => c.gameObject.name == "chara_" + charaId)?.gameObject;
 
-                Transform byWeek = seasonTransform.Find("week" + week.ToString());
-                if (byWeek != null)
+                if (childObject != null)
                 {
-                    Transform attempt = byWeek.Find("chara_" + charaId);
-                    if (attempt != null) return attempt.gameObject;
+                    return childObject;
                 }
             }
 
             Transform weekT = seasonTransform.Find("week" + week.ToString());
             if (weekT != null)
             {
-                return weekT.Find("chara_" + charaId).gameObject;
+                Transform weekTChara = weekT.Find("chara_" + charaId);
+
+                if (weekTChara != null)
+                {
+                    return weekTChara.gameObject;
+                }
             }
 
             Transform weekPlusT = seasonTransform.Find("week" + week.ToString() + "plus");
             if (weekPlusT != null)
             {
-                return weekPlusT.Find("chara_" + charaId).gameObject;
+                Transform weekPlusTChara = weekPlusT.Find("chara_" + charaId);
+                if (weekPlusTChara != null)
+                {
+                    return weekPlusTChara.gameObject;
+                }
+            }
+
+            if (charaId == "dys")
+            {
+                Transform dysSurvey = seasonTransform.Find("toggleDysSurvey");
+
+                if (dysSurvey != null)
+                {
+                    Transform dysSurveyChara = dysSurvey.Find("chara_" + charaId);
+                    if (dysSurveyChara != null)
+                    {
+                        return dysSurveyChara.gameObject;
+                    }
+                }
+
+                Transform dysNoSurvey = seasonTransform.Find("toggleDysNoSurvey");
+                if (dysNoSurvey != null)
+                {
+                    Transform dysNoSurveyChara = dysNoSurvey.Find("chara_" + charaId);
+                    if (dysNoSurveyChara != null)
+                    {
+                        return dysNoSurveyChara.gameObject;
+                    }
+                }
             }
 
             Transform directT = seasonTransform.Find("chara_" + charaId);
@@ -58,7 +91,7 @@ namespace ExoLoader
             return directT.gameObject;
         }
 
-        public GameObject CreateCustomMapObject(GameObject templateObject, CustomChara chara, string scene)
+        public GameObject CreateCustomMapObject(GameObject templateObject, string templateSkeletonID, CustomChara chara, string scene)
         {
             GameObject newObject = UnityEngine.Object.Instantiate(templateObject);
             newObject.name = "chara_" + chara.charaID;
@@ -77,7 +110,7 @@ namespace ExoLoader
             newObject.transform.localPosition = new Vector3(mapSpotPosition[0], mapSpotPosition[1], mapSpotPosition[2]);
             mapSpot.MoveToGround();
 
-            List<Transform> artAgeTransforms = SetupArtObjects(newObject, chara);
+            List<Transform> artAgeTransforms = SetupArtObjects(templateSkeletonID, newObject, chara);
 
             if (!SetupCharaSwitcher(newObject, chara, artAgeTransforms))
             {
@@ -93,13 +126,13 @@ namespace ExoLoader
             return actualSpot;
         }
 
-        private List<Transform> SetupArtObjects(GameObject newObject, CustomChara chara)
+        private List<Transform> SetupArtObjects(string templateSkeletonID, GameObject newObject, CustomChara chara)
         {
             List<Transform> artAgeTransforms = new List<Transform>();
 
             for (int i = 1; i <= 3; i++)
             {
-                GameObject artObject = newObject.transform.Find(chara.data.skeleton).Find(chara.data.skeleton + i.ToString()).gameObject;
+                GameObject artObject = newObject.transform.Find(templateSkeletonID).Find(templateSkeletonID + i.ToString()).gameObject;
                 ModInstance.log("Got " + i.ToString() + "th art object");
 
                 if (artObject != null)

@@ -65,15 +65,26 @@ namespace ExoLoader
 
         private static void CreateNewMapObject(CustomChara chara, string season, int week, string scene)
         {
-            GameObject templateObject = objectFactory.GetMapObjectTemplate(chara.data.skeleton, season, week);
+            GameObject templateObject = null;
+            string usedSkeleton = null;
+            foreach (string skeleton in chara.data.skeleton)
+            {
+                templateObject = objectFactory.GetMapObjectTemplate(skeleton, season, week);
+                if (templateObject != null)
+                {
+                    usedSkeleton = skeleton;
+                    ModInstance.log($"Using skeleton {skeleton} for {chara.charaID}");
+                    break;
+                }
+            }
 
-            if (templateObject == null)
+            if (templateObject == null || usedSkeleton == null)
             {
                 ModInstance.log("Couldn't get base map object, cancelling map spot creation for : " + chara.charaID);
                 return;
             }
 
-            GameObject customMapObject = objectFactory.CreateCustomMapObject(templateObject, chara, scene);
+            GameObject customMapObject = objectFactory.CreateCustomMapObject(templateObject, usedSkeleton, chara, scene);
 
             if (customMapObject != null)
             {

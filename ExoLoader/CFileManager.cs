@@ -319,9 +319,27 @@ namespace ExoLoader
             }
             data.dislikes = dislikes;
 
+            object rawSkeleton = parsedJson.GetValueSafe("Skeleton");
+            if (rawSkeleton is JArray skeletonArray)
+            {
+                ModInstance.log("This character will use multiple skeletons");
+                data.skeleton = skeletonArray.ToObject<string[]>();
+            }
+            else if (rawSkeleton is string skeletonString)
+            {
+                ModInstance.log("This character will use a single skeleton");
+                data.skeleton = [skeletonString];
+            }
+            else
+            {
+                data.skeleton = ["tang", "anemone", "dys"]; // should cover most cases
+            }
 
-            string skeleton = (string)parsedJson["Skeleton"];
-            data.skeleton = skeleton;
+            // if data.skeleton includes "marz", add also "mars" to it
+            if (data.skeleton.Contains("marz"))
+            {
+                data.skeleton = [.. data.skeleton, "mars"];
+            }
 
             string spriteSizeString = (string)parsedJson.GetValueSafe("SpriteSize");
             if (spriteSizeString != null)
