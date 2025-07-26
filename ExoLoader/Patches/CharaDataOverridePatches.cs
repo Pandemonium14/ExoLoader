@@ -236,5 +236,45 @@ namespace ExoLoader
                 ModInstance.log("Error in CharasMenuUpdateCurrentCharaPostfix: " + e.Message);
             }
         }
+
+        [HarmonyPatch(typeof(Chara), nameof(Chara.SetFillbar))]
+        [HarmonyPostfix]
+        public static void CharaSetFillbarPostfix(Chara __instance, Fillbar statFillbar, int index)
+        {
+            try
+            {
+                if (__instance is CustomChara customChara && customChara.data != null)
+                {
+                    CharaDataOverrideField field = index switch
+                    {
+                        0 => CharaDataOverrideField.fillbar1Value,
+                        1 => CharaDataOverrideField.fillbar2Value,
+                        2 => CharaDataOverrideField.fillbar3Value,
+                        _ => throw new ArgumentOutOfRangeException(nameof(index), "Index must be 0, 1, or 2")
+                    };
+                    string latestOverride = GetLatestOverrideOfType(customChara, field);
+                    if (latestOverride != null)
+                    {
+                        if (latestOverride.ToLower().StartsWith("mem_"))
+                        {
+                            int num = Princess.GetMemoryInt(latestOverride).Clamp(0, 10);
+                            statFillbar.ChangeValue((float)num / 10f);
+                        }
+                        else if (int.TryParse(latestOverride, out int value))
+                        {
+                            statFillbar.ChangeValue((float)value / 10f);
+                        }
+                        else
+                        {
+                            ModInstance.log($"Invalid fillbar value '{latestOverride}' for {customChara.charaID} at index {index}");
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log("Error in CharaSetFillbarPostfix: " + e.Message);
+            }
+        }
     }
 }

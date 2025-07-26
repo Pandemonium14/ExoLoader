@@ -24,7 +24,12 @@ namespace ExoLoader
         pronouns,
         dialogueColor,
         augment,
-        defaultBg
+        defaultBg,
+
+        // fillbar
+        fillbar1Value,
+        fillbar2Value,
+        fillbar3Value
     }
 
     public class CharaDataOverride

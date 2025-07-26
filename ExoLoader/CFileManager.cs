@@ -428,6 +428,15 @@ namespace ExoLoader
                             case "DEFAULTBG":
                                 field = CharaDataOverrideField.defaultBg;
                                 break;
+                            case "FILLBAR1":
+                                field = CharaDataOverrideField.fillbar1Value;
+                                break;
+                            case "FILLBAR2":
+                                field = CharaDataOverrideField.fillbar2Value;
+                                break;
+                            case "FILLBAR3":
+                                field = CharaDataOverrideField.fillbar3Value;
+                                break;
                             default:
                                 ModInstance.log("Unknown override field in " + TrimFolderName(folderName) + ": " + fieldToken.ToString());
                                 ModLoadingStatus.LogError("Unknown override field in " + TrimFolderName(folderName) + ": " + fieldToken.ToString());
