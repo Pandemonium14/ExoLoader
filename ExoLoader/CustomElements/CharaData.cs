@@ -84,6 +84,12 @@ namespace ExoLoader
         public float[] helioMapSpot;
         public Dictionary<string, float[]> helioMapSpots;
         public float[] destroyedMapSpot;
+        public Dictionary<string, float[]> nearbyStratoMapSpots;
+        public Dictionary<string, float[]> nearbyHelioMapSpots;
+        public Dictionary<string, float[]> plainsMapSpots;
+        public Dictionary<string, float[]> valleyMapSpots;
+        public Dictionary<string, float[]> ridgeMapSpots;
+        public bool defaultOnMap = true; // true means old ExoLoader onMap behaviour, false means character will only appear if mem_map_charaID is set
 
         public string folderName;
         public bool ages;

@@ -37,7 +37,20 @@ namespace ExoLoader
 
         private static bool IsValidScene(CustomChara chara, string scene)
         {
-            return ((scene.Equals("strato") || scene.Equals("stratodestroyed")) && !chara.data.helioOnly) || scene.Equals("helio");
+            if (scene.Equals("helio") || scene.Equals("nearbyhelio"))
+            {
+                return true;
+            }
+
+            if (chara.data.helioOnly)
+            {
+                if (!Princess.HasMemory(Princess.memNewship))
+                {
+                    return false;
+                }
+            }
+            // swamp is unsupported
+            return !scene.Equals("swamp");
         }
 
         private static void HandleExistingMapObject(CustomChara chara, string scene)
@@ -70,6 +83,7 @@ namespace ExoLoader
             foreach (string skeleton in chara.data.skeleton)
             {
                 templateObject = objectFactory.GetMapObjectTemplate(skeleton, season, week);
+
                 if (templateObject != null)
                 {
                     usedSkeleton = skeleton;

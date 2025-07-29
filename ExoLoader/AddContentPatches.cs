@@ -185,7 +185,11 @@ namespace ExoLoader
         {
             if (__instance is CustomChara chara)
             {
-                // FIXME: to be honest, people who add characters should properly set mem_map_charaID when their character is added
+                if (!chara.data.defaultOnMap)
+                {
+                    return true; // default game behaviour
+                }
+
                 if (chara.isDead)
                 {
                     __result = false;

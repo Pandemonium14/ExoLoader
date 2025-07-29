@@ -50,6 +50,41 @@ namespace ExoLoader
             {
                 return data.destroyedMapSpot;
             }
+            else if (scene.Equals("nearbyhelio"))
+            {
+                if (data.nearbyHelioMapSpots != null && data.nearbyHelioMapSpots.ContainsKey(seasonId) && data.nearbyHelioMapSpots[seasonId] != null)
+                {
+                    return data.nearbyHelioMapSpots[seasonId];
+                }
+            }
+            else if (scene.Equals("nearbystrato"))
+            {
+                if (data.nearbyStratoMapSpots != null && data.nearbyStratoMapSpots.ContainsKey(seasonId) && data.nearbyStratoMapSpots[seasonId] != null)
+                {
+                    return data.nearbyStratoMapSpots[seasonId];
+                }
+            }
+            else if (scene.Equals("plains"))
+            {
+                if (data.plainsMapSpots != null && data.plainsMapSpots.ContainsKey(seasonId) && data.plainsMapSpots[seasonId] != null)
+                {
+                    return data.plainsMapSpots[seasonId];
+                }
+            }
+            else if (scene.Equals("valley"))
+            {
+                if (data.valleyMapSpots != null && data.valleyMapSpots.ContainsKey(seasonId) && data.valleyMapSpots[seasonId] != null)
+                {
+                    return data.valleyMapSpots[seasonId];
+                }
+            }
+            else if (scene.Equals("ridge"))
+            {
+                if (data.ridgeMapSpots != null && data.ridgeMapSpots.ContainsKey(seasonId) && data.ridgeMapSpots[seasonId] != null)
+                {
+                    return data.ridgeMapSpots[seasonId];
+                }
+            }
             return null;
         }
 

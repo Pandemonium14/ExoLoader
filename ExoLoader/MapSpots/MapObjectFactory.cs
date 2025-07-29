@@ -12,16 +12,25 @@ namespace ExoLoader
         public GameObject GetMapObjectTemplate(string charaId, string season, int week)
         {
             GameObject o = GameObject.Find("Seasonal");
-            Transform seasonalTransform = o.transform;
-            Transform seasonTransform = seasonalTransform.Find(season);
+            Transform seasonalTransform = o?.transform;
+            Transform seasonTransform = seasonalTransform?.Find(season);
 
             if (seasonTransform == null)
             {
-                GameObject childObject = o.transform.GetComponentsInChildren<Transform>().FirstOrDefault(c => c.gameObject.name == "chara_" + charaId)?.gameObject;
+                GameObject childObject = o?.transform.GetComponentsInChildren<Transform>().FirstOrDefault(c => c.gameObject.name == "chara_" + charaId)?.gameObject;
                 if (childObject != null)
                 {
                     return childObject;
                 }
+
+                // This means we're likely in the expedition scene and trying to find Sym
+                GameObject i = GameObject.Find("chara_" + charaId);
+
+                if (i != null)
+                {
+                    return i;
+                }
+
                 return null;
             }
 
@@ -97,6 +106,13 @@ namespace ExoLoader
             newObject.name = "chara_" + chara.charaID;
 
             MapSpot mapSpot = newObject.GetComponent<MapSpot>();
+
+            if (mapSpot == null)
+            {
+                ModInstance.log("MapSpot component not found on the new object for " + chara.charaID);
+                return null;
+            }
+
             mapSpot.charaID = chara.charaID;
 
             float[] mapSpotPosition = chara.GetMapSpot(scene, Princess.season.seasonID);
@@ -132,17 +148,45 @@ namespace ExoLoader
 
             for (int i = 1; i <= 3; i++)
             {
-                GameObject artObject = newObject.transform.Find(templateSkeletonID).Find(templateSkeletonID + i.ToString()).gameObject;
-                ModInstance.log("Got " + i.ToString() + "th art object");
+                GameObject artObject = newObject.transform.Find(templateSkeletonID)?.Find(templateSkeletonID + i.ToString())?.gameObject;
+                bool isZeroStage = false;
+
+                if (artObject)
+                {
+                    ModInstance.log("Got " + i.ToString() + "th art object");
+                }
+
+                if (artObject == null && (
+                    templateSkeletonID == "sym" ||
+                    templateSkeletonID == "mom" ||
+                    templateSkeletonID == "dad" ||
+                    templateSkeletonID == "utopia"
+                ))
+                {
+                    artObject = newObject.transform.Find(templateSkeletonID).Find(templateSkeletonID + "0")?.gameObject;
+
+                    if (artObject)
+                    {
+                        isZeroStage = true;
+                        ModInstance.log("Using 0th art object from " + templateSkeletonID);
+                    }
+                }
 
                 if (artObject != null)
                 {
+                    int currentStage = isZeroStage ? Princess.artStage : i;
+
                     ModInstance.log("Art object is named " + artObject.name);
-                    float ageScale = (chara.data.overworldScales[i - 1] != 0f) ? chara.data.overworldScales[i - 1] : 0.004f;
-                    artObject.name = chara.charaID + i.ToString();
-                    ModifyArtObject(artObject, chara, i, ageScale);
-                    ModInstance.log("Modified " + i.ToString() + "th art object");
+                    float ageScale = (chara.data.overworldScales[currentStage - 1] != 0f) ? chara.data.overworldScales[currentStage - 1] : 0.004f;
+                    artObject.name = chara.charaID + currentStage.ToString();
+                    ModifyArtObject(artObject, chara, currentStage, ageScale);
+                    ModInstance.log("Modified " + currentStage.ToString() + "th art object");
                     artAgeTransforms.Add(artObject.transform);
+
+                    if (isZeroStage)
+                    {
+                        break;
+                    }
                 }
             }
 

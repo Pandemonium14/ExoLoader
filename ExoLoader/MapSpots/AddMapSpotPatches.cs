@@ -17,11 +17,6 @@ namespace ExoLoader
         [HarmonyPrefix]
         public static void AddCustomMapSpots()
         {
-            if (!MapManager.IsColonyScene(MapManager.currentScene))
-            {
-                return;
-            }
-
             string scene = MapManager.currentScene.RemoveStart("Colony").ToLower();
             string season = Princess.season.seasonID;
             int week = Princess.monthOfSeason;

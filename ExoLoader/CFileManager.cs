@@ -203,6 +203,12 @@ namespace ExoLoader
             data.onMap = onMap == "TRUE";
             ModInstance.log("OnMap read");
 
+            string defaultOnMap = (string)parsedJson.GetValueSafe("DefaultOnMap");
+            if (defaultOnMap != null)
+            {
+                data.defaultOnMap = defaultOnMap == "TRUE";
+            }
+
             if (data.onMap)
             {
                 string helioOnly = (string)parsedJson["HelioOnly"];
@@ -292,6 +298,96 @@ namespace ExoLoader
                 }
 
                 ModInstance.log("Helio map spot read");
+
+                if (parsedJson.ContainsKey("NearbyStratoMapSpots"))
+                {
+                    ModInstance.log("Reading Nearby Strato map spots as a dictionary");
+                    data.nearbyStratoMapSpots = new Dictionary<string, float[]>();
+                    JObject nearbyStratoMapSpots = (JObject)parsedJson["NearbyStratoMapSpots"];
+                    foreach (var kvp in nearbyStratoMapSpots)
+                    {
+                        string seasonID = kvp.Key;
+                        float[] mapSpot = ((JArray)kvp.Value).ToObject<float[]>();
+                        if (mapSpot == null || mapSpot.Length != 3)
+                        {
+                            DataDebugHelper.PrintDataError("Nearby Strato coordinates missing or broken for " + Path.GetFileName(folderName));
+                            return null;
+                        }
+                        data.nearbyStratoMapSpots.Add(seasonID, mapSpot);
+                    }
+                }
+
+                if (parsedJson.ContainsKey("NearbyHelioMapSpots"))
+                {
+                    ModInstance.log("Reading Nearby Helio map spots as a dictionary");
+                    data.nearbyHelioMapSpots = new Dictionary<string, float[]>();
+                    JObject nearbyHelioMapSpots = (JObject)parsedJson["NearbyHelioMapSpots"];
+                    foreach (var kvp in nearbyHelioMapSpots)
+                    {
+                        string seasonID = kvp.Key;
+                        float[] mapSpot = ((JArray)kvp.Value).ToObject<float[]>();
+                        if (mapSpot == null || mapSpot.Length != 3)
+                        {
+                            DataDebugHelper.PrintDataError("Nearby Helio coordinates missing or broken for " + Path.GetFileName(folderName));
+                            return null;
+                        }
+                        data.nearbyHelioMapSpots.Add(seasonID, mapSpot);
+                    }
+                }
+
+                if (parsedJson.ContainsKey("PlainsMapSpots"))
+                {
+                    ModInstance.log("Reading Plains map spots as a dictionary");
+                    data.plainsMapSpots = new Dictionary<string, float[]>();
+                    JObject plainsMapSpots = (JObject)parsedJson["PlainsMapSpots"];
+                    foreach (var kvp in plainsMapSpots)
+                    {
+                        string seasonID = kvp.Key;
+                        float[] mapSpot = ((JArray)kvp.Value).ToObject<float[]>();
+                        if (mapSpot == null || mapSpot.Length != 3)
+                        {
+                            DataDebugHelper.PrintDataError("Plains coordinates missing or broken for " + Path.GetFileName(folderName));
+                            return null;
+                        }
+                        data.plainsMapSpots.Add(seasonID, mapSpot);
+                    }
+                }
+
+                if (parsedJson.ContainsKey("ValleyMapSpots"))
+                {
+                    ModInstance.log("Reading Valley map spots as a dictionary");
+                    data.valleyMapSpots = new Dictionary<string, float[]>();
+                    JObject valleyMapSpots = (JObject)parsedJson["ValleyMapSpots"];
+                    foreach (var kvp in valleyMapSpots)
+                    {
+                        string seasonID = kvp.Key;
+                        float[] mapSpot = ((JArray)kvp.Value).ToObject<float[]>();
+                        if (mapSpot == null || mapSpot.Length != 3)
+                        {
+                            DataDebugHelper.PrintDataError("Valley coordinates missing or broken for " + Path.GetFileName(folderName));
+                            return null;
+                        }
+                        data.valleyMapSpots.Add(seasonID, mapSpot);
+                    }
+                }
+
+                if (parsedJson.ContainsKey("RidgeMapSpots"))
+                {
+                    ModInstance.log("Reading Ridge map spots as a dictionary");
+                    data.ridgeMapSpots = new Dictionary<string, float[]>();
+                    JObject ridgeMapSpots = (JObject)parsedJson["RidgeMapSpots"];
+                    foreach (var kvp in ridgeMapSpots)
+                    {
+                        string seasonID = kvp.Key;
+                        float[] mapSpot = ((JArray)kvp.Value).ToObject<float[]>();
+                        if (mapSpot == null || mapSpot.Length != 3)
+                        {
+                            DataDebugHelper.PrintDataError("Ridge coordinates missing or broken for " + Path.GetFileName(folderName));
+                            return null;
+                        }
+                        data.ridgeMapSpots.Add(seasonID, mapSpot);
+                    }
+                }
 
                 JArray spriteFrameRatesRaw = (JArray)parsedJson.GetValueSafe("AnimationFrameRates");
                 if (spriteFrameRatesRaw != null)
