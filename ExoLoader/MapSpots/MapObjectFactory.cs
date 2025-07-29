@@ -93,7 +93,6 @@ namespace ExoLoader
             Transform directT = seasonTransform.Find("chara_" + charaId);
             if (directT == null)
             {
-                ModInstance.log("Couldn't find map object for " + charaId + " " + season + " " + week.ToString());
                 return null;
             }
 
@@ -222,10 +221,17 @@ namespace ExoLoader
 
         private void ModifyArtObject(GameObject existingSpineObject, CustomChara chara, int artStage, float scale)
         {
-            SkeletonAsset skeletonAsset = ModAssetManager.GetSkeletonData(AssetContentType.CharacterModel, chara.charaID + "_model_" + artStage.ToString());
+            string name = chara.charaID + "_model";
+
+            if (chara.data.ages)
+            {
+                name += "_" + artStage.ToString();
+            }
+
+            SkeletonAsset skeletonAsset = ModAssetManager.GetSkeletonData(AssetContentType.CharacterModel, name);
             if (skeletonAsset == null)
             {
-                ModInstance.log($"Skeleton asset not found for {chara.charaID} art stage {artStage}");
+                ModInstance.log($"Skeleton {name} asset not found for {chara.charaID} art stage {artStage}");
                 return;
             }
 

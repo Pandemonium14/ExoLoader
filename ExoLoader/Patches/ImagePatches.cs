@@ -19,8 +19,10 @@ namespace ExoLoader
                 {
                     ModInstance.log("Chara is getting a custom chara sprite, getting image " + expression + "...");
                     int artStage = overrideArtStage > 0 ? overrideArtStage : Princess.artStage;
-                    string spriteName = __instance.charaID + artStage + "_" + expression;
-                    ModInstance.log($"Using art stage {artStage} for custom sprite: {spriteName}");
+                    string spriteName = ch.data.ages
+                        ? __instance.charaID + "_" + expression
+                        : __instance.charaID + artStage + "_" + expression;
+                    ModInstance.log($"Looking for sprite: {spriteName} with art stage {artStage}");
                     Sprite sprite = ModAssetManager.GetStorySprite(spriteName);
 
                     if (sprite != null)
@@ -190,9 +192,9 @@ namespace ExoLoader
             {
                 result = input + Princess.artStage.ToString();
             }
-            else if (!ch.data.ages && (input.EndsWith("1") || input.EndsWith("2") || !input.EndsWith("3")))
+            else if (!ch.data.ages && (input.EndsWith("1") || input.EndsWith("2") || input.EndsWith("3")))
             {
-                result = input.RemoveEnding(input[-1].ToString());
+                result = input.Substring(0, input.Length - 1);
             }
             return result;
         }

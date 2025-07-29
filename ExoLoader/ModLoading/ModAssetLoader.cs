@@ -106,26 +106,48 @@ namespace ExoLoader
                 string folderName = chara.data.folderName;
                 string spritesFolder = Path.Combine(folderName, "Sprites");
 
-                for (int artStage = 1; artStage <= 3; artStage++)
+                if (chara.data.ages)
                 {
-                    bool SilentErrors = artStage == 1 && chara.data.helioOnly;
-                    // Portrait for the art stage
-                    string portraitName = $"portrait_{chara.charaID}{artStage}";
-                    ModInstance.log($"Loading character portrait: {portraitName} for art stage {artStage}");
-                    LoadCharacterPortrait(spritesFolder, portraitName, SilentErrors);
+                    for (int artStage = 1; artStage <= 3; artStage++)
+                    {
+                        bool SilentErrors = artStage == 1 && chara.data.helioOnly;
+                        // Portrait for the art stage
+                        string portraitName = $"portrait_{chara.charaID}{artStage}";
+                        ModInstance.log($"Loading character portrait: {portraitName} for art stage {artStage}");
+                        LoadCharacterPortrait(spritesFolder, portraitName, SilentErrors);
+
+                        // Load character models
+                        if (chara.data.onMap)
+                        {
+                            string modelName = $"{chara.charaID}_model_{artStage}";
+                            LoadCharacterModel(spritesFolder, modelName, SilentErrors);
+                        }
+
+                        // Story sprites
+                        string storySpritePrefix = $"{chara.charaID}{artStage}_";
+                        int targetSpriteSize = Math.Max(chara.data.spriteSize, chara.data.spriteSizes[artStage - 1]);
+                        ModInstance.log($"Loading story sprites {storySpritePrefix} story sprites for art stage {artStage} with target size {targetSpriteSize}");
+                        LoadCharacterStorySprites(spritesFolder, storySpritePrefix, SilentErrors, targetSpriteSize);
+                    }
+                }
+                else
+                {
+                    string portraitName = $"portrait_{chara.charaID}";
+                    ModInstance.log($"Loading character portrait: {portraitName} without art stage");
+                    LoadCharacterPortrait(spritesFolder, portraitName, false);
 
                     // Load character models
                     if (chara.data.onMap)
                     {
-                        string modelName = $"{chara.charaID}_model_{artStage}";
-                        LoadCharacterModel(spritesFolder, modelName, SilentErrors);
+                        string modelName = $"{chara.charaID}_model";
+                        LoadCharacterModel(spritesFolder, modelName, false);
                     }
 
                     // Story sprites
-                    string storySpritePrefix = $"{chara.charaID}{artStage}_";
-                    int targetSpriteSize = Math.Max(chara.data.spriteSize, chara.data.spriteSizes[artStage - 1]);
-                    ModInstance.log($"Loading story sprites {storySpritePrefix} story sprites for art stage {artStage} with target size {targetSpriteSize}");
-                    LoadCharacterStorySprites(spritesFolder, storySpritePrefix, SilentErrors, targetSpriteSize);
+                    string storySpritePrefix = $"{chara.charaID}_";
+                    int targetSpriteSize = Math.Max(chara.data.spriteSize, chara.data.spriteSizes[0]);
+                    ModInstance.log($"Loading story sprites {storySpritePrefix} story sprites without art stage with target size {targetSpriteSize}");
+                    LoadCharacterStorySprites(spritesFolder, storySpritePrefix, false, targetSpriteSize);
                 }
 
                 // Main menu sprite
