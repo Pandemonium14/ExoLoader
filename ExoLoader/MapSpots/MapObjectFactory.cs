@@ -101,6 +101,14 @@ namespace ExoLoader
 
         public GameObject CreateCustomMapObject(GameObject templateObject, string templateSkeletonID, CustomChara chara, string scene)
         {
+            float[] mapSpotPosition = chara.GetMapSpot(scene, Princess.season.seasonID);
+
+            if (mapSpotPosition == null)
+            {
+                ModInstance.log($"Can't modify map object in unsupported scene: {scene} for chara {chara.charaID}");
+                return null;
+            }
+
             GameObject newObject = UnityEngine.Object.Instantiate(templateObject);
             newObject.name = "chara_" + chara.charaID;
 
@@ -113,15 +121,6 @@ namespace ExoLoader
             }
 
             mapSpot.charaID = chara.charaID;
-
-            float[] mapSpotPosition = chara.GetMapSpot(scene, Princess.season.seasonID);
-
-            if (mapSpotPosition == null)
-            {
-                ModInstance.log("Can't modify map object in unsupported scene");
-                return null;
-            }
-
             newObject.transform.localPosition = new Vector3(mapSpotPosition[0], mapSpotPosition[1], mapSpotPosition[2]);
             mapSpot.MoveToGround();
 

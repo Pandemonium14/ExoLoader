@@ -20,8 +20,8 @@ namespace ExoLoader
                     ModInstance.log("Chara is getting a custom chara sprite, getting image " + expression + "...");
                     int artStage = overrideArtStage > 0 ? overrideArtStage : Princess.artStage;
                     string spriteName = ch.data.ages
-                        ? __instance.charaID + "_" + expression
-                        : __instance.charaID + artStage + "_" + expression;
+                        ? __instance.charaID + artStage + "_" + expression
+                        : __instance.charaID + "_" + expression;
                     ModInstance.log($"Looking for sprite: {spriteName} with art stage {artStage}");
                     Sprite sprite = ModAssetManager.GetStorySprite(spriteName);
 

@@ -428,7 +428,7 @@ namespace ExoLoader
             }
             else
             {
-                data.skeleton = ["tang", "anemone", "dys"]; // should cover most cases
+                data.skeleton = ["tang", "anemone", "dys", "sym"]; // should cover most cases
             }
 
             // if data.skeleton includes "marz", add also "mars" to it
