@@ -18,7 +18,7 @@ namespace ExoLoader
                 if (__instance is CustomChara ch)
                 {
                     ModInstance.log("Chara is getting a custom chara sprite, getting image " + expression + "...");
-                    int artStage = overrideArtStage > 0 ? overrideArtStage : Princess.artStage;
+                    int artStage = overrideArtStage > 0 ? overrideArtStage : ch.artStage;
                     string spriteName = ch.data.ages
                         ? __instance.charaID + artStage + "_" + expression
                         : __instance.charaID + "_" + expression;
@@ -148,12 +148,29 @@ namespace ExoLoader
                 return first + "_" + second;
             }
 
-            if (!first.EndsWith("1") && !first.EndsWith("2") && !first.EndsWith("3"))
+            // Check if it already has an art stage number
+            if (!HasArtStageNumber(first))
             {
-                first += Princess.artStage.ToString();
+                // Get the character to determine art stage
+                Chara chara = Chara.FromCharaImageID(first);
+                if (chara is CustomChara customChara)
+                {
+                    first += customChara.artStage.ToString();
+                }
+                else
+                {
+                    first += Princess.artStage.ToString(); // Fallback for non-custom characters
+                }
             }
 
             return first + "_" + second;
+        }
+
+        private static bool HasArtStageNumber(string input)
+        {
+            if (input.Length == 0) return false;
+            char lastChar = input[input.Length - 1];
+            return char.IsDigit(lastChar);
         }
 
         [HarmonyPatch(typeof(AssetManager))]
@@ -169,6 +186,7 @@ namespace ExoLoader
             else
             {
                 string portraitName = "portrait_" + MakeActualPortraitName(spriteName, (CustomChara)ch);
+                ModInstance.log($"Loading custom portrait with name {portraitName} for character {ch.charaID}");
                 Sprite sprite = ModAssetManager.GetSprite(AssetContentType.CharacterPortrait, portraitName);
                 if (sprite != null)
                 {
@@ -188,14 +206,30 @@ namespace ExoLoader
         private static string MakeActualPortraitName(string input, CustomChara ch)
         {
             string result = input;
-            if (!input.EndsWith("1") && !input.EndsWith("2") && !input.EndsWith("3") && ch.data.ages)
+
+            if (ch.data.ages)
             {
-                result = input + Princess.artStage.ToString();
+                if (ch.data.customAging != null && ch.data.customAging.Count > 0)
+                {
+                    if (HasArtStageNumber(result))
+                    {
+                        result = result.Substring(0, result.Length - 1);
+                    }
+                }
+
+                if (!HasArtStageNumber(result))
+                {
+                    result += ch.artStage.ToString();
+                }
             }
-            else if (!ch.data.ages && (input.EndsWith("1") || input.EndsWith("2") || input.EndsWith("3")))
+            else
             {
-                result = input.Substring(0, input.Length - 1);
+                if (HasArtStageNumber(result))
+                {
+                    result = result.Substring(0, result.Length - 1);
+                }
             }
+
             return result;
         }
 

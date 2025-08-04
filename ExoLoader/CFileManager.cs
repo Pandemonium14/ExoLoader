@@ -394,7 +394,7 @@ namespace ExoLoader
                 {
                     ModInstance.log("This character will use sprite frame rates by age");
                     string[] spriteFrameRatesStrings = spriteFrameRatesRaw.ToObject<string[]>();
-                    float[] spriteFrameRates = { float.Parse(spriteFrameRatesStrings[0]), float.Parse(spriteFrameRatesStrings[1]), float.Parse(spriteFrameRatesStrings[2]) };
+                    float[] spriteFrameRates = [.. spriteFrameRatesStrings.Select(s => float.Parse(s))];
                     data.spriteFrameRates = spriteFrameRates;
                 }
             }
@@ -448,7 +448,7 @@ namespace ExoLoader
             {
                 ModInstance.log("This character will use sprite sizes by age");
                 string[] spriteSizesStrings = spriteSizesRaw.ToObject<string[]>();
-                int[] spriteSizes = { int.Parse(spriteSizesStrings[0]), int.Parse(spriteSizesStrings[1]), int.Parse(spriteSizesStrings[2]) };
+                int[] spriteSizes = [.. spriteSizesStrings.Select(int.Parse)];
                 data.spriteSizes = spriteSizes;
             }
 
@@ -459,7 +459,7 @@ namespace ExoLoader
             {
                 ModInstance.log("This character will use overworld scale by age");
                 string[] overworldScaleStrings = overworldScaleByAgeRaw.ToObject<string[]>();
-                float[] overworldScales = { float.Parse(overworldScaleStrings[0]) / 1000f, float.Parse(overworldScaleStrings[1]) / 1000f, float.Parse(overworldScaleStrings[2]) / 1000f };
+                float[] overworldScales = [.. overworldScaleStrings.Select(s => float.Parse(s) / 1000f)];
                 data.overworldScales = overworldScales;
             }
             else
@@ -590,6 +590,37 @@ namespace ExoLoader
                     {
                         ModInstance.log("Invalid override entry in " + TrimFolderName(folderName) + ": " + overrideObj.ToString());
                         ModLoadingStatus.LogError("Invalid override entry in " + TrimFolderName(folderName) + ": " + overrideObj.ToString());
+                    }
+                }
+            }
+
+
+            if (parsedJson.TryGetValue("CustomAging", out object customAgingObj))
+            {
+                ModInstance.log("Reading custom aging for " + TrimFolderName(folderName));
+                JArray customAgingArray = (JArray)customAgingObj;
+                foreach (JObject customAgingEntry in customAgingArray.Cast<JObject>())
+                {
+                    if (customAgingEntry.TryGetValue("Stage", out JToken stageToken))
+                    {
+                        int stage = int.Parse(stageToken.ToString());
+                        int? startDate = null;
+                        if (customAgingEntry.TryGetValue("StartDate", out JToken startDateToken))
+                        {
+                            startDate = Season.GetMonthOfGame(startDateToken.ToString());
+                        }
+                        string[] requiredMemories = null;
+                        if (customAgingEntry.TryGetValue("RequiredMemories", out JToken requiredMemoriesToken))
+                        {
+                            requiredMemories = requiredMemoriesToken.ToObject<string[]>();
+                        }
+                        CustomAging customAging = new CustomAging(stage, startDate, requiredMemories);
+                        data.customAging.Add(customAging);
+                    }
+                    else
+                    {
+                        ModInstance.log("Invalid custom aging entry in " + TrimFolderName(folderName) + ": " + customAgingEntry.ToString());
+                        ModLoadingStatus.LogError("Invalid custom aging entry in " + TrimFolderName(folderName) + ": " + customAgingEntry.ToString());
                     }
                 }
             }

@@ -47,6 +47,20 @@ namespace ExoLoader
         }
     }
 
+    public class CustomAging
+    {
+        public int stage;
+        public int startDate;
+        public string[] requiredMemories;
+
+        public CustomAging(int stage, int? startDate = null, string[] requiredMemories = null)
+        {
+            this.stage = stage;
+            this.startDate = startDate ?? 0;
+            this.requiredMemories = requiredMemories;
+        }
+    }
+
     public class CharaData
     {
         public string id;
@@ -78,6 +92,7 @@ namespace ExoLoader
         public string[] jobs;
 
         public Dictionary<CharaDataOverrideField, CharaDataOverride[]> overrides = [];
+        public List<CustomAging> customAging = [];
 
         public float[] stratoMapSpot;
         public Dictionary<string, float[]> stratoMapSpots;
@@ -95,9 +110,9 @@ namespace ExoLoader
         public bool ages;
         public bool onMap = true;
         public int spriteSize = -1;
-        public int[] spriteSizes = new int[3];
+        public int[] spriteSizes = [-1, -1, -1];
         public float[] spriteFrameRates = [12f, 12f, 12f];
-        public float[] overworldScales = new float[3];
+        public float[] overworldScales = [0.004f, 0.004f, 0.004f];
         public MainMenuPosition mainMenu;
 
         public CustomChara MakeChara()

@@ -105,7 +105,6 @@ namespace ExoLoader
 
             if (mapSpotPosition == null)
             {
-                ModInstance.log($"Can't modify map object in unsupported scene: {scene} for chara {chara.charaID}");
                 return null;
             }
 
@@ -143,6 +142,7 @@ namespace ExoLoader
         private List<Transform> SetupArtObjects(string templateSkeletonID, GameObject newObject, CustomChara chara)
         {
             List<Transform> artAgeTransforms = new List<Transform>();
+            int charaArtStage = chara.artStage;
 
             for (int i = 1; i <= 3; i++)
             {
@@ -172,10 +172,21 @@ namespace ExoLoader
 
                 if (artObject != null)
                 {
-                    int currentStage = isZeroStage ? Princess.artStage : i;
+                    int currentStage = isZeroStage ? charaArtStage : i;
 
                     ModInstance.log("Art object is named " + artObject.name);
-                    float ageScale = (chara.data.overworldScales[currentStage - 1] != 0f) ? chara.data.overworldScales[currentStage - 1] : 0.004f;
+                    int arrayIndex = charaArtStage == 0 ? 0 : charaArtStage - 1;
+                    float ageScale = chara.data.overworldScales.Length > arrayIndex
+                        ? chara.data.overworldScales[arrayIndex]
+                        : 0.004f;
+
+                    if (ageScale <= 0)
+                    {
+                        ageScale = 0.004f;
+                    }
+
+                    ModInstance.log($"Setting art object scale to {ageScale} for {chara.charaID} art stage {currentStage}");
+
                     artObject.name = chara.charaID + currentStage.ToString();
                     ModifyArtObject(artObject, chara, currentStage, ageScale);
                     ModInstance.log("Modified " + currentStage.ToString() + "th art object");
@@ -185,6 +196,10 @@ namespace ExoLoader
                     {
                         break;
                     }
+                }
+                else
+                {
+                    ModInstance.log("No art object found for " + templateSkeletonID + i.ToString() + " or 0");
                 }
             }
 
@@ -221,10 +236,11 @@ namespace ExoLoader
         private void ModifyArtObject(GameObject existingSpineObject, CustomChara chara, int artStage, float scale)
         {
             string name = chara.charaID + "_model";
+            int charaArtStage = chara.artStage;
 
             if (chara.data.ages)
             {
-                name += "_" + artStage.ToString();
+                name += "_" + charaArtStage.ToString();
             }
 
             SkeletonAsset skeletonAsset = ModAssetManager.GetSkeletonData(AssetContentType.CharacterModel, name);
@@ -333,7 +349,7 @@ namespace ExoLoader
 
             if (!isAnimated)
             {
-                Sprite[] spriteFrames = ModAssetManager.GetSpriteAnimation(AssetContentType.CharacterSpriteModel, chara.charaID + "_model_" + artStage.ToString());
+                Sprite[] spriteFrames = ModAssetManager.GetSpriteAnimation(AssetContentType.CharacterSpriteModel, chara.charaID + "_model_" + charaArtStage.ToString());
                 if (spriteFrames != null && spriteFrames.Length > 0)
                 {
                     GameObject spriteAnimationObject = new GameObject("SpriteAnimation_" + chara.charaID);
@@ -355,7 +371,17 @@ namespace ExoLoader
 
                     SpriteAnimationPlayer animationPlayer = spriteAnimationObject.AddComponent<SpriteAnimationPlayer>();
                     animationPlayer.sprites = spriteFrames;
-                    animationPlayer.frameRate = chara.data.spriteFrameRates[artStage - 1];
+
+                    float frameRate = chara.data.spriteFrameRates.Length > charaArtStage - 1
+                        ? chara.data.spriteFrameRates[charaArtStage - 1]
+                        : 12f;
+
+                    if (frameRate <= 0)
+                    {
+                        frameRate = 12f;
+                    }
+
+                    animationPlayer.frameRate = frameRate;
 
                     animationPlayer.PlayAnimation();
 

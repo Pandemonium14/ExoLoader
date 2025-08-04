@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Northway.Utils;
 using UnityEngine;
 
 namespace ExoLoader
@@ -8,6 +9,7 @@ namespace ExoLoader
     {
         public static Dictionary<string, GameObject> mapObjects = new Dictionary<string, GameObject>();
         private static MapObjectFactory objectFactory = new MapObjectFactory();
+        private static Dictionary<string, int> lastArtStage = new Dictionary<string, int>();
 
         public static void MakeCustomMapObject(CustomChara chara, string season, int week, string scene)
         {
@@ -18,6 +20,11 @@ namespace ExoLoader
                     RemoveMapObject(chara.charaID);
                     ModInstance.log("Tried making " + chara.charaID + " model in unsuitable scene " + scene);
                     return;
+                }
+
+                if (ShouldRecreateMapObject(chara))
+                {
+                    RemoveMapObject(chara.charaID);
                 }
 
                 if (mapObjects.ContainsKey(chara.charaID))
@@ -33,6 +40,20 @@ namespace ExoLoader
                 ModInstance.log("Error while trying to get map object for " + chara.charaID + ": " + e.Message);
                 ModInstance.log(e.ToString());
             }
+        }
+
+        private static bool ShouldRecreateMapObject(CustomChara chara)
+        {
+            if (mapObjects.ContainsKey(chara.charaID))
+            {
+                if (!lastArtStage.ContainsKey(chara.charaID) || lastArtStage[chara.charaID] != chara.artStage)
+                {
+                    ModInstance.log($"Recreating map object for {chara.charaID} due to art stage change");
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static bool IsValidScene(CustomChara chara, string scene)
@@ -80,6 +101,9 @@ namespace ExoLoader
         {
             GameObject templateObject = null;
             string usedSkeleton = null;
+
+            lastArtStage[chara.charaID] = chara.artStage;
+
             foreach (string skeleton in chara.data.skeleton)
             {
                 templateObject = objectFactory.GetMapObjectTemplate(skeleton, season, week);
