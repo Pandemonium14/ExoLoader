@@ -139,6 +139,69 @@ namespace ExoLoader
             return actualSpot;
         }
 
+        public GameObject CreateCustomExpeditionMapObject(GameObject newObject, string templateSkeletonID, CustomChara chara, Transform parent)
+        {
+            List<Transform> artAgeTransforms = new List<Transform>();
+            int charaArtStage = chara.artStage;
+
+            for (int i = 1; i <= 3; i++)
+            {
+                GameObject artObject = newObject.transform.Find(templateSkeletonID + i.ToString())?.gameObject;
+                bool isZeroStage = false;
+
+                if (artObject == null && (
+                    templateSkeletonID == "sym" ||
+                    templateSkeletonID == "mom" ||
+                    templateSkeletonID == "dad" ||
+                    templateSkeletonID == "utopia"
+                ))
+                {
+                    artObject = newObject.transform.Find(templateSkeletonID + "0")?.gameObject;
+
+                    if (artObject)
+                    {
+                        isZeroStage = true;
+                    }
+                }
+
+                if (artObject != null)
+                {
+                    int currentStage = isZeroStage ? charaArtStage : i;
+
+                    int arrayIndex = charaArtStage == 0 ? 0 : charaArtStage - 1;
+                    float ageScale = chara.data.overworldScales.Length > arrayIndex
+                        ? chara.data.overworldScales[arrayIndex]
+                        : 0.004f;
+
+                    if (ageScale <= 0)
+                    {
+                        ageScale = 0.004f;
+                    }
+
+                    artObject.name = chara.charaID + currentStage.ToString();
+                    ModifyArtObject(artObject, chara, currentStage, ageScale);
+                    artAgeTransforms.Add(artObject.transform);
+
+                    if (isZeroStage)
+                    {
+                        break;
+                    }
+                }
+            }
+
+            GameObject actualSpot = PoolManager.Spawn(newObject, parent);
+            actualSpot.transform.localPosition = newObject.transform.localPosition;
+            newObject.DestroySafe();
+
+            actualSpot.transform.localPosition = new Vector3(
+                -0.5f,
+                0,
+                0
+            );
+
+            return actualSpot;
+        }
+
         private List<Transform> SetupArtObjects(string templateSkeletonID, GameObject newObject, CustomChara chara)
         {
             List<Transform> artAgeTransforms = new List<Transform>();
@@ -190,6 +253,7 @@ namespace ExoLoader
                     artObject.name = chara.charaID + currentStage.ToString();
                     ModifyArtObject(artObject, chara, currentStage, ageScale);
                     ModInstance.log("Modified " + currentStage.ToString() + "th art object");
+                    RepositionSpeechBubble(artObject);
                     artAgeTransforms.Add(artObject.transform);
 
                     if (isZeroStage)
@@ -388,10 +452,17 @@ namespace ExoLoader
                     ModInstance.log($"Created sprite animation for {chara.charaID} art stage {artStage} with {spriteFrames.Length} frames");
                 }
             }
+        }
 
-            // FIXME: figure out later if we need to move the speech bubble, sometimes it looks weird
-            // Transform speechBubbleTransform = existingSpineObject.transform.Find("speechBubble");
-            // ModInstance.log("Got speech bubble transform " + speechBubbleTransform?.name);
+        private void RepositionSpeechBubble(GameObject existingSpineObject)
+        {
+            Transform speechBubbleTransform = existingSpineObject.transform.Find("speechBubble")
+                ?? existingSpineObject.transform.Find("speechBubbleFlipped");
+
+            if (speechBubbleTransform == null) return;
+
+            bool isFlipped = speechBubbleTransform.name.Contains("Flipped");
+            speechBubbleTransform.localPosition = new Vector3(isFlipped ? 0.5f : -0.5f, speechBubbleTransform.localPosition.y, speechBubbleTransform.localPosition.z);
         }
     }
 }

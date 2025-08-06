@@ -8,6 +8,7 @@ namespace ExoLoader
     internal class CustomMapManager
     {
         public static Dictionary<string, GameObject> mapObjects = new Dictionary<string, GameObject>();
+        public static Dictionary<string, GameObject> expeditionObjects = new Dictionary<string, GameObject>();
         private static MapObjectFactory objectFactory = new MapObjectFactory();
         private static Dictionary<string, int> lastArtStage = new Dictionary<string, int>();
 
@@ -196,6 +197,36 @@ namespace ExoLoader
                 }
 
                 ModInstance.log($"Removed map object for {charaID}");
+            }
+        }
+
+        public static GameObject MakeExpeditionObject(GameObject newObject, string templateSkeletonID, CustomChara chara, Transform parent)
+        {
+            try
+            {
+                if (expeditionObjects.ContainsKey(chara.charaID))
+                {
+                    GameObject obj = expeditionObjects[chara.charaID];
+                    if (obj != null)
+                    {
+                        UnityEngine.Object.Destroy(obj);
+                    }
+                }
+
+                GameObject returnObject = objectFactory.CreateCustomExpeditionMapObject(newObject, templateSkeletonID, chara, parent);
+
+                if (returnObject != null)
+                {
+                    expeditionObjects[chara.charaID] = returnObject;
+                }
+
+                return returnObject;
+            }
+            catch (Exception e)
+            {
+                ModInstance.log("Error while trying to create expedition map object: " + e.Message);
+                ModInstance.log(e.StackTrace);
+                return null;
             }
         }
     }
