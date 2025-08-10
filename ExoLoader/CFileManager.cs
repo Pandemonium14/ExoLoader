@@ -203,16 +203,19 @@ namespace ExoLoader
             data.onMap = onMap == "TRUE";
             ModInstance.log("OnMap read");
 
+            string defaultOnMap = (string)parsedJson.GetValueSafe("DefaultOnMap");
+            if (defaultOnMap != null)
+            {
+                data.defaultOnMap = defaultOnMap == "TRUE";
+            }
+
             if (data.onMap)
             {
                 string helioOnly = (string)parsedJson["HelioOnly"];
                 data.helioOnly = helioOnly == "TRUE";
-                //ModInstance.log("HelioOnly read");
 
                 if (!data.helioOnly)
                 {
-                    // There are two notations for map spots PreHelioMapSpot as array of 3 floats, or PreHelioMapSpots as an object with keys of seasonID and values of arrays of 3 floats
-                    // PreHelioMapSpot type is old, so if there is a new notation in the file, we use it, otherwise we check for the old one
                     if (parsedJson.ContainsKey("PreHelioMapSpots"))
                     {
                         ModInstance.log("Reading Pre-helio map spots as a dictionary");
@@ -234,7 +237,11 @@ namespace ExoLoader
                     {
                         ModInstance.log("Reading Pre-helio map spots as an array");
 
-                        string[] stringMapSpot = ((JArray)(parsedJson.GetValueSafe("PreHelioMapSpot"))).ToObject<string[]>();
+                        string[] stringMapSpot = ((JArray)parsedJson.GetValueSafe("PreHelioMapSpot")).ToObject<string[]>();
+                        if (stringMapSpot == null)
+                        {
+                            stringMapSpot = ((JArray)parsedJson.GetValueSafe("StratoMapSpot")).ToObject<string[]>();
+                        }
                         if (stringMapSpot == null || stringMapSpot.Length != 3)
                         {
                             DataDebugHelper.PrintDataError("Pre-helio coordinates missing or broken for " + Path.GetFileName(folderName));
@@ -276,7 +283,11 @@ namespace ExoLoader
                 else
                 {
                     ModInstance.log("Reading Post-helio map spots as an array");
-                    string[] stringMapSpotHelio = ((JArray)(parsedJson.GetValueSafe("PostHelioMapSpot"))).ToObject<string[]>();
+                    string[] stringMapSpotHelio = ((JArray)parsedJson.GetValueSafe("PostHelioMapSpot")).ToObject<string[]>();
+                    if (stringMapSpotHelio == null)
+                    {
+                        stringMapSpotHelio = ((JArray)parsedJson.GetValueSafe("HelioMapSpot")).ToObject<string[]>();
+                    }
                     if (stringMapSpotHelio == null || stringMapSpotHelio.Length == 0)
                     {
                         DataDebugHelper.PrintDataError("Post-helio coordinates missing or broken for " + Path.GetFileName(folderName));
@@ -288,17 +299,107 @@ namespace ExoLoader
 
                 ModInstance.log("Helio map spot read");
 
+                if (parsedJson.ContainsKey("NearbyStratoMapSpots"))
+                {
+                    ModInstance.log("Reading Nearby Strato map spots as a dictionary");
+                    data.nearbyStratoMapSpots = new Dictionary<string, float[]>();
+                    JObject nearbyStratoMapSpots = (JObject)parsedJson["NearbyStratoMapSpots"];
+                    foreach (var kvp in nearbyStratoMapSpots)
+                    {
+                        string seasonID = kvp.Key;
+                        float[] mapSpot = ((JArray)kvp.Value).ToObject<float[]>();
+                        if (mapSpot == null || mapSpot.Length != 3)
+                        {
+                            DataDebugHelper.PrintDataError("Nearby Strato coordinates missing or broken for " + Path.GetFileName(folderName));
+                            return null;
+                        }
+                        data.nearbyStratoMapSpots.Add(seasonID, mapSpot);
+                    }
+                }
+
+                if (parsedJson.ContainsKey("NearbyHelioMapSpots"))
+                {
+                    ModInstance.log("Reading Nearby Helio map spots as a dictionary");
+                    data.nearbyHelioMapSpots = new Dictionary<string, float[]>();
+                    JObject nearbyHelioMapSpots = (JObject)parsedJson["NearbyHelioMapSpots"];
+                    foreach (var kvp in nearbyHelioMapSpots)
+                    {
+                        string seasonID = kvp.Key;
+                        float[] mapSpot = ((JArray)kvp.Value).ToObject<float[]>();
+                        if (mapSpot == null || mapSpot.Length != 3)
+                        {
+                            DataDebugHelper.PrintDataError("Nearby Helio coordinates missing or broken for " + Path.GetFileName(folderName));
+                            return null;
+                        }
+                        data.nearbyHelioMapSpots.Add(seasonID, mapSpot);
+                    }
+                }
+
+                if (parsedJson.ContainsKey("PlainsMapSpots"))
+                {
+                    ModInstance.log("Reading Plains map spots as a dictionary");
+                    data.plainsMapSpots = new Dictionary<string, float[]>();
+                    JObject plainsMapSpots = (JObject)parsedJson["PlainsMapSpots"];
+                    foreach (var kvp in plainsMapSpots)
+                    {
+                        string seasonID = kvp.Key;
+                        float[] mapSpot = ((JArray)kvp.Value).ToObject<float[]>();
+                        if (mapSpot == null || mapSpot.Length != 3)
+                        {
+                            DataDebugHelper.PrintDataError("Plains coordinates missing or broken for " + Path.GetFileName(folderName));
+                            return null;
+                        }
+                        data.plainsMapSpots.Add(seasonID, mapSpot);
+                    }
+                }
+
+                if (parsedJson.ContainsKey("ValleyMapSpots"))
+                {
+                    ModInstance.log("Reading Valley map spots as a dictionary");
+                    data.valleyMapSpots = new Dictionary<string, float[]>();
+                    JObject valleyMapSpots = (JObject)parsedJson["ValleyMapSpots"];
+                    foreach (var kvp in valleyMapSpots)
+                    {
+                        string seasonID = kvp.Key;
+                        float[] mapSpot = ((JArray)kvp.Value).ToObject<float[]>();
+                        if (mapSpot == null || mapSpot.Length != 3)
+                        {
+                            DataDebugHelper.PrintDataError("Valley coordinates missing or broken for " + Path.GetFileName(folderName));
+                            return null;
+                        }
+                        data.valleyMapSpots.Add(seasonID, mapSpot);
+                    }
+                }
+
+                if (parsedJson.ContainsKey("RidgeMapSpots"))
+                {
+                    ModInstance.log("Reading Ridge map spots as a dictionary");
+                    data.ridgeMapSpots = new Dictionary<string, float[]>();
+                    JObject ridgeMapSpots = (JObject)parsedJson["RidgeMapSpots"];
+                    foreach (var kvp in ridgeMapSpots)
+                    {
+                        string seasonID = kvp.Key;
+                        float[] mapSpot = ((JArray)kvp.Value).ToObject<float[]>();
+                        if (mapSpot == null || mapSpot.Length != 3)
+                        {
+                            DataDebugHelper.PrintDataError("Ridge coordinates missing or broken for " + Path.GetFileName(folderName));
+                            return null;
+                        }
+                        data.ridgeMapSpots.Add(seasonID, mapSpot);
+                    }
+                }
+
                 JArray spriteFrameRatesRaw = (JArray)parsedJson.GetValueSafe("AnimationFrameRates");
                 if (spriteFrameRatesRaw != null)
                 {
                     ModInstance.log("This character will use sprite frame rates by age");
                     string[] spriteFrameRatesStrings = spriteFrameRatesRaw.ToObject<string[]>();
-                    float[] spriteFrameRates = { float.Parse(spriteFrameRatesStrings[0]), float.Parse(spriteFrameRatesStrings[1]), float.Parse(spriteFrameRatesStrings[2]) };
+                    float[] spriteFrameRates = [.. spriteFrameRatesStrings.Select(s => float.Parse(s))];
                     data.spriteFrameRates = spriteFrameRates;
                 }
             }
 
-            string[] likes = ((JArray)(parsedJson.GetValueSafe("Likes"))).ToObject<string[]>();
+            string[] likes = ((JArray)parsedJson.GetValueSafe("Likes")).ToObject<string[]>();
             if (likes == null)
             {
                 DataDebugHelper.PrintDataError("Likes entry for " + Path.GetFileName(folderName) + "broken");
@@ -306,7 +407,7 @@ namespace ExoLoader
             }
             data.likes = likes;
 
-            string[] dislikes = ((JArray)(parsedJson.GetValueSafe("Dislikes"))).ToObject<string[]>();
+            string[] dislikes = ((JArray)parsedJson.GetValueSafe("Dislikes")).ToObject<string[]>();
             if (dislikes == null)
             {
                 DataDebugHelper.PrintDataError("Dislikes entry for " + Path.GetFileName(folderName) + "broken");
@@ -314,9 +415,27 @@ namespace ExoLoader
             }
             data.dislikes = dislikes;
 
+            object rawSkeleton = parsedJson.GetValueSafe("Skeleton");
+            if (rawSkeleton is JArray skeletonArray)
+            {
+                ModInstance.log("This character will use multiple skeletons");
+                data.skeleton = skeletonArray.ToObject<string[]>();
+            }
+            else if (rawSkeleton is string skeletonString)
+            {
+                ModInstance.log("This character will use a single skeleton");
+                data.skeleton = [skeletonString];
+            }
+            else
+            {
+                data.skeleton = ["tang", "anemone", "dys", "sym"]; // should cover most cases
+            }
 
-            string skeleton = (string)parsedJson["Skeleton"];
-            data.skeleton = skeleton;
+            // if data.skeleton includes "marz", add also "mars" to it
+            if (data.skeleton.Contains("marz"))
+            {
+                data.skeleton = [.. data.skeleton, "mars"];
+            }
 
             string spriteSizeString = (string)parsedJson.GetValueSafe("SpriteSize");
             if (spriteSizeString != null)
@@ -324,12 +443,12 @@ namespace ExoLoader
                 data.spriteSize = int.Parse(spriteSizeString);
             }
 
-            JArray spriteSizesRaw = ((JArray)(parsedJson.GetValueSafe("SpriteSizesByAge")));
+            JArray spriteSizesRaw = (JArray)parsedJson.GetValueSafe("SpriteSizesByAge");
             if (spriteSizesRaw != null)
             {
                 ModInstance.log("This character will use sprite sizes by age");
                 string[] spriteSizesStrings = spriteSizesRaw.ToObject<string[]>();
-                int[] spriteSizes = { int.Parse(spriteSizesStrings[0]), int.Parse(spriteSizesStrings[1]), int.Parse(spriteSizesStrings[2]) };
+                int[] spriteSizes = [.. spriteSizesStrings.Select(int.Parse)];
                 data.spriteSizes = spriteSizes;
             }
 
@@ -340,7 +459,7 @@ namespace ExoLoader
             {
                 ModInstance.log("This character will use overworld scale by age");
                 string[] overworldScaleStrings = overworldScaleByAgeRaw.ToObject<string[]>();
-                float[] overworldScales = { float.Parse(overworldScaleStrings[0]) / 1000f, float.Parse(overworldScaleStrings[1]) / 1000f, float.Parse(overworldScaleStrings[2]) / 1000f };
+                float[] overworldScales = [.. overworldScaleStrings.Select(s => float.Parse(s) / 1000f)];
                 data.overworldScales = overworldScales;
             }
             else
@@ -428,6 +547,15 @@ namespace ExoLoader
                             case "DEFAULTBG":
                                 field = CharaDataOverrideField.defaultBg;
                                 break;
+                            case "FILLBAR1":
+                                field = CharaDataOverrideField.fillbar1Value;
+                                break;
+                            case "FILLBAR2":
+                                field = CharaDataOverrideField.fillbar2Value;
+                                break;
+                            case "FILLBAR3":
+                                field = CharaDataOverrideField.fillbar3Value;
+                                break;
                             default:
                                 ModInstance.log("Unknown override field in " + TrimFolderName(folderName) + ": " + fieldToken.ToString());
                                 ModLoadingStatus.LogError("Unknown override field in " + TrimFolderName(folderName) + ": " + fieldToken.ToString());
@@ -462,6 +590,37 @@ namespace ExoLoader
                     {
                         ModInstance.log("Invalid override entry in " + TrimFolderName(folderName) + ": " + overrideObj.ToString());
                         ModLoadingStatus.LogError("Invalid override entry in " + TrimFolderName(folderName) + ": " + overrideObj.ToString());
+                    }
+                }
+            }
+
+
+            if (parsedJson.TryGetValue("CustomAging", out object customAgingObj))
+            {
+                ModInstance.log("Reading custom aging for " + TrimFolderName(folderName));
+                JArray customAgingArray = (JArray)customAgingObj;
+                foreach (JObject customAgingEntry in customAgingArray.Cast<JObject>())
+                {
+                    if (customAgingEntry.TryGetValue("Stage", out JToken stageToken))
+                    {
+                        int stage = int.Parse(stageToken.ToString());
+                        int? startDate = null;
+                        if (customAgingEntry.TryGetValue("StartDate", out JToken startDateToken))
+                        {
+                            startDate = Season.GetMonthOfGame(startDateToken.ToString());
+                        }
+                        string[] requiredMemories = null;
+                        if (customAgingEntry.TryGetValue("RequiredMemories", out JToken requiredMemoriesToken))
+                        {
+                            requiredMemories = requiredMemoriesToken.ToObject<string[]>();
+                        }
+                        CustomAging customAging = new CustomAging(stage, startDate, requiredMemories);
+                        data.customAging.Add(customAging);
+                    }
+                    else
+                    {
+                        ModInstance.log("Invalid custom aging entry in " + TrimFolderName(folderName) + ": " + customAgingEntry.ToString());
+                        ModLoadingStatus.LogError("Invalid custom aging entry in " + TrimFolderName(folderName) + ": " + customAgingEntry.ToString());
                     }
                 }
             }

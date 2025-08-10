@@ -106,6 +106,7 @@ namespace ExoLoader
         public static SkeletonAsset GetSkeletonData(AssetContentType contentType, string key)
         {
             var asset = GetAsset(contentType, key);
+            ModInstance.log($"Getting skeleton data for {key} of type {contentType}: {asset}");
             return asset as SkeletonAsset;
         }
 

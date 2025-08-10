@@ -140,10 +140,14 @@ namespace ExoLoader
             };
         }
 
-        // When month changes, update all custom characters with the latest valid data
-        [HarmonyPatch(typeof(PrincessMonth), nameof(PrincessMonth.SetMonth))]
-        [HarmonyPrefix]
-        public static bool PrincessMonthSetMonthPrefix(int value, bool force = false, bool skipUpdateMapManager = false, bool justLoadedMap = false)
+        [HarmonyPatch(typeof(BillboardManager), nameof(BillboardManager.FillMapspots))]
+        [HarmonyPostfix]
+        public static void UpdateCharasOnFillPatch()
+        {
+            UpdateCustomCharas(Princess.monthOfGame);
+        }
+
+        private static void UpdateCustomCharas(int month)
         {
             try
             {
@@ -151,7 +155,7 @@ namespace ExoLoader
                 {
                     if (chara is CustomChara customChara)
                     {
-                        CharaFieldValues fieldValues = GetCharaFieldValues(customChara, month: value);
+                        CharaFieldValues fieldValues = GetCharaFieldValues(customChara, month);
                         if (fieldValues != null)
                         {
                             // Update the character's fields based on the latest overrides
@@ -168,10 +172,8 @@ namespace ExoLoader
             }
             catch (Exception e)
             {
-                ModInstance.log("Error in PrincessMonthSetMonthPrefix: " + e.Message);
+                ModInstance.log("Error in UpdateCustomCharaFields: " + e.Message);
             }
-
-            return true;
         }
 
         [HarmonyPatch(typeof(CharasMenu), "UpdateCurrentChara")]
@@ -220,8 +222,6 @@ namespace ExoLoader
                         actualPronouns = actualPronouns.Substring(0, actualPronouns.Length - 1).Trim();
                     }
 
-                    ModInstance.log($"Custom Chara {customChara.charaID} pronouns: shown={shownPronouns}, actual={actualPronouns}");
-
                     if (actualPronouns != null && actualPronouns != shownPronouns)
                     {
                         // use all parts except the last one and add the actualPronouns at the end
@@ -234,6 +234,46 @@ namespace ExoLoader
             catch (Exception e)
             {
                 ModInstance.log("Error in CharasMenuUpdateCurrentCharaPostfix: " + e.Message);
+            }
+        }
+
+        [HarmonyPatch(typeof(Chara), nameof(Chara.SetFillbar))]
+        [HarmonyPostfix]
+        public static void CharaSetFillbarPostfix(Chara __instance, Fillbar statFillbar, int index)
+        {
+            try
+            {
+                if (__instance is CustomChara customChara && customChara.data != null)
+                {
+                    CharaDataOverrideField field = index switch
+                    {
+                        0 => CharaDataOverrideField.fillbar1Value,
+                        1 => CharaDataOverrideField.fillbar2Value,
+                        2 => CharaDataOverrideField.fillbar3Value,
+                        _ => throw new ArgumentOutOfRangeException(nameof(index), "Index must be 0, 1, or 2")
+                    };
+                    string latestOverride = GetLatestOverrideOfType(customChara, field);
+                    if (latestOverride != null)
+                    {
+                        if (latestOverride.ToLower().StartsWith("mem_"))
+                        {
+                            int num = Princess.GetMemoryInt(latestOverride).Clamp(0, 10);
+                            statFillbar.ChangeValue((float)num / 10f);
+                        }
+                        else if (int.TryParse(latestOverride, out int value))
+                        {
+                            statFillbar.ChangeValue((float)value / 10f);
+                        }
+                        else
+                        {
+                            ModInstance.log($"Invalid fillbar value '{latestOverride}' for {customChara.charaID} at index {index}");
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log("Error in CharaSetFillbarPostfix: " + e.Message);
             }
         }
     }

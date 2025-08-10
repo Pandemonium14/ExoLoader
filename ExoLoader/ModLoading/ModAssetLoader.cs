@@ -101,42 +101,77 @@ namespace ExoLoader
                 if (chara == null || chara.data == null)
                     continue;
 
-                ModInstance.log($"Loading assets for character: {chara.charaID}");
-
-                string folderName = chara.data.folderName;
-                string spritesFolder = Path.Combine(folderName, "Sprites");
-
-                for (int artStage = 1; artStage <= 3; artStage++)
+                try
                 {
-                    bool SilentErrors = artStage == 1 && chara.data.helioOnly;
-                    // Portrait for the art stage
-                    string portraitName = $"portrait_{chara.charaID}{artStage}";
-                    ModInstance.log($"Loading character portrait: {portraitName} for art stage {artStage}");
-                    LoadCharacterPortrait(spritesFolder, portraitName, SilentErrors);
+                    ModInstance.log($"Loading assets for character: {chara.charaID}");
 
-                    // Load character models
-                    if (chara.data.onMap)
+                    string folderName = chara.data.folderName;
+                    string spritesFolder = Path.Combine(folderName, "Sprites");
+
+                    if (chara.data.ages)
                     {
-                        string modelName = $"{chara.charaID}_model_{artStage}";
-                        LoadCharacterModel(spritesFolder, modelName, SilentErrors);
+                        for (int artStage = 1; artStage <= chara.GetLastArtStage(); artStage++)
+                        {
+                            bool SilentErrors = artStage == 1 && chara.data.helioOnly;
+                            // Portrait for the art stage
+                            string portraitName = $"portrait_{chara.charaID}{artStage}";
+                            ModInstance.log($"Loading character portrait: {portraitName} for art stage {artStage}");
+                            LoadCharacterPortrait(spritesFolder, portraitName, SilentErrors);
+
+                            // Load character models
+                            if (chara.data.onMap)
+                            {
+                                string modelName = $"{chara.charaID}_model_{artStage}";
+                                LoadCharacterModel(spritesFolder, modelName, SilentErrors);
+                            }
+
+                            // Story sprites
+                            string storySpritePrefix = $"{chara.charaID}{artStage}_";
+                            int artStageSpriteSize = chara.data.spriteSizes.Length > artStage - 1 ? chara.data.spriteSizes[artStage - 1] :-1;
+                            int targetSpriteSize = Math.Max(chara.data.spriteSize, artStageSpriteSize);
+                            if (targetSpriteSize <= 0)
+                            {
+                                targetSpriteSize = 18;
+                            }
+                            ModInstance.log($"Loading story sprites {storySpritePrefix} story sprites for art stage {artStage} with target size {targetSpriteSize}");
+                            LoadCharacterStorySprites(spritesFolder, storySpritePrefix, SilentErrors, targetSpriteSize);
+                        }
+                    }
+                    else
+                    {
+                        string portraitName = $"portrait_{chara.charaID}";
+                        ModInstance.log($"Loading character portrait: {portraitName} without art stage");
+                        LoadCharacterPortrait(spritesFolder, portraitName, false);
+
+                        // Load character models
+                        if (chara.data.onMap)
+                        {
+                            string modelName = $"{chara.charaID}_model";
+                            LoadCharacterModel(spritesFolder, modelName, false);
+                        }
+
+                        // Story sprites
+                        string storySpritePrefix = $"{chara.charaID}_";
+                        int targetSpriteSize = Math.Max(chara.data.spriteSize, chara.data.spriteSizes[0]);
+                        ModInstance.log($"Loading story sprites {storySpritePrefix} story sprites without art stage with target size {targetSpriteSize}");
+                        LoadCharacterStorySprites(spritesFolder, storySpritePrefix, false, targetSpriteSize);
                     }
 
-                    // Story sprites
-                    string storySpritePrefix = $"{chara.charaID}{artStage}_";
-                    int targetSpriteSize = Math.Max(chara.data.spriteSize, chara.data.spriteSizes[artStage - 1]);
-                    ModInstance.log($"Loading story sprites {storySpritePrefix} story sprites for art stage {artStage} with target size {targetSpriteSize}");
-                    LoadCharacterStorySprites(spritesFolder, storySpritePrefix, SilentErrors, targetSpriteSize);
-                }
+                    // Main menu sprite
+                    if (chara.data.mainMenu != null)
+                    {
+                        string mainMenuSpriteName = $"chara_{chara.charaID}";
+                        LoadCharacterMainMenuSprite(spritesFolder, mainMenuSpriteName);
+                    }
 
-                // Main menu sprite
-                if (chara.data.mainMenu != null)
+                    string adultStorySpritePrefix = $"{chara.charaID}_";
+                    LoadCharacterStorySprites(spritesFolder, adultStorySpritePrefix, false, chara.data.spriteSize);
+                }
+                catch (Exception e)
                 {
-                    string mainMenuSpriteName = $"chara_{chara.charaID}";
-                    LoadCharacterMainMenuSprite(spritesFolder, mainMenuSpriteName);
+                    ModInstance.log($"Failed to load character assets for {chara.charaID}: {e.Message}");
+                    ModLoadingStatus.LogError($"Error loading character assets for {chara.charaID}: {e.Message}");
                 }
-
-                string adultStorySpritePrefix = $"{chara.charaID}_";
-                LoadCharacterStorySprites(spritesFolder, adultStorySpritePrefix, false, chara.data.spriteSize);
             }
         }
 
@@ -414,7 +449,7 @@ namespace ExoLoader
             // Load all custom cards
             foreach (var kvp in CustomCardData.idToFile)
             {
-                string cardID = kvp.Key;
+                string cardID = kvp.Key.ToLower();
                 string cardFile = kvp.Value;
 
                 LoadCard(cardID, cardFile);

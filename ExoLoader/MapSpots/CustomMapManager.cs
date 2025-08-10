@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Northway.Utils;
 using UnityEngine;
 
 namespace ExoLoader
@@ -7,7 +8,9 @@ namespace ExoLoader
     internal class CustomMapManager
     {
         public static Dictionary<string, GameObject> mapObjects = new Dictionary<string, GameObject>();
+        public static Dictionary<string, GameObject> expeditionObjects = new Dictionary<string, GameObject>();
         private static MapObjectFactory objectFactory = new MapObjectFactory();
+        private static Dictionary<string, int> lastArtStage = new Dictionary<string, int>();
 
         public static void MakeCustomMapObject(CustomChara chara, string season, int week, string scene)
         {
@@ -18,6 +21,11 @@ namespace ExoLoader
                     RemoveMapObject(chara.charaID);
                     ModInstance.log("Tried making " + chara.charaID + " model in unsuitable scene " + scene);
                     return;
+                }
+
+                if (ShouldRecreateMapObject(chara))
+                {
+                    RemoveMapObject(chara.charaID);
                 }
 
                 if (mapObjects.ContainsKey(chara.charaID))
@@ -35,9 +43,37 @@ namespace ExoLoader
             }
         }
 
+        private static bool ShouldRecreateMapObject(CustomChara chara)
+        {
+            if (mapObjects.ContainsKey(chara.charaID))
+            {
+                if (!lastArtStage.ContainsKey(chara.charaID) || lastArtStage[chara.charaID] != chara.artStage)
+                {
+                    ModInstance.log($"Recreating map object for {chara.charaID} due to art stage change");
+                    lastArtStage[chara.charaID] = chara.artStage;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private static bool IsValidScene(CustomChara chara, string scene)
         {
-            return ((scene.Equals("strato") || scene.Equals("stratodestroyed")) && !chara.data.helioOnly) || scene.Equals("helio");
+            if (scene.Equals("helio") || scene.Equals("nearbyhelio"))
+            {
+                return true;
+            }
+
+            if (chara.data.helioOnly)
+            {
+                if (!Princess.HasMemory(Princess.memNewship))
+                {
+                    return false;
+                }
+            }
+            // swamp is unsupported
+            return !scene.Equals("swamp");
         }
 
         private static void HandleExistingMapObject(CustomChara chara, string scene)
@@ -65,15 +101,30 @@ namespace ExoLoader
 
         private static void CreateNewMapObject(CustomChara chara, string season, int week, string scene)
         {
-            GameObject templateObject = objectFactory.GetMapObjectTemplate(chara.data.skeleton, season, week);
+            GameObject templateObject = null;
+            string usedSkeleton = null;
 
-            if (templateObject == null)
+            lastArtStage[chara.charaID] = chara.artStage;
+
+            foreach (string skeleton in chara.data.skeleton)
+            {
+                templateObject = objectFactory.GetMapObjectTemplate(skeleton, season, week);
+
+                if (templateObject != null)
+                {
+                    usedSkeleton = skeleton;
+                    ModInstance.log($"Using skeleton {skeleton} for {chara.charaID}");
+                    break;
+                }
+            }
+
+            if (templateObject == null || usedSkeleton == null)
             {
                 ModInstance.log("Couldn't get base map object, cancelling map spot creation for : " + chara.charaID);
                 return;
             }
 
-            GameObject customMapObject = objectFactory.CreateCustomMapObject(templateObject, chara, scene);
+            GameObject customMapObject = objectFactory.CreateCustomMapObject(templateObject, usedSkeleton, chara, scene);
 
             if (customMapObject != null)
             {
@@ -143,10 +194,41 @@ namespace ExoLoader
 
                 if (obj != null)
                 {
+                    ModInstance.log($"Removing map object for {charaID}");
                     UnityEngine.Object.Destroy(obj);
                 }
 
                 ModInstance.log($"Removed map object for {charaID}");
+            }
+        }
+
+        public static GameObject MakeExpeditionObject(GameObject newObject, string templateSkeletonID, CustomChara chara, Transform parent)
+        {
+            try
+            {
+                if (expeditionObjects.ContainsKey(chara.charaID))
+                {
+                    GameObject obj = expeditionObjects[chara.charaID];
+                    if (obj != null)
+                    {
+                        UnityEngine.Object.Destroy(obj);
+                    }
+                }
+
+                GameObject returnObject = objectFactory.CreateCustomExpeditionMapObject(newObject, templateSkeletonID, chara, parent);
+
+                if (returnObject != null)
+                {
+                    expeditionObjects[chara.charaID] = returnObject;
+                }
+
+                return returnObject;
+            }
+            catch (Exception e)
+            {
+                ModInstance.log("Error while trying to create expedition map object: " + e.Message);
+                ModInstance.log(e.StackTrace);
+                return null;
             }
         }
     }

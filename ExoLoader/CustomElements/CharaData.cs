@@ -24,7 +24,12 @@ namespace ExoLoader
         pronouns,
         dialogueColor,
         augment,
-        defaultBg
+        defaultBg,
+
+        // fillbar
+        fillbar1Value,
+        fillbar2Value,
+        fillbar3Value
     }
 
     public class CharaDataOverride
@@ -37,6 +42,20 @@ namespace ExoLoader
         {
             this.field = field;
             this.value = value;
+            this.startDate = startDate ?? 0;
+            this.requiredMemories = requiredMemories;
+        }
+    }
+
+    public class CustomAging
+    {
+        public int stage;
+        public int startDate;
+        public string[] requiredMemories;
+
+        public CustomAging(int stage, int? startDate = null, string[] requiredMemories = null)
+        {
+            this.stage = stage;
             this.startDate = startDate ?? 0;
             this.requiredMemories = requiredMemories;
         }
@@ -69,24 +88,31 @@ namespace ExoLoader
         public bool helioOnly;
         public string[] likes;
         public string[] dislikes;
-        public string skeleton;
+        public string[] skeleton;
         public string[] jobs;
 
         public Dictionary<CharaDataOverrideField, CharaDataOverride[]> overrides = [];
+        public List<CustomAging> customAging = [];
 
         public float[] stratoMapSpot;
         public Dictionary<string, float[]> stratoMapSpots;
         public float[] helioMapSpot;
         public Dictionary<string, float[]> helioMapSpots;
         public float[] destroyedMapSpot;
+        public Dictionary<string, float[]> nearbyStratoMapSpots;
+        public Dictionary<string, float[]> nearbyHelioMapSpots;
+        public Dictionary<string, float[]> plainsMapSpots;
+        public Dictionary<string, float[]> valleyMapSpots;
+        public Dictionary<string, float[]> ridgeMapSpots;
+        public bool defaultOnMap = true; // true means old ExoLoader onMap behaviour, false means character will only appear if mem_map_charaID is set
 
         public string folderName;
         public bool ages;
         public bool onMap = true;
         public int spriteSize = -1;
-        public int[] spriteSizes = new int[3];
+        public int[] spriteSizes = [-1, -1, -1];
         public float[] spriteFrameRates = [12f, 12f, 12f];
-        public float[] overworldScales = new float[3];
+        public float[] overworldScales = [0.004f, 0.004f, 0.004f];
         public MainMenuPosition mainMenu;
 
         public CustomChara MakeChara()

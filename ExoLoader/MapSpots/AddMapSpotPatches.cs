@@ -1,10 +1,6 @@
 ﻿using HarmonyLib;
+using Northway.Utils;
 using System;
-using System.Reflection;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace ExoLoader
@@ -17,11 +13,6 @@ namespace ExoLoader
         [HarmonyPrefix]
         public static void AddCustomMapSpots()
         {
-            if (!MapManager.IsColonyScene(MapManager.currentScene))
-            {
-                return;
-            }
-
             string scene = MapManager.currentScene.RemoveStart("Colony").ToLower();
             string season = Princess.season.seasonID;
             int week = Princess.monthOfSeason;
@@ -39,6 +30,75 @@ namespace ExoLoader
             catch (Exception e)
             {
                 ModInstance.log("Error while trying to add custom map spots: " + e.Message);
+                ModInstance.log(e.StackTrace);
+            }
+        }
+
+        [HarmonyPatch(typeof(MapSpot), nameof(MapSpot.SetStory))]
+        [HarmonyPostfix]
+        public static void SetStoryPatch(MapSpot __instance, Story newStory)
+        {
+            try
+            {
+                if (__instance.type == MapSpotType.chara || __instance.type == MapSpotType.story || __instance.story == null)
+                {
+                    return;
+                }
+
+                MapSpot mapSpot = __instance;
+
+                string spriteID = mapSpot.story.GetSpriteID();
+
+                CustomChara customChara = CustomChara.customCharasById.GetValueSafe(spriteID);
+
+                if (customChara == null || customChara.data.skeleton.Length == 0)
+                {
+                    return;
+                }
+
+                GameObject mapSpotPrefab = null;
+                string usedSkeleton = null;
+
+                foreach (GameObject gameObject in Singleton<AssetManager>.instance.mapSpotPrefabs)
+                {
+                    foreach (string skeleton in customChara.data.skeleton)
+                    {
+                        if (gameObject != null && string.Equals(gameObject.name, skeleton, StringComparison.CurrentCultureIgnoreCase))
+                        {
+                            mapSpotPrefab = gameObject;
+                            usedSkeleton = skeleton;
+                            break;
+                        }
+                    }
+
+                    if (mapSpotPrefab != null)
+                    {
+                        ModInstance.log($"Using skeleton {usedSkeleton} for {customChara.charaID}");
+                        break;
+                    }
+                }
+
+                GameObject newObject = UnityEngine.Object.Instantiate(mapSpotPrefab, mapSpot.transform);
+                GameObject spriteObject = CustomMapManager.MakeExpeditionObject(newObject, usedSkeleton, customChara, mapSpot.transform);
+
+                if (spriteObject == null)
+                {
+                    ModInstance.log($"Failed to create map spot for {customChara.charaID} with skeleton {usedSkeleton}");
+                    return;
+                }
+
+                AccessTools.Field(typeof(MapSpot), "spriteObject").SetValue(mapSpot, spriteObject);
+
+                MapSpotIndicator mapSpotIndicator = mapSpot.mapSpotIndicator;
+                if (mapSpotIndicator != null)
+                {
+                    mapSpotIndicator.Hide();
+                    mapSpotIndicator.Show(mapSpot, spriteObject != null, mapSpot.story.priority == Priority.high);
+                }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log("Error while trying to set story for map spot: " + e.Message);
                 ModInstance.log(e.StackTrace);
             }
         }
