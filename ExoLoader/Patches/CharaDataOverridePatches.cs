@@ -140,10 +140,14 @@ namespace ExoLoader
             };
         }
 
-        // When month changes, update all custom characters with the latest valid data
-        [HarmonyPatch(typeof(PrincessMonth), nameof(PrincessMonth.SetMonth))]
-        [HarmonyPrefix]
-        public static bool PrincessMonthSetMonthPrefix(int value, bool force = false, bool skipUpdateMapManager = false, bool justLoadedMap = false)
+        [HarmonyPatch(typeof(BillboardManager), nameof(BillboardManager.FillMapspots))]
+        [HarmonyPostfix]
+        public static void UpdateCharasOnFillPatch()
+        {
+            UpdateCustomCharas(Princess.monthOfGame);
+        }
+
+        private static void UpdateCustomCharas(int month)
         {
             try
             {
@@ -151,7 +155,7 @@ namespace ExoLoader
                 {
                     if (chara is CustomChara customChara)
                     {
-                        CharaFieldValues fieldValues = GetCharaFieldValues(customChara, month: value);
+                        CharaFieldValues fieldValues = GetCharaFieldValues(customChara, month);
                         if (fieldValues != null)
                         {
                             // Update the character's fields based on the latest overrides
@@ -168,10 +172,8 @@ namespace ExoLoader
             }
             catch (Exception e)
             {
-                ModInstance.log("Error in PrincessMonthSetMonthPrefix: " + e.Message);
+                ModInstance.log("Error in UpdateCustomCharaFields: " + e.Message);
             }
-
-            return true;
         }
 
         [HarmonyPatch(typeof(CharasMenu), "UpdateCurrentChara")]
@@ -219,8 +221,6 @@ namespace ExoLoader
                     {
                         actualPronouns = actualPronouns.Substring(0, actualPronouns.Length - 1).Trim();
                     }
-
-                    ModInstance.log($"Custom Chara {customChara.charaID} pronouns: shown={shownPronouns}, actual={actualPronouns}");
 
                     if (actualPronouns != null && actualPronouns != shownPronouns)
                     {

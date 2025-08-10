@@ -50,6 +50,7 @@ namespace ExoLoader
                 if (!lastArtStage.ContainsKey(chara.charaID) || lastArtStage[chara.charaID] != chara.artStage)
                 {
                     ModInstance.log($"Recreating map object for {chara.charaID} due to art stage change");
+                    lastArtStage[chara.charaID] = chara.artStage;
                     return true;
                 }
             }
@@ -193,6 +194,7 @@ namespace ExoLoader
 
                 if (obj != null)
                 {
+                    ModInstance.log($"Removing map object for {charaID}");
                     UnityEngine.Object.Destroy(obj);
                 }
 

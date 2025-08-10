@@ -449,7 +449,7 @@ namespace ExoLoader
             // Load all custom cards
             foreach (var kvp in CustomCardData.idToFile)
             {
-                string cardID = kvp.Key;
+                string cardID = kvp.Key.ToLower();
                 string cardFile = kvp.Value;
 
                 LoadCard(cardID, cardFile);

@@ -101,42 +101,72 @@ namespace ExoLoader
 
         public GameObject CreateCustomMapObject(GameObject templateObject, string templateSkeletonID, CustomChara chara, string scene)
         {
-            float[] mapSpotPosition = chara.GetMapSpot(scene, Princess.season.seasonID);
-
-            if (mapSpotPosition == null)
+            try
             {
+                float[] mapSpotPosition = chara.GetMapSpot(scene, Princess.season.seasonID);
+
+                if (mapSpotPosition == null)
+                {
+                    return null;
+                }
+
+                GameObject newObject = UnityEngine.Object.Instantiate(templateObject);
+                newObject.name = "chara_" + chara.charaID;
+
+                MapSpot mapSpot = newObject.GetComponent<MapSpot>();
+
+                if (mapSpot == null)
+                {
+                    ModInstance.log("MapSpot component not found on the new object for " + chara.charaID);
+                    return null;
+                }
+
+                mapSpot.charaID = chara.charaID;
+                newObject.transform.localPosition = new Vector3(mapSpotPosition[0], mapSpotPosition[1], mapSpotPosition[2]);
+                mapSpot.MoveToGround();
+
+                List<Transform> artAgeTransforms = SetupArtObjects(templateSkeletonID, newObject, chara);
+
+                // if (!SetupCharaSwitcher(newObject, chara, artAgeTransforms))
+                // {
+                //     return null;
+                // }
+                SetupCharaSwitcher(newObject, chara, artAgeTransforms);
+
+                if (artAgeTransforms.Count == 0)
+                {
+                    ModInstance.log("No art objects found for " + chara.charaID + " in " + templateSkeletonID);
+                    return null;
+                }
+
+                if (newObject == null)
+                {
+                    ModInstance.log("Failed to create new object for " + chara.charaID);
+                    return null;
+                }
+
+                newObject.transform.localScale = new Vector3(1f, 1f, 1f);
+
+                GameObject parent = GameObject.Find("Seasonal") ?? GameObject.Find("Interactives");
+
+                GameObject actualSpot = PoolManager.Spawn(newObject, parent?.transform);
+
+                if (actualSpot == null)
+                {
+                    ModInstance.log("Failed to spawn actual spot for " + chara.charaID);
+                    return null;
+                }
+
+                actualSpot.transform.localPosition = newObject.transform.localPosition;
+                newObject.DestroySafe();
+
+                return actualSpot;
+            }
+            catch (Exception e)
+            {
+                ModInstance.log("Error creating custom map object for " + chara.charaID + ": " + e.Message);
                 return null;
             }
-
-            GameObject newObject = UnityEngine.Object.Instantiate(templateObject);
-            newObject.name = "chara_" + chara.charaID;
-
-            MapSpot mapSpot = newObject.GetComponent<MapSpot>();
-
-            if (mapSpot == null)
-            {
-                ModInstance.log("MapSpot component not found on the new object for " + chara.charaID);
-                return null;
-            }
-
-            mapSpot.charaID = chara.charaID;
-            newObject.transform.localPosition = new Vector3(mapSpotPosition[0], mapSpotPosition[1], mapSpotPosition[2]);
-            mapSpot.MoveToGround();
-
-            List<Transform> artAgeTransforms = SetupArtObjects(templateSkeletonID, newObject, chara);
-
-            if (!SetupCharaSwitcher(newObject, chara, artAgeTransforms))
-            {
-                return null;
-            }
-
-            newObject.transform.localScale = new Vector3(1f, 1f, 1f);
-
-            GameObject actualSpot = PoolManager.Spawn(newObject, GameObject.Find("Seasonal").transform);
-            actualSpot.transform.localPosition = newObject.transform.localPosition;
-            newObject.DestroySafe();
-
-            return actualSpot;
         }
 
         public GameObject CreateCustomExpeditionMapObject(GameObject newObject, string templateSkeletonID, CustomChara chara, Transform parent)
@@ -272,11 +302,11 @@ namespace ExoLoader
 
         private bool SetupCharaSwitcher(GameObject newObject, CustomChara chara, List<Transform> artAgeTransforms)
         {
-            CharaSwitcher charaSwitcher = newObject.GetComponentInChildren<CharaSwitcher>();
-            charaSwitcher.name = chara.charaID + "switcher";
-
             try
             {
+                CharaSwitcher charaSwitcher = newObject.GetComponentInChildren<CharaSwitcher>();
+                charaSwitcher.name = chara.charaID;
+
                 FieldInfo fInfo = typeof(CharaSwitcher).GetField("artAgeTransforms", BindingFlags.NonPublic | BindingFlags.Instance);
                 if (fInfo != null)
                 {
@@ -318,6 +348,7 @@ namespace ExoLoader
             TextAsset skeletonJson = skeletonAsset.SkeletonJson;
             Texture2D[] textures = skeletonAsset.Textures;
             bool isAnimated = skeletonAsset.isAnimated;
+
             if (atlasText == null || skeletonJson == null || textures == null || textures.Length == 0)
             {
                 ModInstance.log($"Invalid skeleton asset for {chara.charaID} art stage {artStage}");
@@ -325,44 +356,25 @@ namespace ExoLoader
             }
 
             SkeletonMecanim skeletonMecanim = existingSpineObject.GetComponent<SkeletonMecanim>();
-
             if (skeletonMecanim == null)
             {
                 ModInstance.log("No SkeletonMecanim component found!");
                 return;
             }
 
-            Shader shader = existingSpineObject.GetComponent<MeshRenderer>().materials[0].shader;
-            if (shader == null) throw new Exception("shader is null");
-
-            // Store original rendering settings
             MeshRenderer meshRenderer = existingSpineObject.GetComponent<MeshRenderer>();
-            Material originalMaterial = null;
-            int originalSortingLayer = 0;
-            int originalSortingOrder = 0;
+            Material originalMaterial = meshRenderer?.material;
+            int originalSortingLayer = meshRenderer?.sortingLayerID ?? 0;
+            int originalSortingOrder = meshRenderer?.sortingOrder ?? 0;
 
-            if (meshRenderer != null)
+            Material materialPropertySource = originalMaterial != null ? new Material(originalMaterial) : null;
+            if (materialPropertySource == null)
             {
-                originalMaterial = meshRenderer.material;
-                originalSortingLayer = meshRenderer.sortingLayerID;
-                originalSortingOrder = meshRenderer.sortingOrder;
+                ModInstance.log("Could not get material property source");
+                return;
             }
-            else
-            {
-                ModInstance.log("MeshRenderer not found on existing spine object, using default settings.");
-            }
-
-            SkeletonDataAsset existingSkeletonDataAsset = skeletonMecanim.skeletonDataAsset;
-
-            if (existingSkeletonDataAsset == null)
-            {
-                ModInstance.log("No existing SkeletonDataAsset found on the SkeletonMecanim component.");
-            }
-
-            Material materialPropertySource = existingSpineObject.GetComponent<MeshRenderer>().materials[0];
 
             var atlasAsset = SpineAtlasAsset.CreateRuntimeInstance(atlasText, textures, materialPropertySource, true);
-
             if (atlasAsset == null || atlasAsset.Materials == null || atlasAsset.Materials.Count() == 0)
             {
                 ModInstance.log("Failed to create SpineAtlasAsset from provided atlas text and texture.");
@@ -382,20 +394,14 @@ namespace ExoLoader
             }
 
             meshRenderer = existingSpineObject.GetComponent<MeshRenderer>();
-            if (meshRenderer != null)
+            if (meshRenderer != null && atlasAsset.Materials != null && atlasAsset.Materials.Count() > 0)
             {
+                meshRenderer.material = atlasAsset.Materials.First();
                 meshRenderer.sortingLayerID = originalSortingLayer;
                 meshRenderer.sortingOrder = originalSortingOrder;
                 meshRenderer.enabled = true;
 
-                if (meshRenderer.material == null && originalMaterial != null)
-                {
-                    meshRenderer.material = originalMaterial;
-                }
-            }
-            else
-            {
-                ModInstance.log("MeshRenderer not found on existing spine object after initialization, using default settings.");
+                ModInstance.log($"Applied atlas material to {chara.charaID} art stage {artStage}");
             }
 
             // Force update the skeleton
@@ -407,7 +413,6 @@ namespace ExoLoader
                     skeletonMecanim.skeleton.SetToSetupPose();
                     skeletonMecanim.LateUpdate();
                 }
-
                 ModInstance.log($"Skeleton replaced. Bone count: {skeletonMecanim.skeleton?.Bones?.Count ?? 0}");
             }
 
@@ -456,13 +461,19 @@ namespace ExoLoader
 
         private void RepositionSpeechBubble(GameObject existingSpineObject)
         {
-            Transform speechBubbleTransform = existingSpineObject.transform.Find("speechBubble")
+            try
+            {
+                Transform speechBubbleTransform = existingSpineObject.transform.Find("speechBubble")
                 ?? existingSpineObject.transform.Find("speechBubbleFlipped");
 
-            if (speechBubbleTransform == null) return;
+                if (speechBubbleTransform == null) return;
 
-            bool isFlipped = speechBubbleTransform.name.Contains("Flipped");
-            speechBubbleTransform.localPosition = new Vector3(isFlipped ? 0.5f : -0.5f, speechBubbleTransform.localPosition.y, speechBubbleTransform.localPosition.z);
+                speechBubbleTransform.localPosition = new Vector3(speechBubbleTransform.localPosition.x + 0.5f, speechBubbleTransform.localPosition.y, speechBubbleTransform.localPosition.z);
+            }
+            catch (Exception e)
+            {
+                ModInstance.log("Failed to reposition speech bubble: " + e.Message);
+            }
         }
     }
 }
