@@ -242,11 +242,6 @@ namespace ExoLoader
                 GameObject artObject = newObject.transform.Find(templateSkeletonID)?.Find(templateSkeletonID + i.ToString())?.gameObject;
                 bool isZeroStage = false;
 
-                if (artObject)
-                {
-                    ModInstance.log("Got " + i.ToString() + "th art object");
-                }
-
                 if (artObject == null && (
                     templateSkeletonID == "sym" ||
                     templateSkeletonID == "mom" ||
@@ -267,7 +262,6 @@ namespace ExoLoader
                 {
                     int currentStage = isZeroStage ? charaArtStage : i;
 
-                    ModInstance.log("Art object is named " + artObject.name);
                     int arrayIndex = charaArtStage == 0 ? 0 : charaArtStage - 1;
                     float ageScale = chara.data.overworldScales.Length > arrayIndex
                         ? chara.data.overworldScales[arrayIndex]

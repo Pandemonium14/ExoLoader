@@ -40,7 +40,10 @@ namespace ExoLoader
             if (patch.patchType == StoryPatchType.replace)
             {
                 patch.key2 = patchInfo[4];
-                ModInstance.log("This patch has ke2 equal to " + patch.key2);
+                if (!patch.key2.IsNullOrEmptyOrWhitespace())
+                {
+                    ModInstance.log("This patch has key2 equal to " + patch.key2);
+                }
                 patch.keyIndex = int.Parse(patchInfo[5]);
                 patch.keyIndex2 = int.Parse(patchInfo[6]);
             }

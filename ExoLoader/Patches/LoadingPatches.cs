@@ -17,7 +17,6 @@ namespace ExoLoader
             {
                 _instance = this;
                 DontDestroyOnLoad(gameObject);
-                ModInstance.log("ExoLoadingManager created.");
             }
             else
             {
@@ -32,11 +31,11 @@ namespace ExoLoader
 
         private IEnumerator LoadWithProgress()
         {
-            ModInstance.log("Starting loading process...");
+            ModInstance.log("Starting asset preloading process...");
 
             yield return StartCoroutine(ModAssetLoader.LoadWithProgress());
 
-            ModInstance.log("Loading process completed.");
+            ModInstance.log("Asset preloading process completed.");
 
             yield return new WaitForSeconds(0.2f);
 
@@ -60,7 +59,6 @@ namespace ExoLoader
             {
                 GameObject loaderObj = new GameObject("ExoLoadingManager");
                 loaderObj.AddComponent<ExoLoadingManager>();
-                ModInstance.log("Created ExoLoadingManager");
             }
         }
     }

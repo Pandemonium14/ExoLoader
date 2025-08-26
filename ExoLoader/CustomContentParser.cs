@@ -65,7 +65,6 @@ namespace ExoLoader
                     {
                         case "Characters":
                             {
-                                ModInstance.log("Parsing characters folder");
                                 // This works a bit differently, because "Characters" folder contains subfolders for each character
                                 foreach (string charaFolder in Directory.GetDirectories(folder))
                                 {
@@ -90,12 +89,10 @@ namespace ExoLoader
                             }
                         case "Cards":
                             {
-                                ModInstance.log("Parsing cards folder");
                                 foreach (string file in Directory.GetFiles(folder))
                                 {
                                     if (file.EndsWith(".json"))
                                     {
-                                        ModInstance.log("Parsing file : " + Path.GetFileName(file));
                                         try
                                         {
 
@@ -119,7 +116,6 @@ namespace ExoLoader
                             }
                         case "Backgrounds":
                             {
-                                ModInstance.log("Adding backgrounds and CGs");
                                 List<string> cBgs = new List<string>(Singleton<AssetManager>.instance.backgroundAndEndingNames);
                                 foreach (string file in Directory.GetFiles(folder))
                                 {
@@ -128,7 +124,6 @@ namespace ExoLoader
                                         string bgName = Path.GetFileName(file).Replace(".png", "").ToLower();
                                         if (!Singleton<AssetManager>.instance.backgroundAndEndingNames.Contains(bgName))
                                         {
-                                            ModInstance.log("Found bg " + bgName);
                                             cBgs.Add(bgName);
                                             Singleton<AssetManager>.instance.backgroundAndEndingNames.Append(bgName);
                                             CustomBackground.Add(bgName, Path.GetDirectoryName(file));
@@ -141,7 +136,6 @@ namespace ExoLoader
                             }
                         case "StorySprites":
                             {
-                                ModInstance.log("Adding custom story sprites");
                                 string[] originalList = Northway.Utils.Singleton<AssetManager>.instance.charaSpriteNames;
                                 List<string> newlist = [.. originalList];
                                 int counter = 0;
@@ -176,7 +170,6 @@ namespace ExoLoader
                             }
                         case "Jobs":
                             {
-                                ModInstance.log("Parsing job folders");
                                 foreach (string file in Directory.GetFiles(folder))
                                 {
                                     if (file.EndsWith(".json"))
@@ -203,7 +196,6 @@ namespace ExoLoader
                             }
                         case "Endings":
                             {
-                                ModInstance.log("Parsing ending folders");
                                 foreach (string file in Directory.GetFiles(folder))
                                 {
                                     if (file.EndsWith(".json"))
@@ -231,7 +223,6 @@ namespace ExoLoader
 
                         case "ScriptExtensions":
                             {
-                                ModInstance.log("Parsing script extensions folder");
                                 foreach (string file in Directory.GetFiles(folder))
                                 {
                                     if (file.EndsWith(".json"))
@@ -286,7 +277,6 @@ namespace ExoLoader
 
                         case "Achievements":
                             {
-                                ModInstance.log("Parsing achievements folders");
                                 foreach (string file in Directory.GetFiles(folder))
                                 {
                                     if (file.EndsWith(".json"))
@@ -415,7 +405,6 @@ namespace ExoLoader
 
                     abilityMap = ((JObject)abilityEntry).ToObject<Dictionary<string, object>>();
 
-                    ModInstance.log("Reading an Ability entry");
                     string abID = (string)abilityMap.GetValueSafe("ID");
                     CardAbilityType abType = CardAbilityType.FromID(abID);
                     if (abType != null)
@@ -686,7 +675,6 @@ namespace ExoLoader
 
                     abilityMap = ((JObject)abilityEntry).ToObject<Dictionary<string, object>>();
 
-                    ModInstance.log("Reading an Ability entry");
                     string abID = (string)abilityMap.GetValueSafe("ID");
                     CardAbilityType abType = CardAbilityType.FromID(abID);
                     if (abType != null)

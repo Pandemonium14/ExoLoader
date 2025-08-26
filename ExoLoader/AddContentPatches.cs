@@ -23,20 +23,14 @@ namespace ExoLoader
                 }
                 else if (filename == "ExocolonistCards - cards")
                 {
-                    ModInstance.log("calling LoadCustomContent for Cards");
                     LoadCustomContent("Cards");
                 }
                 else if (filename == "Exocolonist - variables")
                 {
-                    ModInstance.log("Loading preliminary content");
-
-                    ModInstance.log("Loading story patches");
                     StoryPatchManager.PopulatePatchList();
 
-                    ModInstance.log("Patching story files");
                     StoryPatchManager.PatchAllStories();
 
-                    ModInstance.log("Loading custom backgrounds");
                     LoadCustomContent("Backgrounds");
 
                 }
@@ -54,7 +48,6 @@ namespace ExoLoader
                 }
                 else if (filename == "Exocolonist - cheevos")
                 {
-                    ModInstance.log("Loading custom achievements");
                     LoadCustomContent("Achievements");
                 }
             }
@@ -144,7 +137,6 @@ namespace ExoLoader
         {
             try
             {
-                ModInstance.instance.Log("Checking CustomContent folders");
                 string[] contentFolders = CFileManager.GetAllCustomContentFolders();
                 if (contentFolders != null && contentFolders.Length == 0)
                 {
@@ -233,7 +225,7 @@ namespace ExoLoader
                         Chara chara = Chara.FromID(charaID);
                         if (chara == null)
                         {
-                            ModInstance.log($"{story?.storyID ?? "null"}: ParserStoryReqParseReqInnerPrefix: Chara.FromID returned null for {charaID}");
+                            ModInstance.log($"{story?.storyID ?? "null"}: will be ignored because {charaID} does not exist");
                             line = "location = none"; // replace invalid chara with a 'none' location, meaning this story will not be triggered unless called from somewhere else
                         }
                     }

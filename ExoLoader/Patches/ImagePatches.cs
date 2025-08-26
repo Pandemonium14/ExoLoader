@@ -262,8 +262,6 @@ namespace ExoLoader
 
             try
             {
-                ModInstance.log("Loading custom gallery thumbnail with id " + backgroundName);
-
                 Sprite sprite = ModAssetManager.GetSprite(AssetContentType.BackgroundThumbnail, backgroundName);
 
                 if (sprite != null)
@@ -300,8 +298,6 @@ namespace ExoLoader
 
             try
             {
-                ModInstance.log("Loading custom background with id " + spriteName);
-
                 Sprite sprite = ModAssetManager.GetSprite(AssetContentType.Background, spriteName);
                 if (sprite != null)
                 {
@@ -320,7 +316,6 @@ namespace ExoLoader
         [HarmonyPostfix]
         static void MainMenuCharasOnEnablePostfix(MainMenuCharas __instance)
         {
-            ModInstance.log("MainMenuCharas OnEnable called, adding custom characters...");
             PatchMainManuCharas(__instance);
         }
 

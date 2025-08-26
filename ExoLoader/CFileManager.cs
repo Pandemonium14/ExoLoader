@@ -57,7 +57,6 @@ namespace ExoLoader
         public static CharaData ParseCustomCharacterData(string folderName)
         {
             string fullJson = File.ReadAllText(Path.Combine(folderName, "data.json"));
-            ModInstance.log("Read text");
 
             if (fullJson == null ||  fullJson.Length == 0)
             {
@@ -66,7 +65,6 @@ namespace ExoLoader
             }
 
             Dictionary<string, object> parsedJson = JsonConvert.DeserializeObject<Dictionary<string, object>>(fullJson);
-            ModInstance.log("Converted json");
             if (parsedJson == null || parsedJson.Count == 0)
             {
                 DataDebugHelper.PrintDataError("Error parsing " + Path.GetFileName(folderName) + " json file", "Couldn't parse " + folderName + "/data.json","","Is the json file malformed? missing bracket, comma or quotation mark?");
@@ -112,14 +110,9 @@ namespace ExoLoader
                     return null;
                 }
 
-                ModInstance.log("Reading Data entry");
-
-
                 data.id = (string)dataMap["ID"];
                 data.name = (string)dataMap["NAME"];
                 data.nickname = (string)dataMap["NICKNAME"];
-
-                //ModInstance.log("ID, NAME, and NICKNAME read");
 
                 string g = (string) dataMap["GENDER"];
                 if (g.Equals("X"))
@@ -152,12 +145,10 @@ namespace ExoLoader
                 {
                     DataDebugHelper.PrintDataError("Love error in " + Path.GetFileName(folderName) + " json file", "Couldn't parse LOVE entry in the Data entry.", "Does it exist? Is it set to exactly FALSE or TRUE?");
                 }
-                ModInstance.log("Gender and Love read");
 
                 dataMap.TryGetValue("AGE10", out object age10);
 
                 data.ageOffset = int.Parse((string) age10) - 10;
-                //ModInstance.log("Age read");
 
                 data.birthday = (string) dataMap.GetValueSafe("BIRTHDAY");
                 data.dialogueColor = (string) dataMap.GetValueSafe("DIALOGUECOLOR");
@@ -165,8 +156,6 @@ namespace ExoLoader
                 data.basicInfo = (string) dataMap.GetValueSafe("BASICS");
                 data.moreInfo = (string) dataMap.GetValueSafe("MORE");
                 data.augment = (string) dataMap.GetValueSafe("ENHANCEMENT");
-
-                //ModInstance.log("Up to Sliders read");
 
                 data.slider1left = (string) dataMap.GetValueSafe("FILLBAR1LEFT");
                 data.slider1right = (string) dataMap.GetValueSafe("FILLBAR1RIGHT");
@@ -191,7 +180,6 @@ namespace ExoLoader
                 int.Parse((string) dataMap.GetValueSafe("FILLBAR3CHILD")),
                 int.Parse((string) dataMap.GetValueSafe("FILLBAR3TEEN")),
                 int.Parse((string) dataMap.GetValueSafe("FILLBAR3ADULT")) };
-                ModInstance.log("Data entry read");
             }
             else
             {
@@ -201,7 +189,6 @@ namespace ExoLoader
 
             string onMap = (string)parsedJson["OnMap"];
             data.onMap = onMap == "TRUE";
-            ModInstance.log("OnMap read");
 
             string defaultOnMap = (string)parsedJson.GetValueSafe("DefaultOnMap");
             if (defaultOnMap != null)
@@ -260,7 +247,6 @@ namespace ExoLoader
                     float[] mapSpotD = { float.Parse(stringMapSpotD[0]), float.Parse(stringMapSpotD[1]), float.Parse(stringMapSpotD[2]) };
                     data.destroyedMapSpot = mapSpotD;
                 }
-                //ModInstance.log("Non-HelioOnly map spots read");
 
                 // Helio map spots also come in two notations, as an array of 3 floats or as a dictionary with keys of seasonID and values of arrays of 3 floats
                 if (parsedJson.ContainsKey("PostHelioMapSpots"))
@@ -296,8 +282,6 @@ namespace ExoLoader
                     float[] mapSpotHelio = { float.Parse(stringMapSpotHelio[0]), float.Parse(stringMapSpotHelio[1]), float.Parse(stringMapSpotHelio[2]) };
                     data.helioMapSpot = mapSpotHelio;
                 }
-
-                ModInstance.log("Helio map spot read");
 
                 if (parsedJson.ContainsKey("NearbyStratoMapSpots"))
                 {
@@ -625,7 +609,6 @@ namespace ExoLoader
                 }
             }
 
-            ModInstance.instance.Log("Finished Parsing");
             data.folderName = folderName;
             return data;
         }
