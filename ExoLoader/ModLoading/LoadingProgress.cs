@@ -32,12 +32,9 @@ public class LoadingProgress : MonoBehaviour
 
     private void SetupUI()
     {
-        ModInstance.log("Setting up LoadingProgress UI...");
-
         loadingScene = FindObjectOfType<LoadingScene>();
         if (loadingScene != null)
         {
-            ModInstance.log("Found LoadingScene, setting up mod loading UI...");
             CreateModLoadingUI();
         }
 
@@ -59,8 +56,6 @@ public class LoadingProgress : MonoBehaviour
                 ModInstance.log("Could not find any Canvas to attach mod loading UI to!");
                 return;
             }
-
-            ModInstance.log($"Using canvas: {targetCanvas.name}");
 
             Transform existingLoadingText = loadingScene.loadingText.transform;
 
@@ -125,8 +120,6 @@ public class LoadingProgress : MonoBehaviour
             progressRect.anchorMax = new Vector2(0.9f, 0.5f);
             progressRect.offsetMin = Vector2.zero;
             progressRect.offsetMax = Vector2.zero;
-
-            ModInstance.log("Successfully created mod loading UI elements.");
         }
         catch (System.Exception e)
         {
@@ -147,7 +140,6 @@ public class LoadingProgress : MonoBehaviour
         if (color == null)
             color = Color.white;
 
-        ModInstance.log($"Showing loading overlay: {message}");
         if (_instance == null) return;
 
         // If we haven't set up UI yet, try again

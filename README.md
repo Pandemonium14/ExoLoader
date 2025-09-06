@@ -1,5 +1,5 @@
 # ExoLoader
-[![Version](https://img.shields.io/badge/ExoLoader-v1.7-blue.svg)](https://github.com/Pandemonium14/ExoLoader/releases)
+[![Version](https://img.shields.io/badge/ExoLoader-v1.7.1-blue.svg)](https://github.com/Pandemonium14/ExoLoader/releases)
 
 
 Mod for I Was a Teenage Exocolonist that aims to make adding characters, cards, backgrounds, and other things to IWATE easy and to allow making any content without touching any code (other than Exoscript).

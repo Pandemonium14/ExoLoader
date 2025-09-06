@@ -14,10 +14,7 @@ namespace ExoLoader
         public static readonly string patchFolderName = "StoryPatches";
         public static readonly string patchStartMarker = "@";
         public static readonly string patchedStoriesFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "CustomContent", "common", "PatchedStories");
-        
-        
-        
-       
+
         public static Dictionary<string, List<StoryPatch>> eventsToPatches = new Dictionary<string, List<StoryPatch>>();
 
         public static Dictionary<string, DateTime> patchFilesToDates = new Dictionary<string, DateTime>();
@@ -38,12 +35,19 @@ namespace ExoLoader
             int counter = 0;
             foreach (string folder in GetAllPatchFolders())
             {
+                string modName = CFileManager.GetModName(folder);
+
+                if (!ExoLoaderSave.GetModEnabled(modName))
+                {
+                    ModInstance.log("Skipping patches for disabled mod " + modName);
+                    continue;
+                }
 
                 foreach (string file in Directory.GetFiles(folder))
                 {
                     try
                     {
-                        ModInstance.log("Parsing patches in " + Path.GetFileName(file));
+                        ModInstance.log("Parsing patches from " + modName);
                         bool wasPatch = false;
 
                         string[] lines = File.ReadAllLines(file);
@@ -224,13 +228,45 @@ namespace ExoLoader
 
         public static bool ShouldWriteNewPatchedFiles()
         {
-            if (!File.Exists(Path.Combine(patchedStoriesFolder, "patched_chara_anemone.exo"))) { return true; }
+            if (!File.Exists(Path.Combine(patchedStoriesFolder, "patched_chara_anemone.exo")))
+            {
+                return true;
+            }
 
+            if (!File.Exists(Path.Combine(patchedStoriesFolder, "modlist.json")))
+            {
+                ModInstance.log("Mod list file not found, rewriting patched files");
+                return true;
+            }
+
+            string modListPath = Path.Combine(patchedStoriesFolder, "modlist");
+            Dictionary<string, bool> modList = new Dictionary<string, bool>();
+
+            if (File.Exists(modListPath))
+            {
+                foreach (var line in File.ReadLines(modListPath))
+                {
+                    var parts = line.Split(':');
+                    if (parts.Length == 2 && bool.TryParse(parts[1], out bool isEnabled))
+                    {
+                        modList[parts[0]] = isEnabled;
+                    }
+                }
+            }
+
+            foreach (var kvp in modList)
+            {
+                if (ExoLoaderSave.GetModEnabled(kvp.Key, true) != kvp.Value)
+                {
+                    ModInstance.log("Mod enabled state changed for " + kvp.Key + ", rewriting patched files");
+                    return true;
+                }
+            }
 
             DateTime mostRecentEdit = DateTime.MinValue;
             DateTime lastPatching = File.GetLastWriteTime(Directory.GetFiles(patchedStoriesFolder)[0]);
 
-            //vanilla story files
+            // vanilla story files
             string storyFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Exocolonist_Data", "StreamingAssets", "Stories");
             foreach (string storyFile in Directory.GetFiles(storyFolder))
             {
@@ -239,7 +275,8 @@ namespace ExoLoader
                     mostRecentEdit = File.GetLastWriteTime(storyFile);
                 }
             }
-            //custom story files
+
+            // custom story files
             foreach (string folder in CFileManager.GetAllCustomContentFolders("Stories"))
             {
                 foreach (string file in Directory.GetFiles(folder))
@@ -250,7 +287,8 @@ namespace ExoLoader
                     }
                 }
             }
-            //story patches
+
+            // story patches
             foreach (string folder in CFileManager.GetAllCustomContentFolders(patchFolderName))
             {
                 foreach (string file in Directory.GetFiles(folder))
@@ -261,7 +299,116 @@ namespace ExoLoader
                     }
                 }
             }
+
             return mostRecentEdit > lastPatching;
+        }
+
+        private static void CreateModlistFile()
+        {
+            string modListPath = Path.Combine(patchedStoriesFolder, "modlist");
+            Dictionary<string, bool> modList = new Dictionary<string, bool>();
+
+            foreach (ContentMod mod in ContentMod.allMods.Values)
+            {
+                modList[mod.id] = ExoLoaderSave.GetModEnabled(mod.id, true);
+            }
+
+            using (StreamWriter writer = new StreamWriter(modListPath))
+            {
+                foreach (var kvp in modList)
+                {
+                    writer.WriteLine($"{kvp.Key}:{kvp.Value}");
+                }
+            }
+        }
+
+        private static void AddModPatch()
+        {
+            List<ContentMod> enabledMods = new List<ContentMod>();
+
+            foreach (ContentMod mod in ContentMod.allMods.Values)
+            {
+                if (ExoLoaderSave.GetModEnabled(mod.id, true))
+                {
+                    enabledMods.Add(mod);
+                }
+            }
+
+            if (enabledMods.Count == 0)
+            {
+                return;
+            }
+
+            StoryPatch modPatch = new StoryPatch();
+            modPatch.eventID = "gameStartIntro";
+            modPatch.patchType = StoryPatchType.insert;
+            modPatch.key = "Warning:";
+            modPatch.keyIndex = 0;
+            modPatch.contentLines = [
+                "		= exoloaderJump1",
+                "		The game has been modified by the following ExoLoader content mods:"
+            ];
+
+            StoryPatch modPatch2 = new StoryPatch();
+            modPatch2.eventID = "gameStartIntro";
+            modPatch2.patchType = StoryPatchType.insert;
+            modPatch2.key = "Warning:";
+            modPatch2.keyIndex = 1;
+            modPatch2.contentLines = [
+                "		= exoloaderJump2",
+                "		The game has been modified by the following ExoLoader content mods:"
+            ];
+
+            List<string> creditsPatches = [];
+            List<string> creditPatches2 = [];
+
+            foreach (ContentMod mod in enabledMods)
+            {
+                modPatch.contentLines.Add("		- " + mod.name + (mod.version != null ? (" v" + mod.version) : ""));
+                modPatch2.contentLines.Add("		- " + mod.name + (mod.version != null ? (" v" + mod.version) : ""));
+
+                if (mod.introCredits != null && mod.introCredits.Count > 0)
+                {
+                    creditsPatches.Add($"		** {mod.name} Info");
+                    creditsPatches.Add("");
+                    creditsPatches.AddRange(mod.introCredits.Select(line => "			" + line));
+                    creditsPatches.Add("");
+                    creditsPatches.Add("			*** Back");
+                    creditsPatches.Add("				> exoloaderJump1");
+
+                    creditPatches2.Add($"		** {mod.name} Info");
+                    creditPatches2.Add("");
+                    creditPatches2.AddRange(mod.introCredits.Select(line => "			" + line));
+                    creditPatches2.Add("");
+                    creditPatches2.Add("			*** Back");
+                    creditPatches2.Add("				> exoloaderJump2");
+                }
+            }
+
+            modPatch.contentLines.Add("");
+            modPatch.contentLines.Add("		** Continue");
+            modPatch.contentLines.Add("		 	> introwarning1");
+            modPatch.contentLines.Add("");
+            modPatch.contentLines.AddRange(creditsPatches);
+            modPatch.contentLines.Add("");
+            modPatch.contentLines.Add("	*= introwarning1");
+
+            modPatch2.contentLines.Add("");
+            modPatch2.contentLines.Add("		** Continue");
+            modPatch2.contentLines.Add("		 	> introwarning2");
+            modPatch2.contentLines.Add("");
+            modPatch2.contentLines.AddRange(creditPatches2);
+            modPatch2.contentLines.Add("");
+            modPatch2.contentLines.Add("	*= introwarning2");
+
+            // Add to list of patches
+            if (!eventsToPatches.ContainsKey(modPatch.eventID))
+            {
+                eventsToPatches[modPatch.eventID] = new List<StoryPatch>();
+            }
+
+            eventsToPatches[modPatch.eventID].Add(modPatch);
+            eventsToPatches[modPatch2.eventID].Add(modPatch2);
         }
 
         public static void PatchAllStories()
@@ -269,6 +416,16 @@ namespace ExoLoader
             if (ShouldWriteNewPatchedFiles())
             {
                 ModInstance.log("Creating new patched files...");
+
+                if (Directory.Exists(patchedStoriesFolder))
+                {
+                    Directory.Delete(patchedStoriesFolder, true);
+                }
+                Directory.CreateDirectory(patchedStoriesFolder);
+
+                CreateModlistFile();
+                AddModPatch();
+
                 string storyFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Exocolonist_Data", "StreamingAssets", "Stories");
                 foreach (string storyFile in Directory.GetFiles(storyFolder))
                 {
@@ -284,8 +441,17 @@ namespace ExoLoader
                         }
                     }
                 }
+
                 foreach (string folder in CFileManager.GetAllCustomContentFolders("Stories"))
                 {
+                    string modName = CFileManager.GetModName(folder);
+
+                    if (!ExoLoaderSave.GetModEnabled(modName))
+                    {
+                        ModInstance.log("Skipping custom stories for disabled mod " + modName);
+                        continue;
+                    }
+
                     foreach (string storyFile in Directory.GetFiles(folder))
                     {
                         if (Path.GetExtension(storyFile) == ".exo")

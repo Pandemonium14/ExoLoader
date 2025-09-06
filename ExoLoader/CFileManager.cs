@@ -57,22 +57,20 @@ namespace ExoLoader
         public static CharaData ParseCustomCharacterData(string folderName)
         {
             string fullJson = File.ReadAllText(Path.Combine(folderName, "data.json"));
-            ModInstance.log("Read text");
 
-            if (fullJson == null ||  fullJson.Length == 0)
+            if (fullJson == null || fullJson.Length == 0)
             {
                 DataDebugHelper.PrintDataError("Error reading " + Path.GetFileName(folderName) + " json file", "Couldn't read text for " + folderName + " data.json file", "It should be named data.json");
                 return null;
             }
 
             Dictionary<string, object> parsedJson = JsonConvert.DeserializeObject<Dictionary<string, object>>(fullJson);
-            ModInstance.log("Converted json");
             if (parsedJson == null || parsedJson.Count == 0)
             {
-                DataDebugHelper.PrintDataError("Error parsing " + Path.GetFileName(folderName) + " json file", "Couldn't parse " + folderName + "/data.json","","Is the json file malformed? missing bracket, comma or quotation mark?");
+                DataDebugHelper.PrintDataError("Error parsing " + Path.GetFileName(folderName) + " json file", "Couldn't parse " + folderName + "/data.json", "", "Is the json file malformed? missing bracket, comma or quotation mark?");
                 return null;
             }
-            List<string> missingKeys = new List<string>() { "Not all required entries were found in the character's data.json file. Missing:"};
+            List<string> missingKeys = new List<string>() { "Not all required entries were found in the character's data.json file. Missing:" };
             foreach (string key in expectedCharacterEntries)
             {
                 if (!parsedJson.ContainsKey(key))
@@ -93,7 +91,8 @@ namespace ExoLoader
                 try
                 {
                     dataMap = ((JObject)dataValue).ToObject<Dictionary<string, object>>();
-                } catch
+                }
+                catch
                 {
                     DataDebugHelper.PrintDataError("Data entry can't be parsed in " + Path.GetFileName(folderName) + " json file", "A Data entry was found but couldn't be parsed as a dictionary.");
                     return null;
@@ -112,16 +111,11 @@ namespace ExoLoader
                     return null;
                 }
 
-                ModInstance.log("Reading Data entry");
-
-
                 data.id = (string)dataMap["ID"];
                 data.name = (string)dataMap["NAME"];
                 data.nickname = (string)dataMap["NICKNAME"];
 
-                //ModInstance.log("ID, NAME, and NICKNAME read");
-
-                string g = (string) dataMap["GENDER"];
+                string g = (string)dataMap["GENDER"];
                 if (g.Equals("X"))
                 {
                     data.gender = GenderID.nonbinary;
@@ -133,10 +127,10 @@ namespace ExoLoader
                 else if (g.Equals("M"))
                 {
                     data.gender = GenderID.male;
-                } 
+                }
                 else
                 {
-                    DataDebugHelper.PrintDataError("Gender error in " + Path.GetFileName(folderName) + " json file","Couldn't parse GENDER entry in the Data entry.", "Does it exist? Is it X (for nb), M (for male) or F (for female)");
+                    DataDebugHelper.PrintDataError("Gender error in " + Path.GetFileName(folderName) + " json file", "Couldn't parse GENDER entry in the Data entry.", "Does it exist? Is it X (for nb), M (for male) or F (for female)");
                 }
 
                 string love = (string)dataMap["LOVE"];
@@ -152,46 +146,41 @@ namespace ExoLoader
                 {
                     DataDebugHelper.PrintDataError("Love error in " + Path.GetFileName(folderName) + " json file", "Couldn't parse LOVE entry in the Data entry.", "Does it exist? Is it set to exactly FALSE or TRUE?");
                 }
-                ModInstance.log("Gender and Love read");
 
                 dataMap.TryGetValue("AGE10", out object age10);
 
-                data.ageOffset = int.Parse((string) age10) - 10;
-                //ModInstance.log("Age read");
+                data.ageOffset = int.Parse((string)age10) - 10;
 
-                data.birthday = (string) dataMap.GetValueSafe("BIRTHDAY");
-                data.dialogueColor = (string) dataMap.GetValueSafe("DIALOGUECOLOR");
-                data.defaultBg = (string) dataMap.GetValueSafe("DEFAULTBG");
-                data.basicInfo = (string) dataMap.GetValueSafe("BASICS");
-                data.moreInfo = (string) dataMap.GetValueSafe("MORE");
-                data.augment = (string) dataMap.GetValueSafe("ENHANCEMENT");
+                data.birthday = (string)dataMap.GetValueSafe("BIRTHDAY");
+                data.dialogueColor = (string)dataMap.GetValueSafe("DIALOGUECOLOR");
+                data.defaultBg = (string)dataMap.GetValueSafe("DEFAULTBG");
+                data.basicInfo = (string)dataMap.GetValueSafe("BASICS");
+                data.moreInfo = (string)dataMap.GetValueSafe("MORE");
+                data.augment = (string)dataMap.GetValueSafe("ENHANCEMENT");
 
-                //ModInstance.log("Up to Sliders read");
-
-                data.slider1left = (string) dataMap.GetValueSafe("FILLBAR1LEFT");
-                data.slider1right = (string) dataMap.GetValueSafe("FILLBAR1RIGHT");
+                data.slider1left = (string)dataMap.GetValueSafe("FILLBAR1LEFT");
+                data.slider1right = (string)dataMap.GetValueSafe("FILLBAR1RIGHT");
                 data.slider1values = new int[]
                 {
                 int.Parse((string) dataMap.GetValueSafe("FILLBAR1CHILD")),
                 int.Parse((string) dataMap.GetValueSafe("FILLBAR1TEEN")),
                 int.Parse((string) dataMap.GetValueSafe("FILLBAR1ADULT"))
                 };
-                data.slider2left = (string) dataMap.GetValueSafe("FILLBAR2LEFT");
-                data.slider2right = (string) dataMap.GetValueSafe("FILLBAR2RIGHT");
+                data.slider2left = (string)dataMap.GetValueSafe("FILLBAR2LEFT");
+                data.slider2right = (string)dataMap.GetValueSafe("FILLBAR2RIGHT");
                 data.slider2values = new int[]
                 {
                 int.Parse((string)  dataMap.GetValueSafe("FILLBAR2CHILD")),
                 int.Parse((string) dataMap.GetValueSafe("FILLBAR2TEEN")),
                 int.Parse((string) dataMap.GetValueSafe("FILLBAR2ADULT"))
                 };
-                data.slider3left = (string) dataMap.GetValueSafe("FILLBAR3LEFT");
-                data.slider3right = (string) dataMap.GetValueSafe("FILLBAR3RIGHT");
+                data.slider3left = (string)dataMap.GetValueSafe("FILLBAR3LEFT");
+                data.slider3right = (string)dataMap.GetValueSafe("FILLBAR3RIGHT");
                 data.slider3values = new int[]
                 {
                 int.Parse((string) dataMap.GetValueSafe("FILLBAR3CHILD")),
                 int.Parse((string) dataMap.GetValueSafe("FILLBAR3TEEN")),
                 int.Parse((string) dataMap.GetValueSafe("FILLBAR3ADULT")) };
-                ModInstance.log("Data entry read");
             }
             else
             {
@@ -201,7 +190,6 @@ namespace ExoLoader
 
             string onMap = (string)parsedJson["OnMap"];
             data.onMap = onMap == "TRUE";
-            ModInstance.log("OnMap read");
 
             string defaultOnMap = (string)parsedJson.GetValueSafe("DefaultOnMap");
             if (defaultOnMap != null)
@@ -260,7 +248,6 @@ namespace ExoLoader
                     float[] mapSpotD = { float.Parse(stringMapSpotD[0]), float.Parse(stringMapSpotD[1]), float.Parse(stringMapSpotD[2]) };
                     data.destroyedMapSpot = mapSpotD;
                 }
-                //ModInstance.log("Non-HelioOnly map spots read");
 
                 // Helio map spots also come in two notations, as an array of 3 floats or as a dictionary with keys of seasonID and values of arrays of 3 floats
                 if (parsedJson.ContainsKey("PostHelioMapSpots"))
@@ -296,8 +283,6 @@ namespace ExoLoader
                     float[] mapSpotHelio = { float.Parse(stringMapSpotHelio[0]), float.Parse(stringMapSpotHelio[1]), float.Parse(stringMapSpotHelio[2]) };
                     data.helioMapSpot = mapSpotHelio;
                 }
-
-                ModInstance.log("Helio map spot read");
 
                 if (parsedJson.ContainsKey("NearbyStratoMapSpots"))
                 {
@@ -473,7 +458,7 @@ namespace ExoLoader
             object rawJobs = parsedJson.GetValueSafe("Jobs");
             if (rawJobs != null)
             {
-                string[] jobs = ((JArray) rawJobs).ToObject<string[]>();
+                string[] jobs = ((JArray)rawJobs).ToObject<string[]>();
                 if (jobs != null)
                 {
                     data.jobs = jobs;
@@ -625,7 +610,6 @@ namespace ExoLoader
                 }
             }
 
-            ModInstance.instance.Log("Finished Parsing");
             data.folderName = folderName;
             return data;
         }
@@ -646,7 +630,8 @@ namespace ExoLoader
             return list.ToArray();
         }
 
-        public static List<string> GetAllCustomContentFolders(string type) {
+        public static List<string> GetAllCustomContentFolders(string type)
+        {
             List<string> patchFolders = new List<string>();
             foreach (string contentFolder in GetAllCustomContentFolders())
             {
@@ -680,7 +665,8 @@ namespace ExoLoader
             {
                 ModInstance.log("Requested image is already loaded!");
                 return customSprites[imageName];
-            } else
+            }
+            else
             {
                 string imagePath = Path.Combine(folderName, "Sprites", imageName + ".png");
                 if (!File.Exists(imagePath))
@@ -717,9 +703,9 @@ namespace ExoLoader
             }
         }
 
-        public static Sprite GetCustomPortrait(string folderName,string imageName)
+        public static Sprite GetCustomPortrait(string folderName, string imageName)
         {
-            ModInstance.log("Looking for portrait image " + imageName + " in folder " +  TrimFolderName(folderName));
+            ModInstance.log("Looking for portrait image " + imageName + " in folder " + TrimFolderName(folderName));
             string portraitName = "portrait_" + imageName;
             if (customSprites.ContainsKey(portraitName))
             {
@@ -734,7 +720,7 @@ namespace ExoLoader
                 return null;
             }
 
-            
+
             Texture2D texture = GetTexture(path);
             Sprite image = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0));
             customSprites.Add(portraitName, image);
@@ -817,6 +803,40 @@ namespace ExoLoader
         public static string TrimFolderName(string folderName)
         {
             return folderName.RemoveStart(AppDomain.CurrentDomain.BaseDirectory);
+        }
+
+        public static string GetModName(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                return string.Empty;
+            }
+
+            string basePath = AppDomain.CurrentDomain.BaseDirectory;
+            if (path.StartsWith(basePath, StringComparison.OrdinalIgnoreCase))
+            {
+                path = path.Substring(basePath.Length);
+            }
+
+            path = path.Replace('\\', '/');
+
+            path = path.Trim('/');
+
+            string[] segments = path.Split(['/'], StringSplitOptions.RemoveEmptyEntries);
+
+            if (segments.Length == 0)
+                return string.Empty;
+
+            int customContentIndex = Array.FindIndex(segments, s => string.Equals(s, "CustomContent", StringComparison.OrdinalIgnoreCase));
+
+            if (customContentIndex >= 0 && customContentIndex + 1 < segments.Length)
+            {
+                return segments[customContentIndex + 1];
+            }
+            else
+            {
+                return segments[0];
+            }
         }
     }
 }

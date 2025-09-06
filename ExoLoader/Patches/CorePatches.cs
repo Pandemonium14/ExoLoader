@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using HarmonyLib;
 using UnityEngine.UI;
+using UnityEngine.UIElements;
 
 namespace ExoLoader
 {
@@ -17,6 +18,9 @@ namespace ExoLoader
         {
             { "showErrorOverlay", "Show an overlay with error messages when the game loads. Useful for debugging." }
         };
+
+        private static Dictionary<string, bool> needsRestart = new();
+        private static bool showedRestartPopup = false;
 
         [HarmonyPatch(typeof(Groundhogs), "Load")]
         [HarmonyPostfix]
@@ -71,6 +75,39 @@ namespace ExoLoader
                 button.onClick.ReplaceListener(delegate
                 {
                     listener2();
+                });
+
+                ConnectNavigation(currentAboveButton, button);
+                currentAboveButton = button;
+            }
+
+            NWButton modListHeader = CreateModListHeader(__instance);
+            if (modListHeader != null)
+            {
+                ConnectNavigation(currentAboveButton, modListHeader);
+            }
+
+            foreach (ContentMod mod in ContentMod.allMods.Values)
+            {
+                string modID = mod.id;
+                bool enabled = ExoLoaderSave.GetModEnabled(modID);
+
+                string text = mod.name + " " + (enabled ? TextLocalized.Localize("button_on") : TextLocalized.Localize("button_off"));
+                NWButton button = __instance.AddButton(text, null);
+
+                string tooltip = mod.description;
+                if (tooltip != null)
+                {
+                    button.tooltipText = tooltip;
+                }
+
+                Action listener = delegate
+                {
+                    SetModEnabled(modID, !enabled, button);
+                };
+                button.onClick.ReplaceListener(delegate
+                {
+                    listener();
                 });
 
                 ConnectNavigation(currentAboveButton, button);
@@ -133,6 +170,30 @@ namespace ExoLoader
             catch (Exception ex)
             {
                 ModInstance.log($"Failed to create mod header: {ex.Message}");
+                return null;
+            }
+        }
+
+        private static NWButton CreateModListHeader(SettingsMenu settingsMenu)
+        {
+            try
+            {
+                NWButton headerButton = settingsMenu.AddButton("ExoLoader Mod List", null);
+
+                headerButton.interactable = false;
+
+                if (headerButton.GetComponent<Text>() != null)
+                {
+                    var textComponent = headerButton.GetComponent<Text>();
+                    textComponent.fontStyle = UnityEngine.FontStyle.Bold;
+                    textComponent.color = new UnityEngine.Color(1f, 0.8f, 0.2f, 1f);
+                }
+
+                return headerButton;
+            }
+            catch (Exception ex)
+            {
+                ModInstance.log($"Failed to create mod list header: {ex.Message}");
                 return null;
             }
         }
@@ -220,6 +281,53 @@ namespace ExoLoader
                 Action listener = delegate
                 {
                     SetSetting(settingName, !(bool)value, buttonToUpdate);
+                };
+                buttonToUpdate.onClick.ReplaceListener(delegate
+                {
+                    listener();
+                });
+            }
+        }
+
+        private static void SetModEnabled(string modID, object value, NWButton buttonToUpdate = null)
+        {
+            if (ExoLoaderSave.instance == null || ExoLoaderSave.instance.mods == null)
+            {
+                return;
+            }
+
+            ExoLoaderSave.UpdateModEnabled(modID, (bool)value);
+
+            if (needsRestart.ContainsKey(modID))
+            {
+                needsRestart.Remove(modID);
+            }
+            else
+            {
+                needsRestart.Add(modID, true);
+            }
+
+            if (!showedRestartPopup)
+            {
+                PopupMenu.ShowWarning("Changes to the currently loaded mods will take effect after restarting the game.");
+                showedRestartPopup = true;
+            }
+
+            if (!(buttonToUpdate != null))
+            {
+                return;
+            }
+
+            if (ContentMod.allMods.TryGetValue(modID, out ContentMod mod))
+            {
+                buttonToUpdate.text = mod.name + " " + ((bool)value ? TextLocalized.Localize("button_on") : TextLocalized.Localize("button_off")) + (needsRestart.ContainsKey(modID) ? "[restart]" : "");
+            }
+
+            if (value is bool)
+            {
+                Action listener = delegate
+                {
+                    SetModEnabled(modID, !(bool)value, buttonToUpdate);
                 };
                 buttonToUpdate.onClick.ReplaceListener(delegate
                 {

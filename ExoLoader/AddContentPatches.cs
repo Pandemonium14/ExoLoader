@@ -23,20 +23,14 @@ namespace ExoLoader
                 }
                 else if (filename == "ExocolonistCards - cards")
                 {
-                    ModInstance.log("calling LoadCustomContent for Cards");
                     LoadCustomContent("Cards");
                 }
                 else if (filename == "Exocolonist - variables")
                 {
-                    ModInstance.log("Loading preliminary content");
-
-                    ModInstance.log("Loading story patches");
                     StoryPatchManager.PopulatePatchList();
 
-                    ModInstance.log("Patching story files");
                     StoryPatchManager.PatchAllStories();
 
-                    ModInstance.log("Loading custom backgrounds");
                     LoadCustomContent("Backgrounds");
 
                 }
@@ -54,13 +48,55 @@ namespace ExoLoader
                 }
                 else if (filename == "Exocolonist - cheevos")
                 {
-                    ModInstance.log("Loading custom achievements");
                     LoadCustomContent("Achievements");
+                }
+                else if (filename == "Exocolonist - credits")
+                {
+                    AppendCredits();
                 }
             }
             catch (Exception e)
             {
                 ModLoadingStatus.LogError($"Error while loading custom content to {filename}: {e.Message}");
+            }
+        }
+
+        [HarmonyPatch(typeof(ParserData), nameof(ParserData.LoadAllData))]
+        [HarmonyPrefix]
+        public static void LoadContentModData()
+        {
+            try
+            {
+                string[] contentFolders = CFileManager.GetAllCustomContentFolders();
+                if (contentFolders != null && contentFolders.Length == 0)
+                {
+                    return;
+                }
+
+                foreach (string folder in contentFolders)
+                {
+                    string modName = CFileManager.GetModName(folder);
+
+                    if (modName == "common")
+                    {
+                        continue;
+                    }
+
+                    string jsonFilePath = Path.Combine(folder, "data.json");
+                    ContentMod mod = new ContentMod(modName);
+                    if (File.Exists(jsonFilePath))
+                    {
+                        string jsonData = File.ReadAllText(jsonFilePath);
+                        mod.ParseJson(jsonData);
+                    }
+
+                    ContentMod.allMods[mod.id] = mod;
+                }
+            }
+            catch (Exception e)
+            {
+                ModLoadingStatus.LogError($"Error while loading content mod data: {e.Message}");
+
             }
         }
 
@@ -144,7 +180,6 @@ namespace ExoLoader
         {
             try
             {
-                ModInstance.instance.Log("Checking CustomContent folders");
                 string[] contentFolders = CFileManager.GetAllCustomContentFolders();
                 if (contentFolders != null && contentFolders.Length == 0)
                 {
@@ -153,13 +188,93 @@ namespace ExoLoader
                 }
                 foreach (string folder in contentFolders)
                 {
-                    ModInstance.log("Parsing " + contentType + " content folder: " + CFileManager.TrimFolderName(folder));
+                    string modName = CFileManager.GetModName(folder);
+                    if (!ExoLoaderSave.GetModEnabled(modName))
+                    {
+                        continue;
+                    }
+                    ModInstance.log("Parsing " + contentType + " from " + modName);
                     CustomContentParser.ParseContentFolder(folder, contentType);
                 }
             }
             catch (Exception e)
             {
                 ModLoadingStatus.LogError($"Error while loading custom content of type {contentType}: {e.Message}");
+            }
+        }
+
+        private static void AppendCredits()
+        {
+            try
+            {
+                List<ContentMod> enabledMods = new List<ContentMod>();
+
+                foreach (ContentMod mod in ContentMod.allMods.Values)
+                {
+                    if (ExoLoaderSave.GetModEnabled(mod.id, true))
+                    {
+                        enabledMods.Add(mod);
+                    }
+                }
+
+                if (enabledMods.Count == 0)
+                {
+                    return;
+                }
+
+                var creditsField = typeof(CreditsMenu).GetField("credits", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                if (creditsField == null)
+                {
+                    ModLoadingStatus.LogError("Could not find CreditsMenu.credits field via reflection");
+                    return;
+                }
+
+                Dictionary<int, List<CreditsEntry>> credits = (Dictionary<int, List<CreditsEntry>>)creditsField.GetValue(null);
+                if (credits == null)
+                {
+                    ModLoadingStatus.LogError("Could not get value of CreditsMenu.credits field");
+                    return;
+                }
+
+                int latestPage = credits.Keys.Max();
+                int creditsPageNum = latestPage;
+
+                foreach (ContentMod mod in enabledMods)
+                {
+                    if (mod.gameCredits != null && mod.gameCredits.Count > 0)
+                    {
+                        creditsPageNum++;
+                        CreditsMenu.AddCredit(creditsPageNum, "", "");
+                        CreditsMenu.AddCredit(creditsPageNum, "", "");
+                        CreditsMenu.AddCredit(creditsPageNum, mod.name, mod.version != null ? $"v{mod.version}" : "");
+                        foreach (string credit in mod.gameCredits)
+                        {
+                            string[] parts = credit.Split('|');
+                            if (parts.Length == 2)
+                            {
+                                string creditsName = parts[0].Trim();
+                                string creditsInfo = parts[1].Trim();
+                                CreditsMenu.AddCredit(creditsPageNum, creditsName, creditsInfo);
+                            }
+                            else
+                            {
+                                string creditsName = credit.Trim();
+                                CreditsMenu.AddCredit(creditsPageNum, creditsName, "");
+                            }
+                        }
+                    }
+                }
+
+                creditsPageNum++;
+                CreditsMenu.AddCredit(creditsPageNum, "", "");
+                CreditsMenu.AddCredit(creditsPageNum, "", "");
+                CreditsMenu.AddCredit(creditsPageNum, "ExoLoader", MyPluginInfo.PLUGIN_VERSION);
+                CreditsMenu.AddCredit(creditsPageNum, "Pandemonium", "Code\n <link=\"https://github.com/Pandemonium14\">Pandemonium14</link>");
+                CreditsMenu.AddCredit(creditsPageNum, "Saerielle", "Code\n <link=\"https://github.com/saerielle\">saerielle</link>");
+            }
+            catch (Exception e)
+            {
+                ModLoadingStatus.LogError($"Error while appending credits: {e.Message}");
             }
         }
 
@@ -233,7 +348,7 @@ namespace ExoLoader
                         Chara chara = Chara.FromID(charaID);
                         if (chara == null)
                         {
-                            ModInstance.log($"{story?.storyID ?? "null"}: ParserStoryReqParseReqInnerPrefix: Chara.FromID returned null for {charaID}");
+                            ModInstance.log($"{story?.storyID ?? "null"}: will be ignored because {charaID} does not exist");
                             line = "location = none"; // replace invalid chara with a 'none' location, meaning this story will not be triggered unless called from somewhere else
                         }
                     }

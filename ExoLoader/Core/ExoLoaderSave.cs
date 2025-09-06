@@ -19,6 +19,7 @@ namespace ExoLoader
         {
             { "showErrorOverlay", false }
         };
+        public Dictionary<string, bool> mods = new();
 
         public static ExoLoaderSave instance
         {
@@ -58,6 +59,30 @@ namespace ExoLoader
             return defaultValue;
         }
 
+        public static void UpdateModEnabled(string key, bool value)
+        {
+            if (instance.mods.ContainsKey(key))
+            {
+                instance.mods[key] = value;
+            }
+            else
+            {
+                instance.mods.Add(key, value);
+            }
+
+            Save();
+        }
+
+        public static bool GetModEnabled(string key, bool defaultValue = true)
+        {
+            if (instance.mods.TryGetValue(key, out bool value))
+            {
+                return value;
+            }
+
+            return defaultValue;
+        }
+
         public static bool HasCheevo(string id)
         {
             return instance.cheevos.Contains(id.ToLower());
@@ -89,6 +114,7 @@ namespace ExoLoader
         {
             try
             {
+                ModInstance.log("Loading ExoLoaderSave...");
                 LoadInner();
             }
             catch (Exception ex)
@@ -213,10 +239,10 @@ namespace ExoLoader
 
             save.cheevos = [.. cheevos];
             save.settings = new Dictionary<string, bool>(settings);
+            save.mods = new Dictionary<string, bool>(mods);
 
             return save;
         }
 
-        
     }
 }
