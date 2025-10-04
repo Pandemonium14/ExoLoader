@@ -18,6 +18,8 @@ namespace ExoLoader
         public int keyIndex2 = -1;
         public int indexCounter = 0;
         public int indexCounter2 = 0;
+        public string modName = "common";
+        public string ignoreModName;
 
         public List<string> contentLines;
 
@@ -31,6 +33,21 @@ namespace ExoLoader
             string[] patchInfo = SplitWithEscapes(lines[index], '|', '@');
 
             patch.patchType = patchInfo[1].ParseEnum<StoryPatchType>();
+
+            if (patch.patchType == StoryPatchType.ignore)
+            {
+                // The format is @ignore|OriginalModName|EventID|Key|Key2|KeyIndex|KeyIndex2 - the ignore patches are for replacement patches only
+                patch.ignoreModName = patchInfo[2];
+                patch.eventID = patchInfo[3];
+                patch.key = patchInfo[4];
+                patch.key2 = patchInfo[5];
+                patch.keyIndex = int.Parse(patchInfo[6]);
+                patch.keyIndex2 = int.Parse(patchInfo[7]);
+                patch.contentLines = [];
+                patch.patchEnd = index;
+                return patch;
+            }
+
             patch.eventID = patchInfo[2];
             patch.key = patchInfo[3];
             if (patch.patchType == StoryPatchType.insert)
