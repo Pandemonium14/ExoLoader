@@ -691,6 +691,17 @@ namespace ExoLoader
                     }
                 }
             }
+
+            // Allow cards with 3 abilities to have a gem as well, requested feature even if not strictly how base game cards work
+            // While it's possible to simply increase amount of abilities, it's better to keep that at 3 to limit 4th ability to gems only
+            // due to a limited space on the cards
+            if (data.TryGetValue("HasGem", out object hasGemValue) && bool.TryParse((string)hasGemValue, out bool hasGem) && hasGem)
+            {
+                abilities.Add(CardAbilityType.FromID("gem"));
+                values.Add(0);
+                suits.Add(CardSuit.none);
+            }
+
             cardData.abilityIds = abilities;
             cardData.abilityValues = values;
             cardData.abilitySuits = suits;
