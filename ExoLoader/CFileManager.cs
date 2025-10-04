@@ -610,6 +610,18 @@ namespace ExoLoader
                 }
             }
 
+            if (parsedJson.TryGetValue("SecretAdmirerType", out object secretAdmirerObj))
+            {
+                string secretAdmirer = (secretAdmirerObj as string)?.ToLower();
+
+                data.secretAdmirerType = secretAdmirer switch
+                {
+                    "false" or "never" => SecretAdmirerType.never,
+                    "polyamorous" or "poly" => SecretAdmirerType.polyamorous,
+                    _ => SecretAdmirerType.none,
+                };
+            }
+
             data.folderName = folderName;
             return data;
         }

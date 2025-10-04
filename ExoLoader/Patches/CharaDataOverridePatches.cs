@@ -276,5 +276,30 @@ namespace ExoLoader
                 ModInstance.log("Error in CharaSetFillbarPostfix: " + e.Message);
             }
         }
+
+        [HarmonyPatch(typeof(Chara), "isDatingSomeone", MethodType.Getter)]
+        [HarmonyPostfix]
+        public static void CharaIsDatingSomeonePostfix(Chara __instance, ref bool __result)
+        {
+            try
+            {
+                if (__instance is CustomChara chara && chara.data != null)
+                {
+                    if (chara.data.secretAdmirerType == SecretAdmirerType.never)
+                    {
+                        __result = true; // mark character as if dating someone, so they never be a secret admirer - just like Sym
+                    }
+                    else if (chara.data.secretAdmirerType == SecretAdmirerType.polyamorous)
+                    {
+                        __result = false; // mark character as if not dating anyone, so they can always be a secret admirer
+                    }
+                    // Otherwise leave the result as is (default game behaviour)
+                }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log("Error in CharaIsDatingSomeonePostfix: " + e.Message);
+            }
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using BepInEx.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
@@ -12,6 +13,13 @@ namespace ExoLoader
     {
         public string template;
         public float[] position;
+    }
+
+    public enum SecretAdmirerType
+    {
+        none,
+        never,
+        polyamorous
     }
 
     public enum CharaDataOverrideField
@@ -114,6 +122,8 @@ namespace ExoLoader
         public float[] spriteFrameRates = [12f, 12f, 12f];
         public float[] overworldScales = [0.004f, 0.004f, 0.004f];
         public MainMenuPosition mainMenu;
+
+        public SecretAdmirerType secretAdmirerType = SecretAdmirerType.none; // none means default game behaviour - only if canLove
 
         public CustomChara MakeChara()
         {
