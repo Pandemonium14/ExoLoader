@@ -74,6 +74,7 @@ namespace ExoLoader
         public string id;
         public string name;
         public string nickname;
+        public string nicknameMemory;
         public GenderID gender;
         public bool canLove;
         public int ageOffset;

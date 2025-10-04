@@ -94,6 +94,16 @@ namespace ExoLoader
             string augment = chara.data.augment;
             string defaultBg = chara.data.defaultBg;
 
+            if (!string.IsNullOrEmpty(chara.data.nicknameMemory) && Princess.HasMemory(chara.data.nicknameMemory))
+            {
+                string nicknameTmp = Princess.GetMemory(chara.data.nicknameMemory);
+
+                if (!string.IsNullOrEmpty(nicknameTmp))
+                {
+                    nickname = nicknameTmp;
+                }
+            }
+
             foreach (var field in chara.data.overrides.Keys)
             {
                 foreach (CharaDataOverride data in chara.data.overrides[field])
