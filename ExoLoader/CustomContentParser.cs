@@ -46,6 +46,13 @@ namespace ExoLoader
             "Plural",
         };
 
+        private static readonly string[] expectedPetEntries = new string[]
+        {
+            "ID",
+            "Name",
+            "Level"
+        };
+
         private static readonly string[] expectedCheevoEntries = new string[]
         {
             "ID",
@@ -295,6 +302,32 @@ namespace ExoLoader
                                             else
                                             {
                                                 DataDebugHelper.PrintDataError("Unexpected error when loading achievement " + Path.GetFileNameWithoutExtension(file), ex.Message);
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                        case "Pets":
+                            {
+                                foreach (string file in Directory.GetFiles(folder))
+                                {
+                                    if (file.EndsWith(".json"))
+                                    {
+                                        ModInstance.log("Found pet file " + Path.GetFileName(file) + ", parsing...");
+                                        try
+                                        {
+                                            ParsePetData(file);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            if (ex is InvalidCastException)
+                                            {
+                                                DataDebugHelper.PrintDataError("Invalid cast when loading pet " + Path.GetFileNameWithoutExtension(file), "This happens when there is missing quotation marks in the json, or if you put text where a number should be. Make sure everything is in order!");
+                                            }
+                                            else
+                                            {
+                                                DataDebugHelper.PrintDataError("Unexpected error when loading pet " + Path.GetFileNameWithoutExtension(file), ex.Message);
                                             }
                                         }
                                     }
@@ -775,7 +808,8 @@ namespace ExoLoader
             if (json.ContainsKey("IsRelax"))
             {
                 jobData.isRelax = bool.Parse((string)json["IsRelax"]);
-            } else
+            }
+            else
             {
                 jobData.isRelax = false;
             }
@@ -1135,6 +1169,177 @@ namespace ExoLoader
                 loveAll,
                 requiredCheevos
             );
+        }
+
+        private static void ParsePetData(string file)
+        {
+            string fullJson = File.ReadAllText(file);
+            if (fullJson == null || fullJson.Length == 0)
+            {
+                DataDebugHelper.PrintDataError("Couldn't read json file for " + Path.GetFileName(file));
+                ModInstance.instance.Log("Couldn't read text for " + Path.GetFileNameWithoutExtension(file));
+                return;
+            }
+            Dictionary<string, object> data = JsonConvert.DeserializeObject<Dictionary<string, object>>(fullJson);
+            if (data == null || data.Count == 0)
+            {
+                DataDebugHelper.PrintDataError("Couldn't parse json file for " + Path.GetFileNameWithoutExtension(file), "Json file could be read as text but the text coudln't be parsed. Check for any missing \",{}, or comma");
+                ModInstance.instance.Log("Couldn't parse json for " + Path.GetFileName(file));
+                return;
+            }
+            List<string> missingKeys = new List<string>() { "The following keys are mandatory for a pet file but were missing:" };
+            foreach (string key in expectedPetEntries)
+            {
+                if (!data.ContainsKey(key))
+                {
+                    missingKeys.Add(key);
+                }
+            }
+            if (missingKeys.Count > 1)
+            {
+                DataDebugHelper.PrintDataError("Missing mandatory keys for card " + Path.GetFileNameWithoutExtension(file), missingKeys.ToArray());
+                return;
+            }
+
+            CustomPet petData = new CustomPet();
+            petData.file = file;
+            petData.id = (string)data["ID"];
+            petData.name = (string)data["Name"];
+            petData.level = int.Parse((string)data["Level"]);
+
+            try
+            {
+                string howGetValue = data.ContainsKey("HowGet") ? ((string)data["HowGet"]).ToLower() : "none";
+
+                switch (howGetValue)
+                {
+                    case "unique":
+                        {
+                            petData.howGet = HowGet.unique;
+                            break;
+                        }
+                    case "training":
+                        {
+                            petData.howGet = HowGet.training;
+                            break;
+                        }
+                    case "trainingbuy":
+                        {
+                            petData.howGet = HowGet.trainingBuy;
+                            break;
+                        }
+                    case "shopdefault":
+                        {
+                            petData.howGet = HowGet.shopDefault;
+                            break;
+                        }
+                    case "shopclothes":
+                        {
+                            petData.howGet = HowGet.shopClothes;
+                            break;
+                        }
+                    case "shopweapons":
+                        {
+                            petData.howGet = HowGet.shopWeapons;
+                            break;
+                        }
+                    case "shopgadgets":
+                        {
+                            petData.howGet = HowGet.shopGadgets;
+                            break;
+                        }
+                    case "none":
+                    default:
+                        {
+                            petData.howGet = HowGet.none;
+                            break;
+                        }
+                }
+
+                if (data.TryGetValue("UpgradeFrom", out object upgradeFromCardID))
+                {
+                    petData.upgradeFromCardID = (string)upgradeFromCardID;
+                }
+                else
+                {
+                    petData.upgradeFromCardID = null;
+                }
+
+                if (data.TryGetValue("Kudos", out object kudoCost))
+                {
+                    petData.kudoCost = ((string)kudoCost).ParseInt();
+                }
+                else
+                {
+                    petData.kudoCost = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                ModInstance.log("Invalid new field value in " + Path.GetFileNameWithoutExtension(file) + ": " + ex.Message);
+            }
+
+            if (data.TryGetValue("ArtistName", out object artistName))
+            {
+                petData.artist = (string)artistName;
+            }
+            if (data.TryGetValue("ArtistSocialAt", out object artistAt))
+            {
+                petData.artistAt = (string)artistAt;
+            }
+
+            if (data.TryGetValue("ArtistLink", out object artistLink))
+            {
+                petData.artistLink = (string)artistLink;
+            }
+
+            List<CardAbilityType> abilities = new List<CardAbilityType>();
+            List<int> values = new List<int>();
+            List<CardSuit> suits = new List<CardSuit>();
+            for (int i = 1; i <= 3; i++)
+            {
+                if (data.TryGetValue("Ability" + i.ToString(), out object abilityEntry))
+                {
+                    Dictionary<string, object> abilityMap;
+
+                    abilityMap = ((JObject)abilityEntry).ToObject<Dictionary<string, object>>();
+
+                    string abID = (string)abilityMap.GetValueSafe("ID");
+                    CardAbilityType abType = CardAbilityType.FromID(abID);
+                    if (abType != null)
+                    {
+                        abilities.Add(abType);
+
+                        values.Add(((string)abilityMap.GetValueSafe("Value")).ParseInt());
+                        suits.Add(((string)abilityMap.GetValueSafe("Suit")).ParseEnum<CardSuit>());
+                    }
+                    else if (abID != null && abID != "")
+                    {
+                        DataDebugHelper.PrintDataError("Invalid ability in " + Path.GetFileNameWithoutExtension(file));
+                        ModInstance.log("WARNING: Incorrect Ability ID : " + abID);
+                    }
+                }
+            }
+
+            // Check if there is a pet ability, if not - add it automatically
+            if (!abilities.Contains(CardAbilityType.FromID("pet")))
+            {
+                abilities.Add(CardAbilityType.FromID("pet"));
+                values.Add(0);
+                suits.Add(CardSuit.none);
+            }
+
+            petData.abilityIds = abilities;
+            petData.abilityValues = values;
+            petData.abilitySuits = suits;
+
+            petData.animation = BillboardWaveMode.breathing;
+            if (data.TryGetValue("Animation", out object animationValue))
+            {
+                petData.animation = ((string)animationValue).ParseEnum<BillboardWaveMode>(BillboardWaveMode.breathing);
+            }
+
+            petData.MakePet();
         }
     }
 }
