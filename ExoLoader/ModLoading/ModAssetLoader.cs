@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Northway.Utils;
 using UnityEngine;
 
 namespace ExoLoader
@@ -57,6 +59,7 @@ namespace ExoLoader
             yield return new WaitForSeconds(0.2f);
 
             LoadCards();
+            LoadPets();
 
             LoadingProgress.Instance?.UpdateProgress(1.0f, "ExoLoader loading complete!");
             yield return null;
@@ -486,6 +489,68 @@ namespace ExoLoader
             {
                 ModInstance.log($"Failed to load card sprite: {cardID}");
                 ModLoadingStatus.LogError($"Error loading card sprite {cardID}: {e.Message}");
+            }
+        }
+
+        public static void LoadPets()
+        {
+            ModInstance.log("Loading custom pets...");
+
+            // Load all custom pets
+            foreach (var kvp in CustomPet.idToFile)
+            {
+                string petID = kvp.Key.ToLower();
+                string petFile = kvp.Value;
+
+                LoadPet(petID, petFile);
+            }
+
+            ModInstance.log("Custom pets loaded successfully.");
+        }
+
+        private static void LoadPet(string petID, string originFile)
+        {
+            try
+            {
+                string spriteName = petID;
+                string path = originFile.Replace(".json", "_sprite.png");
+                CustomPet pet = CustomPet.customPetsById.ContainsKey(petID) ? CustomPet.customPetsById[petID] : null;
+                if (pet == null)
+                {
+                    ModInstance.log($"No CustomPet data found for pet ID: {petID}");
+                    return;
+                }
+
+                ModInstance.log($"Loading pet: {petID} from {CFileManager.TrimFolderName(path)}");
+
+                Sprite sprite = ImageUtils.LoadSprite(path, new SpriteLoadConfig
+                {
+                    SpriteName = spriteName
+                });
+
+                if (sprite != null)
+                {
+                    PetSpriteInfo spriteInfo = new PetSpriteInfo
+                    {
+                        petID = petID,
+                        sprite = sprite,
+                        waveMode = pet.animation
+                    };
+
+                    PetSpriteInfo[] existingSprites = Singleton<Player>.instance.petSprites;
+                    List<PetSpriteInfo> updatedSprites = [.. existingSprites];
+                    updatedSprites.Add(spriteInfo);
+                    Singleton<Player>.instance.petSprites = [.. updatedSprites];
+                }
+                else
+                {
+                    throw new Exception($"Sprite not found at path: {path}");
+                }
+            }
+            catch (Exception e)
+            {
+                ModInstance.log($"Failed to load pet sprite: {petID}");
+                ModLoadingStatus.LogError($"Error loading pet sprite {petID}: {e.Message}");
             }
         }
 

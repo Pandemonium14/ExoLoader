@@ -62,6 +62,7 @@ namespace ExoLoader
                                 try
                                 {
                                     patch = StoryPatch.ReadPatch(lines, index);
+                                    patch.modName = modName;
                                 }
                                 catch (Exception e)
                                 {
@@ -100,6 +101,32 @@ namespace ExoLoader
                 }
             }
             ModInstance.log("Loaded " + counter + " patches in total");
+            ClearIgnorePatches();
+        }
+
+        private static void ClearIgnorePatches()
+        {
+            try
+            {
+                // check if there are ignore patches, find patches they apply to and remove those patches
+                foreach (var eventPatches in eventsToPatches.Values)
+                {
+                    var ignorePatches = eventPatches.Where(p => p.patchType == StoryPatchType.ignore).ToList();
+                    foreach (var ignorePatch in ignorePatches)
+                    {
+                        ModInstance.log("Applying ignore patch for mod " + ignorePatch.ignoreModName + " event " + ignorePatch.eventID + " key " + ignorePatch.key + " key2 " + ignorePatch.key2);
+                        ModInstance.log("Before ignore, event has " + eventPatches.Count + " patches");
+                        eventPatches.RemoveAll(p => p.modName == ignorePatch.ignoreModName && p.eventID == ignorePatch.eventID && p.key == ignorePatch.key && p.key2 == ignorePatch.key2 && p.keyIndex == ignorePatch.keyIndex && p.keyIndex2 == ignorePatch.keyIndex2);
+                        ModInstance.log("After ignore, event has " + eventPatches.Count + " patches");
+                        eventPatches.Remove(ignorePatch);
+                        ModInstance.log("Removed ignore patch, " + eventPatches.Count + " patches left");
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                ModLoadingStatus.LogError("Error while applying ignore patches: " + e.Message);
+            }
         }
 
         public static bool IsStartOfEvent(string line)

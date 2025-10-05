@@ -10,6 +10,7 @@ namespace ExoLoader
     {
         none,
         insert,
-        replace
+        replace,
+        ignore
     }
 }

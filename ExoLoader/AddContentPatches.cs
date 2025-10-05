@@ -24,6 +24,7 @@ namespace ExoLoader
                 else if (filename == "ExocolonistCards - cards")
                 {
                     LoadCustomContent("Cards");
+                    LoadCustomContent("Pets");
                 }
                 else if (filename == "Exocolonist - variables")
                 {

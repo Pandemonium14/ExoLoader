@@ -115,6 +115,15 @@ namespace ExoLoader
                 data.name = (string)dataMap["NAME"];
                 data.nickname = (string)dataMap["NICKNAME"];
 
+                if (dataMap.ContainsKey("NICKNAME_MEMORY"))
+                {
+                    data.nicknameMemory = (string)dataMap["NICKNAME_MEMORY"];
+                }
+                else
+                {
+                    data.nicknameMemory = null;
+                }
+
                 string g = (string)dataMap["GENDER"];
                 if (g.Equals("X"))
                 {
@@ -608,6 +617,18 @@ namespace ExoLoader
                         ModLoadingStatus.LogError("Invalid custom aging entry in " + TrimFolderName(folderName) + ": " + customAgingEntry.ToString());
                     }
                 }
+            }
+
+            if (parsedJson.TryGetValue("SecretAdmirerType", out object secretAdmirerObj))
+            {
+                string secretAdmirer = (secretAdmirerObj as string)?.ToLower();
+
+                data.secretAdmirerType = secretAdmirer switch
+                {
+                    "false" or "never" => SecretAdmirerType.never,
+                    "polyamorous" or "poly" => SecretAdmirerType.polyamorous,
+                    _ => SecretAdmirerType.none,
+                };
             }
 
             data.folderName = folderName;

@@ -208,4 +208,10 @@ class CustomStoryCalls : StoryCalls
 
         return true;
     }
+
+    // method that would return how many characters player is dating right now
+    public static int datingcount()
+    {
+        return Chara.allCharas.Count(c => c.isDatingYou && !c.isDead);
+    }
 }
