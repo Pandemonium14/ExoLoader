@@ -28,12 +28,7 @@ namespace ExoLoader
                 }
                 else if (filename == "Exocolonist - variables")
                 {
-                    StoryPatchManager.PopulatePatchList();
-
-                    StoryPatchManager.PatchAllStories();
-
                     LoadCustomContent("Backgrounds");
-
                 }
                 else if (filename == "Exocolonist - jobs")
                 {
@@ -103,12 +98,22 @@ namespace ExoLoader
 
         [HarmonyPatch(typeof(ParserData), nameof(ParserData.LoadAllData))]
         [HarmonyPostfix]
+        [HarmonyPriority(1)]
         public static void FinalizeLoading()
         {
             FinalizeCharacters();
             LoadCustomContent("ScriptExtensions");
             // Add locale keys for all custom backgrounds
             CustomBackground.AddLocales();
+
+            ModInstance.log("Patching Exoloader stories");
+            StoryPatchManager.PopulatePatchList();
+            StoryPatchManager.PatchAllStories();
+
+            // Basically here we have the lowest priority postfix, so we can clear all stories and reload them after all other story patches have been applied
+            // This fixes interaction issues with Extraloader
+            Story.ClearAllStories();
+            ParserStory.LoadStories();
         }
 
         public static void FinalizeCharacters() //Loads likes, dislikes
