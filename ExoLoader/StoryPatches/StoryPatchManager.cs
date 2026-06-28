@@ -303,6 +303,19 @@ namespace ExoLoader
                 }
             }
 
+            // FIXME: this would need to be changed if/when there are other mods that use Extraloader
+            string extraContentStoriesFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ExtraContent", "1_ExtraColonists", "Stories");
+            if (Directory.Exists(extraContentStoriesFolder))
+            {
+                foreach (string storyFile in Directory.GetFiles(extraContentStoriesFolder))
+                {
+                    if (File.GetLastWriteTime(storyFile) > mostRecentEdit)
+                    {
+                        mostRecentEdit = File.GetLastWriteTime(storyFile);
+                    }
+                }
+            }
+
             // custom story files
             foreach (string folder in CFileManager.GetAllCustomContentFolders("Stories"))
             {
@@ -453,18 +466,41 @@ namespace ExoLoader
                 CreateModlistFile();
                 AddModPatch();
 
-                string storyFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Exocolonist_Data", "StreamingAssets", "Stories");
-                foreach (string storyFile in Directory.GetFiles(storyFolder))
+                // FIXME: this would need to be changed if/when there are other mods that use Extraloader
+                string extraContentStoriesFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ExtraContent", "1_ExtraColonists", "Stories");
+                if (Directory.Exists(extraContentStoriesFolder))
                 {
-                    if (Path.GetExtension(storyFile) == ".exo")
+                    ModInstance.log("Found ExtraContent/1_ExtraColonists/Stories folder, patching those files instead of base game");
+                    foreach (string storyFile in Directory.GetFiles(extraContentStoriesFolder))
                     {
-                        try
+                        if (Path.GetExtension(storyFile) == ".exo")
                         {
-                            PatchStoryFile(storyFile, "_");
+                            try
+                            {
+                                PatchStoryFile(storyFile, "_");
+                            }
+                            catch (Exception e)
+                            {
+                                ModLoadingStatus.LogError("Error while patching story file " + Path.GetFileName(storyFile) + ": " + e.Message);
+                            }
                         }
-                        catch (Exception e)
+                    }
+                }
+                else
+                {
+                    string storyFolder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Exocolonist_Data", "StreamingAssets", "Stories");
+                    foreach (string storyFile in Directory.GetFiles(storyFolder))
+                    {
+                        if (Path.GetExtension(storyFile) == ".exo")
                         {
-                            ModLoadingStatus.LogError("Error while patching story file " + Path.GetFileName(storyFile) + ": " + e.Message);
+                            try
+                            {
+                                PatchStoryFile(storyFile, "_");
+                            }
+                            catch (Exception e)
+                            {
+                                ModLoadingStatus.LogError("Error while patching story file " + Path.GetFileName(storyFile) + ": " + e.Message);
+                            }
                         }
                     }
                 }
